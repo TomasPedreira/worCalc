@@ -31,6 +31,7 @@ from PySide6.QtWidgets import (
 from ..domain.calibration import (
     AffineCalibration,
     Calibration,
+    METRES_TO_YARDS,
     Point,
     read_resolution,
     write_calibration,
@@ -1107,14 +1108,9 @@ class MainWindow(QMainWindow):
                 if result.impact_range_yards is not None
                 else "outside sampled map"
             )
-            if result.overshoot_yards is None:
-                excess = "Overshoot unavailable"
-            elif result.overshoot_yards >= 0:
-                excess = f"OVER BY {result.overshoot_yards:,.0f} yd"
-            else:
-                excess = f"SHORT BY {abs(result.overshoot_yards):,.0f} yd"
             target_height = (
-                f"{result.height_above_target_metres:+.1f} m"
+                f"{result.height_above_target_metres * METRES_TO_YARDS:+.1f} yd "
+                f"({result.height_above_target_metres:+.1f} m)"
                 if result.height_above_target_metres is not None
                 else "unavailable"
             )
@@ -1123,8 +1119,8 @@ class MainWindow(QMainWindow):
                 f"Minimum clearance: {result.minimum_clearance_metres:+.1f} m\n"
                 f"Current elevation: {result.original_elevation_deg:.3f}°\n"
                 f"Clearance elevation: {clearing}\n"
-                f"Height above target: {target_height}\n"
-                f"Predicted impact: {impact} · {excess}"
+                f"Predicted height over target: {target_height}\n"
+                f"Downrange impact: {impact}"
             )
         else:
             self.clearance_status.setText(f"{confidence} · ROUTE CLEAR")
@@ -1137,14 +1133,15 @@ class MainWindow(QMainWindow):
                 else "unavailable"
             )
             target_height = (
-                f"{result.height_above_target_metres:+.1f} m"
+                f"{result.height_above_target_metres * METRES_TO_YARDS:+.1f} yd "
+                f"({result.height_above_target_metres:+.1f} m)"
                 if result.height_above_target_metres is not None
                 else "unavailable"
             )
             self.clearance_details.setText(
                 f"Minimum clearance: {minimum}\n"
                 f"Elevation: {result.original_elevation_deg:.3f}°\n"
-                f"Height above target: {target_height}"
+                f"Predicted height over target: {target_height}"
             )
         self.clearance_details.show()
         impact_for_overlay = (

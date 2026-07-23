@@ -60,7 +60,10 @@ class FireMissionUiTests(unittest.TestCase):
         self.assertIs(self.window.trajectory_profile.result, clearance)
         self.assertIn("ESTIMATED", self.window.clearance_status.text())
         self.assertTrue(self.window.clearance_details.isVisible())
-        self.assertIn("Height above target", self.window.clearance_details.text())
+        self.assertIn(
+            "Predicted height over target", self.window.clearance_details.text()
+        )
+        self.assertIn("yd (", self.window.clearance_details.text())
         solution_before_gradient = (
             self.window.solution_range.text(),
             self.window.solution_tof.text(),

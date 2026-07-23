@@ -35,6 +35,23 @@ class TrajectoryTests(unittest.TestCase):
         self.assertAlmostEqual(result.overshoot_yards, 0, delta=10)
         self.assertAlmostEqual(result.height_above_target_metres, 0, places=6)
 
+    def test_gentle_uphill_does_not_treat_muzzle_clearance_as_obstruction(self):
+        profile = tuple(
+            TerrainProfilePoint(distance, distance / 100)
+            for distance in range(0, 2001, 10)
+        )
+
+        result = analyze_trajectory_clearance(
+            profile,
+            target_range_yards=1000,
+            original_elevation_deg=0,
+            speed_metres_per_second=370,
+            drag_per_second=0.1,
+        )
+
+        self.assertFalse(result.obstructed)
+        self.assertEqual(result.clearing_elevation_deg, 0)
+
     def test_hill_requires_more_elevation_and_reports_overshoot(self):
         profile = list(flat_profile(3000))
         for index, point in enumerate(profile):

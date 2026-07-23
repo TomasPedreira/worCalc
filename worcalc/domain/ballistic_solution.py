@@ -73,7 +73,7 @@ class BallisticSolutionEngine:
         terrain_profile: tuple[TerrainProfilePoint, ...],
         speed_metres_per_second: float,
         drag_per_second: float,
-        safety_margin_metres: float = 1.0,
+        safety_margin_metres: float = 0.01,
     ) -> TrajectoryClearanceResult | None:
         angle = self.solve(
             horizontal_range_yards,

@@ -59,6 +59,17 @@ class ElevationField:
     def maximum_metres(self) -> float | None:
         return max((sample.elevation_metres for sample in self.samples), default=None)
 
+    def gradient_range_metres(self) -> tuple[float, float] | None:
+        """Return the exact sampled elevation range for this map."""
+        minimum = self.minimum_metres
+        maximum = self.maximum_metres
+        if minimum is None or maximum is None:
+            return None
+        if maximum - minimum < 1.0:
+            midpoint = (minimum + maximum) / 2.0
+            return midpoint - 0.5, midpoint + 0.5
+        return minimum, maximum
+
     def percentile_metres(self, percentile: float) -> float | None:
         if not self.samples:
             return None

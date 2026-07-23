@@ -40,6 +40,17 @@ class ElevationFieldTests(unittest.TestCase):
         self.assertGreater(lower, 0)
         self.assertLess(upper, 100)
 
+    def test_gradient_range_uses_exact_map_minimum_and_maximum(self):
+        field = ElevationField(
+            (
+                ElevationSample(0, 0, 4, "lowest"),
+                ElevationSample(1, 0, 25, "middle"),
+                ElevationSample(2, 0, 91, "highest"),
+            )
+        )
+
+        self.assertEqual(field.gradient_range_metres(), (4, 91))
+
     def test_profile_samples_straight_route_with_distances(self):
         field = ElevationField(
             (

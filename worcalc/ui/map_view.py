@@ -125,11 +125,11 @@ def elevation_overlay_pixmap(
     height: int,
     grid_size: int = 80,
 ) -> QPixmap:
-    """Render a high-contrast interpolated diagnostic gradient."""
-    contrast_range = field.contrast_range_metres()
-    if contrast_range is None or width <= 0 or height <= 0:
+    """Render a gradient spanning this map's sampled minimum and maximum."""
+    gradient_range = field.gradient_range_metres()
+    if gradient_range is None or width <= 0 or height <= 0:
         return QPixmap()
-    minimum, maximum = contrast_range
+    minimum, maximum = gradient_range
     grid_width = max(2, grid_size)
     grid_height = max(2, round(grid_size * height / width))
     image = QImage(grid_width, grid_height, QImage.Format.Format_ARGB32)
