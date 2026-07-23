@@ -1,0 +1,24 @@
+.venv/
+__pycache__/
+*.py[cod]
+
+# Local Codex/workspace metadata
+.agents/
+
+# Installed game assets and copied PAK payloads
+Assets/
+*.pak
+paks/Antietam/
+paks/DrillCamp/
+paks/HarpersFerry/
+paks/SouthMountain/
+paks/extracted/
+
+# Generated map and calibration data
+/maps/
+paks/converted_minimaps/
+paks/gameplay_area_calibrations.csv
+paks/gameplay_area_calibrations.json
+
+# Generated analysis output
+ballistic_model_comparison.png
