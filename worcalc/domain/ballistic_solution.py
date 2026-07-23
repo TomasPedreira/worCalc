@@ -13,6 +13,12 @@ from .ballistics import (
     height_adjusted_elevation,
     load_reference_points,
 )
+from .projectile import ARTILLERY_GRAVITY_METRES_PER_SECOND_SQUARED
+from .trajectory import (
+    TerrainProfilePoint,
+    TrajectoryClearanceResult,
+    analyze_trajectory_clearance,
+)
 
 
 class BallisticSolutionEngine:
@@ -58,4 +64,33 @@ class BallisticSolutionEngine:
             base_elevation,
             horizontal_range_yards,
             target_height_change_metres,
+        )
+
+    def analyze_clearance(
+        self,
+        horizontal_range_yards: float,
+        target_height_change_metres: float,
+        terrain_profile: tuple[TerrainProfilePoint, ...],
+        speed_metres_per_second: float,
+        drag_per_second: float,
+        safety_margin_metres: float = 1.0,
+    ) -> TrajectoryClearanceResult | None:
+        angle = self.solve(
+            horizontal_range_yards,
+            target_height_change_metres,
+        )
+        if angle is None:
+            return None
+        return analyze_trajectory_clearance(
+            terrain_profile,
+            horizontal_range_yards,
+            angle,
+            speed_metres_per_second,
+            drag_per_second,
+            gravity_metres_per_second_squared=(
+                ARTILLERY_GRAVITY_METRES_PER_SECOND_SQUARED
+            ),
+            muzzle_height_metres=0.762,
+            safety_margin_metres=safety_margin_metres,
+            confidence="estimated",
         )

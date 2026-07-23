@@ -6,7 +6,7 @@ class before the main window is changed.
 
 ```text
 worcalc/
-  domain/      Pure calibration, ranging, projectile, and ballistic math
+  domain/      Pure calibration, ranging, projectile, trajectory, and ballistic math
   maps/        PAK catalog, entity decoding, projection, and elevation sampling
   ui/          Qt widgets and application composition
   paths.py     Shared repository data locations
@@ -37,10 +37,12 @@ Safe concurrent ownership areas:
 | Area | Primary files | Typical work |
 | --- | --- | --- |
 | Ballistics | `worcalc/domain/ballistics.py`, `projectile.py` | Models and physics |
+| Clearance | `worcalc/domain/trajectory.py` | Terrain-profile trajectory and obstruction math |
 | Ranging | `worcalc/domain/ranging.py`, `calibration.py` | Distance and transforms |
 | Map data | `worcalc/maps/` | PAK parsing, locations, terrain/elevation |
 | Map rendering | `worcalc/ui/map_view.py` | Markers, overlays, interaction |
 | Explorer | `worcalc/ui/ballistics_explorer.py` | Curve-analysis UI |
+| Profile plot | `worcalc/ui/trajectory_profile.py` | Terrain and shell side-profile rendering |
 | Integration | `worcalc/ui/main_window.py` | Wiring feature APIs into the app |
 
 Only the integration owner should normally edit `main_window.py` during a

@@ -1,9 +1,28 @@
 import unittest
 
-from worcalc.ui.bearing_compass import compass_direction, map_bearing_degrees
+from worcalc.ui.bearing_compass import (
+    COMPASS_DIAL_LABELS,
+    compass_direction,
+    map_bearing_degrees,
+)
 
 
 class BearingCompassTests(unittest.TestCase):
+    def test_dial_labels_all_cardinal_and_intercardinal_directions(self):
+        self.assertEqual(
+            COMPASS_DIAL_LABELS,
+            (
+                (0, "N"),
+                (45, "NE"),
+                (90, "E"),
+                (135, "SE"),
+                (180, "S"),
+                (225, "SW"),
+                (270, "W"),
+                (315, "NW"),
+            ),
+        )
+
     def test_cardinal_and_intercardinal_labels(self):
         self.assertEqual(compass_direction(0), "N")
         self.assertEqual(compass_direction(45), "NE")

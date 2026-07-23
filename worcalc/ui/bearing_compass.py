@@ -9,6 +9,18 @@ from PySide6.QtGui import QColor, QFont, QPainter, QPen, QPolygonF
 from PySide6.QtWidgets import QWidget
 
 
+COMPASS_DIAL_LABELS = (
+    (0, "N"),
+    (45, "NE"),
+    (90, "E"),
+    (135, "SE"),
+    (180, "S"),
+    (225, "SW"),
+    (270, "W"),
+    (315, "NW"),
+)
+
+
 def compass_direction(bearing_degrees: float) -> str:
     directions = ("N", "NE", "E", "SE", "S", "SW", "W", "NW")
     return directions[round((bearing_degrees % 360.0) / 45.0) % 8]
@@ -77,15 +89,15 @@ class BearingCompass(QWidget):
 
         painter.setFont(QFont("Consolas", 9, QFont.Weight.Bold))
         painter.setPen(QColor("#eee9d5"))
-        labels = {
-            "N": QPointF(center.x(), dial.top() + 15),
-            "E": QPointF(dial.right() - 14, center.y()),
-            "S": QPointF(center.x(), dial.bottom() - 10),
-            "W": QPointF(dial.left() + 14, center.y()),
-        }
-        for text, point in labels.items():
+        label_radius = radius - 17
+        for bearing, text in COMPASS_DIAL_LABELS:
+            angle = radians(bearing - 90)
+            point = QPointF(
+                center.x() + cos(angle) * label_radius,
+                center.y() + sin(angle) * label_radius,
+            )
             painter.drawText(
-                QRectF(point.x() - 10, point.y() - 9, 20, 18),
+                QRectF(point.x() - 12, point.y() - 9, 24, 18),
                 Qt.AlignmentFlag.AlignCenter,
                 text,
             )

@@ -40,6 +40,23 @@ class ElevationFieldTests(unittest.TestCase):
         self.assertGreater(lower, 0)
         self.assertLess(upper, 100)
 
+    def test_profile_samples_straight_route_with_distances(self):
+        field = ElevationField(
+            (
+                ElevationSample(0, 0, 10, "start"),
+                ElevationSample(5, 0, 20, "middle"),
+                ElevationSample(10, 0, 30, "end"),
+            )
+        )
+        profile = field.profile_along_line(
+            Point(0, 0),
+            Point(10, 0),
+            total_distance_yards=100,
+            spacing_yards=50,
+        )
+        self.assertEqual([point.distance_yards for point in profile], [0, 50, 100])
+        self.assertEqual([point.elevation_metres for point in profile], [10, 20, 30])
+
 
 if __name__ == "__main__":
     unittest.main()

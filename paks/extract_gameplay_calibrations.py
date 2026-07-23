@@ -20,6 +20,11 @@ METRES_TO_YARDS = 1.0936132983377078
 PAK_IMAGE_SIZE = 2048
 
 
+def should_include_map_group(battlefield: str, mode: str) -> bool:
+    """Exclude asset groups that are not real selectable battlefield maps."""
+    return (battlefield, mode) != ("HarpersFerry", "DrillCamp")
+
+
 def relaxed_json(text: str) -> object:
     """Parse the game's JSON-like files, which permit trailing commas."""
     return json.loads(re.sub(r",\s*([}\]])", r"\1", text))
@@ -88,6 +93,8 @@ def main() -> None:
     with zipfile.ZipFile(archive_path) as archive:
         entries = {entry.filename: entry for entry in archive.infolist()}
         for (battlefield, mode), paths in sorted(grouped_paths.items()):
+            if not should_include_map_group(battlefield, mode):
+                continue
             entry_name = f"Levels/{battlefield}/Definitions/{mode}.json"
             entry = entries.get(entry_name)
             if entry is None:

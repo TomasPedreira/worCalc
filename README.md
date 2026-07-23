@@ -117,6 +117,17 @@ table are calculated by extrapolating the selected curve. The curve is inverted 
 horizontal range, then corrected by the signed gun-to-target sight angle, so uphill
 targets increase the indicated elevation and downhill targets decrease it.
 
+The fire-mission panel also performs an estimated route-clearance analysis. It
+samples the current elevation field along the firing bearing, plots the terrain and
+shell arc, identifies the first obstruction, and searches for the minimum higher
+elevation that clears the route by one metre. When a raised trajectory is required,
+the panel reports its height above the target, predicted impact range, and the number
+of yards over or short of the selected target. Red and amber map markers show the
+obstruction and predicted impact. Results remain explicitly marked **estimated**
+until the compiled CryEngine
+terrain heightmap is decoded; the current field is interpolated from positioned game
+objects.
+
 For an analysis plot that overlays the reference points, both interpolations,
 least-squares polynomial fits, and the theoretical gravity/linear-drag trajectory:
 

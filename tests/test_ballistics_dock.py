@@ -54,6 +54,13 @@ class FireMissionUiTests(unittest.TestCase):
         self.assertIn("SLANT", overlay.text())
         self.assertIn("FUZE", overlay.text())
         self.assertIn("ELEV", overlay.text())
+        clearance = self.window.current_clearance_result
+        self.assertIsNotNone(clearance)
+        assert clearance is not None
+        self.assertIs(self.window.trajectory_profile.result, clearance)
+        self.assertIn("ESTIMATED", self.window.clearance_status.text())
+        self.assertTrue(self.window.clearance_details.isVisible())
+        self.assertIn("Height above target", self.window.clearance_details.text())
         solution_before_gradient = (
             self.window.solution_range.text(),
             self.window.solution_tof.text(),
@@ -150,6 +157,14 @@ class FireMissionUiTests(unittest.TestCase):
         self.window._add_measurement_point(QPointF(200, 300))
         self.window._add_measurement_point(QPointF(500, 300))
         self.assertAlmostEqual(self.window.solution_bearing.bearing, 90.0)
+
+    def test_trajectory_overlay_marks_obstruction_and_impact(self) -> None:
+        self.window._select_map(discover_maps(self.maps_dir)[0])
+        self.window.view.set_points([QPointF(100, 100), QPointF(500, 100)])
+        self.window.view.set_trajectory_overlay(1000, 500, 1250)
+        self.assertEqual(len(self.window.view._trajectory_items), 4)
+        self.window.view.clear_trajectory_overlay()
+        self.assertEqual(self.window.view._trajectory_items, [])
 
     def test_control_column_scrolls_in_short_window(self) -> None:
         self.window.resize(1100, 560)

@@ -3,10 +3,16 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from paks.extract_gameplay_calibrations import should_include_map_group
 from worcalc.app import discover_maps
 
 
 class MapDiscoveryTests(unittest.TestCase):
+    def test_excludes_harpers_ferry_drill_camp_asset_group(self):
+        self.assertFalse(should_include_map_group("HarpersFerry", "DrillCamp"))
+        self.assertTrue(should_include_map_group("DrillCamp", "DrillCamp"))
+        self.assertTrue(should_include_map_group("HarpersFerry", "Skirmish"))
+
     def test_loads_named_maps_and_transforms_from_pak_catalog(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

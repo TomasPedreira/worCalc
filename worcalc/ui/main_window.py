@@ -38,12 +38,14 @@ from ..domain.calibration import (
 from ..domain.ballistic_solution import BallisticSolutionEngine
 from ..domain.projectile import ARTILLERY_PHYSICS, artillery_time_of_flight
 from ..domain.ranging import RangeMeasurement
+from ..domain.trajectory import TrajectoryClearanceResult
 from ..maps.catalog import MapRecord, load_map_catalog
 from ..maps.elevation import ElevationField, elevation_field_for_map
 from ..maps.entities import locations_for_map
 from ..paths import BALLISTICS_CSV, MAPS_DIR
 from .bearing_compass import BearingCompass, map_bearing_degrees
 from .map_view import MapView
+from .trajectory_profile import TrajectoryProfilePlot
 
 
 APP_STYLESHEET = """
@@ -313,6 +315,7 @@ class MainWindow(QMainWindow):
         self.elevation_field: ElevationField | None = None
         self.current_range_measurement: RangeMeasurement | None = None
         self.current_flight_time_text = "—"
+        self.current_clearance_result: TrajectoryClearanceResult | None = None
         self.map_items: dict[Path, QTreeWidgetItem] = {}
         self.ballistic_solver: BallisticSolutionEngine | None = None
         self.setWindowTitle("worCalc — Artillery Fire Direction")
@@ -676,6 +679,22 @@ class MainWindow(QMainWindow):
         secondary_solution_grid.addWidget(elevation_frame, 0, 0)
         secondary_solution_grid.addWidget(tof_frame, 0, 1)
         mission_layout.addLayout(secondary_solution_grid)
+        clearance_label = QLabel("ROUTE CLEARANCE · ESTIMATED")
+        clearance_label.setObjectName("fieldLabel")
+        self.clearance_status = QLabel("Place gun and target to analyze the route")
+        self.clearance_status.setWordWrap(True)
+        self.clearance_status.setObjectName("muted")
+        self.clearance_details = QLabel()
+        self.clearance_details.setWordWrap(True)
+        self.clearance_details.setTextInteractionFlags(
+            Qt.TextInteractionFlag.TextSelectableByMouse
+        )
+        self.clearance_details.hide()
+        self.trajectory_profile = TrajectoryProfilePlot()
+        mission_layout.addWidget(clearance_label)
+        mission_layout.addWidget(self.clearance_status)
+        mission_layout.addWidget(self.clearance_details)
+        mission_layout.addWidget(self.trajectory_profile)
 
         map_card = QFrame()
         map_card.setObjectName("panelCard")
@@ -836,6 +855,7 @@ class MainWindow(QMainWindow):
             self.current_range_measurement = None
             self.current_flight_time_text = "—"
             self.view.clear_target_solution()
+            self._set_clearance_result(None)
             self.measurement.setText("READY / Place the gun position on the map")
             self.solution_range.setText("—")
             self.solution_bearing.clear_bearing()
@@ -845,6 +865,7 @@ class MainWindow(QMainWindow):
             self.current_range_measurement = None
             self.current_flight_time_text = "—"
             self.view.clear_target_solution()
+            self._set_clearance_result(None)
             self.measurement.setText("GUN SET / Place the target position")
             self.solution_range.setText("—")
             self.solution_bearing.clear_bearing()
@@ -955,6 +976,7 @@ class MainWindow(QMainWindow):
     ) -> None:
         if len(self.points) != 2 or self.ballistic_solver is None:
             self.solution_elevation.setText("—")
+            self._set_clearance_result(None)
             self._update_target_overlay()
             return
         angle = self.ballistic_solver.solve(
@@ -965,6 +987,7 @@ class MainWindow(QMainWindow):
             self.solution_elevation.setText("Unavailable")
             self.current_flight_time_text = "unavailable"
             self.solution_tof.setText(self.current_flight_time_text)
+            self._set_clearance_result(None)
             self._update_target_overlay()
             return
         self.solution_elevation.setText(f"{angle:.3f}°")
@@ -979,7 +1002,162 @@ class MainWindow(QMainWindow):
         except ValueError:
             self.current_flight_time_text = "unavailable"
         self.solution_tof.setText(self.current_flight_time_text)
+        self._analyze_route_clearance(
+            horizontal_range_yards,
+            target_height_change_metres,
+        )
         self._update_target_overlay()
+
+    def _analyze_route_clearance(
+        self,
+        horizontal_range_yards: float,
+        target_height_change_metres: float,
+    ) -> None:
+        if (
+            self.ballistic_solver is None
+            or self.elevation_field is None
+            or not self.elevation_field.samples
+            or len(self.points) != 2
+        ):
+            self._set_clearance_result(None)
+            return
+        profile = self._terrain_profile_to_map_edge(horizontal_range_yards)
+        if not profile:
+            self._set_clearance_result(None)
+            return
+        try:
+            speed, drag = ARTILLERY_PHYSICS[self.cannon_type.currentText()][
+                self.projectile_type.currentText()
+            ]
+            result = self.ballistic_solver.analyze_clearance(
+                horizontal_range_yards,
+                target_height_change_metres,
+                profile,
+                speed,
+                drag,
+            )
+        except (KeyError, ValueError):
+            result = None
+        self._set_clearance_result(result)
+
+    def _terrain_profile_to_map_edge(self, target_range_yards: float):
+        assert self.elevation_field is not None
+        start = Point(self.points[0].x(), self.points[0].y())
+        target = Point(self.points[1].x(), self.points[1].y())
+        dx = target.x - start.x
+        dy = target.y - start.y
+        if dx == 0 and dy == 0:
+            return ()
+        width, height = self.current_image_size
+        factors: list[float] = []
+        if dx > 0:
+            factors.append((width - start.x) / dx)
+        elif dx < 0:
+            factors.append((0 - start.x) / dx)
+        if dy > 0:
+            factors.append((height - start.y) / dy)
+        elif dy < 0:
+            factors.append((0 - start.y) / dy)
+        positive_factors = [factor for factor in factors if factor >= 1.0]
+        extension = min(positive_factors) if positive_factors else 1.0
+        end = Point(
+            start.x + dx * extension,
+            start.y + dy * extension,
+        )
+        return self.elevation_field.profile_along_line(
+            start,
+            end,
+            target_range_yards * extension,
+            spacing_yards=5.0,
+        )
+
+    def _set_clearance_result(
+        self,
+        result: TrajectoryClearanceResult | None,
+    ) -> None:
+        self.current_clearance_result = result
+        self.trajectory_profile.set_result(result)
+        if result is None:
+            self.clearance_status.setText(
+                "Route clearance unavailable · sampled elevation required"
+            )
+            self.clearance_status.setStyleSheet("color:#9ba392;")
+            self.clearance_details.clear()
+            self.clearance_details.hide()
+            self.view.clear_trajectory_overlay()
+            return
+        confidence = result.confidence.upper()
+        if result.obstructed:
+            self.clearance_status.setText(f"{confidence} · ROUTE OBSTRUCTED")
+            self.clearance_status.setStyleSheet(
+                "color:#ff7a70; font-weight:700; font-family:Consolas;"
+            )
+            obstruction = (
+                f"{result.first_obstruction_yards:,.0f} yd"
+                if result.first_obstruction_yards is not None
+                else "unknown"
+            )
+            clearing = (
+                f"{result.clearing_elevation_deg:.3f}°"
+                if result.clearing_elevation_deg is not None
+                else "no clearing solution"
+            )
+            impact = (
+                f"{result.impact_range_yards:,.0f} yd"
+                if result.impact_range_yards is not None
+                else "outside sampled map"
+            )
+            if result.overshoot_yards is None:
+                excess = "Overshoot unavailable"
+            elif result.overshoot_yards >= 0:
+                excess = f"OVER BY {result.overshoot_yards:,.0f} yd"
+            else:
+                excess = f"SHORT BY {abs(result.overshoot_yards):,.0f} yd"
+            target_height = (
+                f"{result.height_above_target_metres:+.1f} m"
+                if result.height_above_target_metres is not None
+                else "unavailable"
+            )
+            self.clearance_details.setText(
+                f"First obstruction: {obstruction}\n"
+                f"Minimum clearance: {result.minimum_clearance_metres:+.1f} m\n"
+                f"Current elevation: {result.original_elevation_deg:.3f}°\n"
+                f"Clearance elevation: {clearing}\n"
+                f"Height above target: {target_height}\n"
+                f"Predicted impact: {impact} · {excess}"
+            )
+        else:
+            self.clearance_status.setText(f"{confidence} · ROUTE CLEAR")
+            self.clearance_status.setStyleSheet(
+                "color:#63d785; font-weight:700; font-family:Consolas;"
+            )
+            minimum = (
+                f"{result.minimum_clearance_metres:+.1f} m"
+                if result.minimum_clearance_metres is not None
+                else "unavailable"
+            )
+            target_height = (
+                f"{result.height_above_target_metres:+.1f} m"
+                if result.height_above_target_metres is not None
+                else "unavailable"
+            )
+            self.clearance_details.setText(
+                f"Minimum clearance: {minimum}\n"
+                f"Elevation: {result.original_elevation_deg:.3f}°\n"
+                f"Height above target: {target_height}"
+            )
+        self.clearance_details.show()
+        impact_for_overlay = (
+            result.impact_range_yards
+            if result.overshoot_yards is not None
+            and abs(result.overshoot_yards) >= 1.0
+            else None
+        )
+        self.view.set_trajectory_overlay(
+            result.target_range_yards,
+            result.first_obstruction_yards,
+            impact_for_overlay,
+        )
 
     def _update_target_overlay(self) -> None:
         if len(self.points) != 2 or self.current_range_measurement is None:
@@ -996,6 +1174,7 @@ class MainWindow(QMainWindow):
         self.current_range_measurement = None
         self.current_flight_time_text = "—"
         self.view.clear_points()
+        self._set_clearance_result(None)
         self.solution_range.setText("—")
         self.solution_bearing.clear_bearing()
         self.solution_elevation.setText("—")

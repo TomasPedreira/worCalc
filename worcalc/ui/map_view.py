@@ -250,6 +250,7 @@ class MapView(QGraphicsView):
         self._compass_items = []
         self._target_solution_label: QGraphicsSimpleTextItem | None = None
         self._target_solution_background: QGraphicsRectItem | None = None
+        self._trajectory_items: list[QGraphicsItem] = []
         self._range_transform: AffineCalibration | None = None
         self._yards_per_pixel: float | None = None
         self._point_clicked = point_clicked
@@ -279,6 +280,7 @@ class MapView(QGraphicsView):
         self._compass_items.clear()
         self._target_solution_label = None
         self._target_solution_background = None
+        self._trajectory_items.clear()
         self._source_pixmap = pixmap
         self._pixmap_item = self._scene.addPixmap(styled_map_pixmap(pixmap, self._map_style))
         self._elevation_item = None
@@ -298,6 +300,7 @@ class MapView(QGraphicsView):
         self._compass_items.clear()
         self._target_solution_label = None
         self._target_solution_background = None
+        self._trajectory_items.clear()
         self._pixmap_item = None
         self._elevation_item = None
         self._elevation_field = None
@@ -417,6 +420,7 @@ class MapView(QGraphicsView):
             self._scene.removeItem(self._line)
             self._line = None
         self.clear_target_solution()
+        self.clear_trajectory_overlay()
         self._clear_range_rings()
 
     def clear_target_solution(self) -> None:
@@ -426,6 +430,69 @@ class MapView(QGraphicsView):
         if self._target_solution_background is not None:
             self._scene.removeItem(self._target_solution_background)
             self._target_solution_background = None
+
+    def clear_trajectory_overlay(self) -> None:
+        for item in self._trajectory_items:
+            self._scene.removeItem(item)
+        self._trajectory_items.clear()
+
+    def set_trajectory_overlay(
+        self,
+        target_range_yards: float,
+        obstruction_range_yards: float | None,
+        impact_range_yards: float | None,
+    ) -> None:
+        self.clear_trajectory_overlay()
+        if len(self._markers) != 2 or target_range_yards <= 0:
+            return
+        gun = self._markers[0].scenePos()
+        target = self._markers[1].scenePos()
+        delta = target - gun
+
+        def route_point(distance_yards: float) -> QPointF:
+            fraction = distance_yards / target_range_yards
+            return QPointF(
+                gun.x() + delta.x() * fraction,
+                gun.y() + delta.y() * fraction,
+            )
+
+        if obstruction_range_yards is not None:
+            obstruction = route_point(obstruction_range_yards)
+            blocked_line = self._scene.addLine(
+                gun.x(),
+                gun.y(),
+                obstruction.x(),
+                obstruction.y(),
+                QPen(QColor("#e34f4f"), 2.5, Qt.PenStyle.DashLine),
+            )
+            obstruction_marker = self._scene.addEllipse(
+                QRectF(-5, -5, 10, 10),
+                QPen(QColor("#ffd0c8"), 1.5),
+                QBrush(QColor("#e34f4f")),
+            )
+            obstruction_marker.setPos(obstruction)
+            self._trajectory_items.extend((blocked_line, obstruction_marker))
+
+        if impact_range_yards is not None:
+            impact = route_point(impact_range_yards)
+            continuation = self._scene.addLine(
+                target.x(),
+                target.y(),
+                impact.x(),
+                impact.y(),
+                QPen(QColor("#e2c85d"), 2, Qt.PenStyle.DashLine),
+            )
+            impact_marker = self._scene.addEllipse(
+                QRectF(-5, -5, 10, 10),
+                QPen(QColor("#fff1a8"), 1.5),
+                QBrush(QColor("#e2c85d")),
+            )
+            impact_marker.setPos(impact)
+            self._trajectory_items.extend((continuation, impact_marker))
+
+        for item in self._trajectory_items:
+            item.setAcceptedMouseButtons(Qt.MouseButton.NoButton)
+            item.setZValue(7.5)
 
     def set_target_solution(
         self,

@@ -9,10 +9,11 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from heapq import nsmallest
-from math import isfinite
+from math import ceil, isfinite
 from pathlib import Path
 
 from ..domain.calibration import Point
+from ..domain.trajectory import TerrainProfilePoint
 from .catalog import MapRecord
 from .entities import load_battlefield_position_samples
 
@@ -107,6 +108,38 @@ class ElevationField:
             weighted_height += sample.elevation_metres * weight
             total_weight += weight
         return weighted_height / total_weight if total_weight else None
+
+    def profile_along_line(
+        self,
+        start: Point,
+        end: Point,
+        total_distance_yards: float,
+        spacing_yards: float = 5.0,
+    ) -> tuple[TerrainProfilePoint, ...]:
+        """Sample the estimated elevation field along a straight map-space route."""
+
+        if total_distance_yards <= 0:
+            raise ValueError("Profile distance must be positive.")
+        if spacing_yards <= 0:
+            raise ValueError("Profile spacing must be positive.")
+        count = max(1, ceil(total_distance_yards / spacing_yards))
+        profile: list[TerrainProfilePoint] = []
+        for index in range(count + 1):
+            fraction = index / count
+            point = Point(
+                start.x + (end.x - start.x) * fraction,
+                start.y + (end.y - start.y) * fraction,
+            )
+            elevation = self.elevation_at(point)
+            if elevation is None:
+                return ()
+            profile.append(
+                TerrainProfilePoint(
+                    total_distance_yards * fraction,
+                    elevation,
+                )
+            )
+        return tuple(profile)
 
 
 def elevation_field_for_map(
