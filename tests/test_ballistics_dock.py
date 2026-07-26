@@ -4,11 +4,13 @@ from pathlib import Path
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
-from PySide6.QtCore import QPointF
-from PySide6.QtWidgets import QApplication, QGraphicsItem
+from PySide6.QtCore import QPointF, Qt
+from PySide6.QtGui import QColor
+from PySide6.QtWidgets import QApplication, QGraphicsItem, QLabel, QPushButton
 
 from worcalc.app import MainWindow, discover_maps
 from worcalc.domain.calibration import METRES_TO_YARDS
+from worcalc.domain.trajectory import TrajectoryClearanceResult
 
 
 class FireMissionUiTests(unittest.TestCase):
@@ -146,6 +148,42 @@ class FireMissionUiTests(unittest.TestCase):
             first_overlay_position,
         )
 
+    def test_markers_are_labeled_yellow_gun_and_red_target(self) -> None:
+        self.window._select_map(discover_maps(self.maps_dir)[0])
+        self.window._add_measurement_point(QPointF(100, 120))
+        self.window._add_measurement_point(QPointF(300, 320))
+
+        gun, target = self.window.view._markers
+        self.assertEqual((gun.label, gun.role), ("G", "gun"))
+        self.assertEqual((target.label, target.role), ("T", "target"))
+        self.assertEqual(gun.brush().color(), QColor("#f2c94c"))
+        self.assertEqual(target.brush().color(), QColor("#9f2f38"))
+        self.assertEqual(target.label_color, QColor("#fff0e5"))
+
+    def test_removing_gun_retains_target_until_replacement_gun_is_placed(self) -> None:
+        self.window._select_map(discover_maps(self.maps_dir)[0])
+        original_gun = QPointF(100, 120)
+        target_point = QPointF(300, 320)
+        replacement_gun = QPointF(180, 220)
+        self.window._add_measurement_point(original_gun)
+        self.window._add_measurement_point(target_point)
+        target_marker = self.window.view._markers[1]
+
+        self.window.view._remove_entity(self.window.view._markers[0])
+
+        self.assertEqual(self.window.points, [])
+        self.assertEqual(self.window.view._markers, [target_marker])
+        self.assertEqual(target_marker.role, "target")
+        self.assertEqual(target_marker.scenePos(), target_point)
+
+        self.window._add_measurement_point(replacement_gun)
+
+        self.assertEqual(self.window.points, [replacement_gun, target_point])
+        self.assertEqual(
+            [marker.role for marker in self.window.view._markers],
+            ["gun", "target"],
+        )
+
     def test_hover_readout_reports_pixel_world_and_elevation(self) -> None:
         self.window._select_map(discover_maps(self.maps_dir)[0])
         self.window._map_position_hovered(QPointF(100, 200))
@@ -166,8 +204,21 @@ class FireMissionUiTests(unittest.TestCase):
         self.window.view.set_points([QPointF(100, 100), QPointF(500, 100)])
         self.window.view.set_trajectory_overlay(1000, 500, 1250)
         self.assertEqual(len(self.window.view._trajectory_items), 4)
+        solid, _collision, skipped, _impact = self.window.view._trajectory_items
+        self.assertEqual(solid.pen().style(), Qt.PenStyle.SolidLine)
+        self.assertEqual(skipped.pen().style(), Qt.PenStyle.DashLine)
+        self.assertEqual(solid.pen().color(), QColor("#d94149"))
+        self.assertEqual(skipped.pen().color(), QColor("#d94149"))
+        self.assertFalse(self.window.view._line.isVisible())
+        self.assertTrue(
+            all(
+                item.zValue() < self.window.view._markers[1].zValue()
+                for item in self.window.view._trajectory_items
+            )
+        )
         self.window.view.clear_trajectory_overlay()
         self.assertEqual(self.window.view._trajectory_items, [])
+        self.assertTrue(self.window.view._line.isVisible())
 
     def test_control_column_scrolls_in_short_window(self) -> None:
         self.window.resize(1100, 560)
@@ -176,6 +227,153 @@ class FireMissionUiTests(unittest.TestCase):
             self.window.control_scroll.verticalScrollBar().maximum(),
             0,
         )
+
+    def test_solution_options_are_in_header_and_map_toggles_are_at_bottom(self) -> None:
+        self.window._select_map(discover_maps(self.maps_dir)[0])
+        self.window.resize(1100, 560)
+        self.app.processEvents()
+
+        header_options = (
+            self.window.cannon_type,
+            self.window.projectile_type,
+            self.window.ballistic_method,
+        )
+        for option in header_options:
+            self.assertTrue(self.window.toolbar.isAncestorOf(option))
+            self.assertFalse(self.window.control_scroll.isAncestorOf(option))
+            self.assertTrue(option.isVisible())
+        header_button_texts = {
+            button.text() for button in self.window.toolbar.findChildren(QPushButton)
+        }
+        self.assertNotIn("FIT MAP", header_button_texts)
+        self.assertNotIn("CLEAR", header_button_texts)
+        bottom_toggles = (
+            self.window.grayscale_map,
+            self.window.elevation_overlay,
+        )
+        for toggle in bottom_toggles:
+            self.assertTrue(self.window.display_options_bar.isAncestorOf(toggle))
+            self.assertFalse(self.window.control_scroll.isAncestorOf(toggle))
+            self.assertTrue(toggle.isVisible())
+        self.assertFalse(hasattr(self.window, "measurement"))
+        self.assertTrue(
+            self.window.control_scroll.isAncestorOf(self.window.muzzle_velocity)
+        )
+        self.assertTrue(
+            self.window.control_scroll.isAncestorOf(self.window.drag_factor)
+        )
+        self.window.grayscale_map.setChecked(True)
+        self.assertEqual(self.window.view._map_style, "Grayscale")
+
+    def test_map_rows_use_muted_gold_selection_and_outlined_hover(self) -> None:
+        item_rule = self.window.styleSheet().split(
+            "QTreeWidget::item {", 1
+        )[1].split("}", 1)[0]
+        hover_rule = self.window.styleSheet().split(
+            "QTreeWidget::item:hover", 1
+        )[1].split("}", 1)[0]
+        selected_rule = self.window.styleSheet().split(
+            "QTreeWidget::item:selected", 1
+        )[1].split("}", 1)[0]
+        self.assertIn("font-weight: 700", item_rule)
+        self.assertIn("background: #1d261d", hover_rule)
+        self.assertIn("border-color: #465442", hover_rule)
+        self.assertIn("background: #cdb36b", selected_rule)
+        self.assertIn("border-color: #cdb36b", selected_rule)
+        self.assertIn("color: #15160f", selected_rule)
+        self.assertIn(
+            "QTreeWidget::branch:hover, QTreeWidget::branch:selected "
+            "{ background: #121811; }",
+            self.window.styleSheet(),
+        )
+
+    def test_map_groups_toggle_on_single_click_and_cannot_be_selected(self) -> None:
+        battlefield = self.window.map_tree.topLevelItem(0)
+        mode = battlefield.child(0)
+        map_item = mode.child(0)
+
+        self.assertFalse(
+            battlefield.flags() & Qt.ItemFlag.ItemIsSelectable
+        )
+        self.assertFalse(mode.flags() & Qt.ItemFlag.ItemIsSelectable)
+        self.assertTrue(map_item.flags() & Qt.ItemFlag.ItemIsSelectable)
+        self.assertTrue(battlefield.font(0).bold())
+        self.assertTrue(mode.font(0).bold())
+        self.assertTrue(map_item.font(0).bold())
+        self.assertFalse(self.window.map_tree.expandsOnDoubleClick())
+        self.assertIn(
+            "QTreeWidget::branch { image: none; background: #121811; }",
+            self.window.styleSheet(),
+        )
+
+        self.assertFalse(battlefield.isExpanded())
+        self.window._tree_item_clicked(battlefield, 0)
+        self.assertTrue(battlefield.isExpanded())
+        self.window._tree_item_clicked(battlefield, 0)
+        self.assertFalse(battlefield.isExpanded())
+
+    def test_target_solution_box_does_not_overlap_target_marker(self) -> None:
+        self.window._select_map(discover_maps(self.maps_dir)[0])
+        self.window._add_measurement_point(QPointF(100, 120))
+        self.window._add_measurement_point(QPointF(300, 320))
+        self.app.processEvents()
+
+        target = self.window.view._markers[1]
+        background = self.window.view._target_solution_background
+        self.assertIsNotNone(background)
+        assert background is not None
+        self.assertFalse(
+            target.sceneBoundingRect().intersects(background.sceneBoundingRect())
+        )
+
+    def test_sidebar_keeps_thumbnails_without_collapse_strip(self) -> None:
+        battlefield = self.window.map_tree.topLevelItem(0)
+        map_item = battlefield.child(0).child(0)
+
+        self.assertFalse(map_item.icon(0).isNull())
+        self.assertTrue(map_item.font(0).bold())
+        self.assertFalse(hasattr(self.window, "sidebar_toggle"))
+
+    def test_side_panels_use_outlined_cards_and_inset_data(self) -> None:
+        style = self.window.styleSheet()
+        self.assertIn("QWidget#sidebar { border-right: 1px solid #465442; }", style)
+        self.assertIn("QFrame#panelCard", style)
+        self.assertIn("QFrame#readout", style)
+        self.assertIn("border: 1px solid #465442", style)
+        self.assertIn("border-bottom: 1px solid #465442", style)
+        self.assertIn("border:1px solid #465442", self.window.map_info.styleSheet())
+        self.assertIn(
+            "border:1px solid #465442",
+            self.window.solution_bearing.styleSheet(),
+        )
+
+    def test_obstructed_route_status_is_one_line_with_only_outcome_red(self) -> None:
+        result = TrajectoryClearanceResult(
+            confidence="estimated",
+            target_range_yards=1000,
+            original_elevation_deg=5,
+            obstructed=True,
+            first_obstruction_yards=400,
+            minimum_clearance_metres=-2,
+            clearing_elevation_deg=6,
+            impact_range_yards=1100,
+            overshoot_yards=100,
+            height_above_target_metres=0,
+            original_trajectory=(),
+            clearing_trajectory=(),
+        )
+
+        self.window._set_clearance_result(result)
+
+        self.assertEqual(
+            self.window.clearance_status.text(),
+            'ESTIMATED ROUTE: <span style="color:#ff7a70; '
+            'font-weight:700;">OBSTRUCTED</span>',
+        )
+        labels = {
+            label.text() for label in self.window.findChildren(QLabel)
+        }
+        self.assertNotIn("ROUTE CLEARANCE · ESTIMATED", labels)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,77 @@
+worCalc - Windows Setup
+=======================
+
+Requirements
+------------
+
+- Windows 10/11
+- Python 3.12 with the Python Launcher
+- Internet access for the initial dependency install
+
+Setup
+-----
+
+Extract the archive, open PowerShell in the extracted directory, and run:
+
+    py -3.12 -m venv .venv
+    .\.venv\Scripts\python.exe -m pip install -r requirements.txt
+
+Launch
+------
+
+    .\.venv\Scripts\python.exe -m worcalc
+
+For subsequent launches, only the launch command is required.
+
+Map data
+--------
+
+Game assets and PAK-derived map data are intentionally excluded from this
+archive. Generate the required runtime files directly from an installed War of
+Rights Assets directory:
+
+    .\.venv\Scripts\python.exe extract_assets.py "D:\path\to\War of Rights\Assets"
+
+The path may point either to the Assets directory itself or to its parent
+War of Rights game directory. The extractor reads:
+
+    Assets\Minimaps_*.pak
+    Assets\LevelsLooseFiles.pak
+    Assets\Levels\<Battlefield>\level.pak
+
+It converts gameplay-area DDS textures to PNG, copies the required level
+archives, and generates the calibration catalog under:
+
+    paks\
+      gameplay_area_calibrations.json
+      converted_minimaps\
+
+Pillow handles DDS conversion; FFmpeg is not required.
+
+The application will launch without extracted data, but the map library will
+remain empty.
+
+The final layout should be:
+
+    <project>\
+      extract_assets.py
+      paks\
+      worcalc\
+      requirements.txt
+      war_of_rights_ballistic_ranges.csv
+
+Controls
+--------
+
+- Single-click battlefield and mode groups to expand or collapse them.
+- Select a map, then click once for the gun and again for the target.
+- Drag markers to reposition them; right-click a marker to remove it.
+- Cannon, ammunition, and estimation-curve selectors are in the top bar.
+- Grayscale and elevation-gradient toggles are below the map.
+
+Troubleshooting
+---------------
+
+- "py" not found: install Python 3.12 with the Python Launcher enabled.
+- Missing PySide6: rerun the pip install command above.
+- Missing worcalc module: run the command from the extracted project root.

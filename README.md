@@ -28,7 +28,13 @@ To regenerate the catalog from the installed game assets:
 
 The extraction and DDS conversion utilities are documented in `paks/README.md`.
 
-## Run
+## Run on Windows
+
+For first-time setup, screenshots-free step-by-step instructions, later
+launches, basic use, and troubleshooting, see
+[`RUNNING_ON_WINDOWS.txt`](RUNNING_ON_WINDOWS.txt).
+
+Quick setup for users already comfortable with PowerShell:
 
 ```powershell
 py -3.12 -m venv .venv

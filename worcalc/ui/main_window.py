@@ -4,7 +4,7 @@ import sys
 from pathlib import Path
 
 from PySide6.QtCore import QPointF, QSize, Qt, Signal
-from PySide6.QtGui import QIcon, QPixmap
+from PySide6.QtGui import QFont, QIcon, QPixmap
 from PySide6.QtWidgets import (
     QApplication,
     QCheckBox,
@@ -56,17 +56,18 @@ QMainWindow, QWidget {
     font-family: "Segoe UI";
     font-size: 13px;
 }
-QWidget#sidebar, QWidget#controlPanel { background: #151b14; }
+QWidget#sidebar, QWidget#controlPanel { background: #121811; }
+QWidget#sidebar { border-right: 1px solid #465442; }
 QWidget#mapWorkspace { background: #0d110d; }
 QFrame#toolbar, QFrame#panelCard, QFrame#instructionCard {
-    background: #171e16;
-    border: 1px solid #394235;
+    background: #151c14;
+    border: 1px solid #465442;
     border-radius: 3px;
 }
 QFrame#toolbar { border-width: 0 0 1px 0; border-radius: 0; }
 QFrame#readout {
-    background: #1c241b;
-    border: 1px solid #364032;
+    background: #1d251c;
+    border: 1px solid #465442;
     border-radius: 2px;
 }
 QLabel#brand { font-size: 18px; font-weight: 700; color: #f2edda; }
@@ -80,6 +81,8 @@ QLabel#sectionTitle {
     font-family: Consolas;
     font-size: 12px;
     font-weight: 700;
+    border-bottom: 1px solid #465442;
+    padding-bottom: 6px;
 }
 QLabel#mapTitle { font-size: 20px; font-weight: 700; }
 QLabel#mapSubtitle { color: #9ea890; font-family: Consolas; font-size: 10px; }
@@ -114,9 +117,25 @@ QTreeWidget {
     outline: 0;
     color: #e7e2cf;
 }
-QTreeWidget::item { padding: 7px 4px; border-left: 2px solid transparent; }
-QTreeWidget::item:hover { background: #20271e; }
-QTreeWidget::item:selected { background: #30382b; border-left: 2px solid #d0ba55; color: #fff7d5; }
+QTreeWidget::item {
+    padding: 8px 9px;
+    margin: 2px 4px;
+    border: 1px solid transparent;
+    border-radius: 3px;
+    font-weight: 700;
+}
+QTreeWidget::item:hover {
+    background: #1d261d;
+    border-color: #465442;
+}
+QTreeWidget::item:selected {
+    background: #cdb36b;
+    border-color: #cdb36b;
+    color: #15160f;
+    font-weight: 700;
+}
+QTreeWidget::branch { image: none; background: #121811; }
+QTreeWidget::branch:hover, QTreeWidget::branch:selected { background: #121811; }
 QScrollBar:vertical { background: #111610; width: 8px; }
 QScrollBar::handle:vertical { background: #3c4538; min-height: 30px; border-radius: 4px; }
 QToolTip { background: #20261e; color: #fff3c6; border: 1px solid #c6b35e; padding: 5px; }
@@ -322,11 +341,6 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("worCalc — Artillery Fire Direction")
         self.setStyleSheet(APP_STYLESHEET)
 
-        self.sidebar_toggle = QPushButton("‹")
-        self.sidebar_toggle.setFixedWidth(22)
-        self.sidebar_toggle.setStyleSheet("padding:0; border-radius:0;")
-        self.sidebar_toggle.setToolTip("Collapse map selector")
-        self.sidebar_toggle.clicked.connect(self._toggle_sidebar)
         self.sidebar = self._create_sidebar()
 
         self.pages = QStackedWidget()
@@ -345,7 +359,6 @@ class MainWindow(QMainWindow):
         root.setContentsMargins(0, 0, 0, 0)
         root.setSpacing(0)
         root.addWidget(self.sidebar)
-        root.addWidget(self.sidebar_toggle)
         root.addWidget(self.pages, 1)
         container = QWidget()
         container.setLayout(root)
@@ -419,10 +432,15 @@ class MainWindow(QMainWindow):
         self.map_tree.setHeaderHidden(True)
         self.map_tree.setIconSize(QSize(34, 34))
         self.map_tree.setIndentation(18)
+        self.map_tree.setExpandsOnDoubleClick(False)
         self.map_tree.itemClicked.connect(self._tree_item_clicked)
         nodes: dict[tuple[str, ...], QTreeWidgetItem] = {}
         if not self.maps:
-            self.map_tree.addTopLevelItem(QTreeWidgetItem(["No maps found"]))
+            empty_item = QTreeWidgetItem(["No maps found"])
+            empty_item.setFlags(
+                empty_item.flags() & ~Qt.ItemFlag.ItemIsSelectable
+            )
+            self.map_tree.addTopLevelItem(empty_item)
         for record in self.maps:
             parts = record.tree_parts
             parent: QTreeWidgetItem | None = None
@@ -431,6 +449,13 @@ class MainWindow(QMainWindow):
                 item = nodes.get(key)
                 if item is None:
                     item = QTreeWidgetItem([part])
+                    item_font = item.font(0)
+                    item_font.setWeight(QFont.Weight.Bold)
+                    item.setFont(0, item_font)
+                    if depth < len(parts):
+                        item.setFlags(
+                            item.flags() & ~Qt.ItemFlag.ItemIsSelectable
+                        )
                     nodes[key] = item
                     if parent is None:
                         self.map_tree.addTopLevelItem(item)
@@ -469,6 +494,8 @@ class MainWindow(QMainWindow):
         record = item.data(0, Qt.ItemDataRole.UserRole)
         if isinstance(record, MapRecord):
             self._select_map(record)
+        elif item.childCount():
+            item.setExpanded(not item.isExpanded())
 
     def _filter_map_tree(self, text: str) -> None:
         query = text.strip().casefold()
@@ -504,6 +531,7 @@ class MainWindow(QMainWindow):
         workspace_layout.setSpacing(0)
         toolbar = QFrame()
         toolbar.setObjectName("toolbar")
+        self.toolbar = toolbar
         header = QHBoxLayout(toolbar)
         header.setContentsMargins(16, 9, 14, 9)
         header.setSpacing(8)
@@ -520,28 +548,9 @@ class MainWindow(QMainWindow):
         self.calibrate_button.setToolTip("Calibrate the currently selected map")
         self.calibrate_button.clicked.connect(self._open_calibration)
         self.calibrate_button.hide()
-        self.map_style = QComboBox()
-        self.map_style.addItems(["Parchment", "Grayscale"])
-        self.map_style.setFixedWidth(116)
-        self.map_style.setToolTip("Choose how the PAK minimap mask is displayed")
-        self.map_style.currentTextChanged.connect(self._set_map_style)
-        fit_button = QPushButton("FIT MAP")
-        fit_button.setToolTip("Fit the full map inside the workspace")
-        fit_button.clicked.connect(lambda: self.view.fit_map())
-        reset = QPushButton("CLEAR")
-        reset.setToolTip("Remove the current gun and target points")
-        reset.clicked.connect(self._reset_measurement)
-        header.addLayout(title_block)
-        header.addStretch()
-        prompt = QLabel("CLICK MAP TO PLACE GUN / TARGET")
-        prompt.setObjectName("eyebrow")
-        prompt.setMaximumWidth(210)
-        header.addWidget(prompt)
-        header.addWidget(fit_button)
-        header.addWidget(reset)
-        header.addWidget(self.map_style)
         self.projectile_type = QComboBox()
         self.projectile_type.addItems(["Shell", "Case"])
+        self.projectile_type.setFixedWidth(88)
         self.projectile_type.setToolTip("Select the ammunition for the fuze estimate")
         self.projectile_type.currentTextChanged.connect(
             lambda _text: self._weapon_changed()
@@ -550,10 +559,32 @@ class MainWindow(QMainWindow):
         self.cannon_type.addItems(
             ["3-inch Ordnance", "10-pounder Parrott", "12-pounder Napoleon"]
         )
+        self.cannon_type.setFixedWidth(178)
         self.cannon_type.setToolTip("Select the cannon for the fuze estimate")
         self.cannon_type.currentTextChanged.connect(
             lambda _text: self._weapon_changed()
         )
+        self.ballistic_method = QComboBox()
+        self.ballistic_method.setFixedWidth(168)
+        self.ballistic_method.setEnabled(False)
+        self.ballistic_method.setToolTip(
+            "Choose the curve used to calculate the required gun elevation"
+        )
+
+        def add_header_option(title: str, control: QWidget) -> None:
+            option_layout = QVBoxLayout()
+            option_layout.setSpacing(2)
+            option_label = QLabel(title)
+            option_label.setObjectName("fieldLabel")
+            option_layout.addWidget(option_label)
+            option_layout.addWidget(control)
+            header.addLayout(option_layout)
+
+        header.addLayout(title_block)
+        header.addStretch()
+        add_header_option("CANNON", self.cannon_type)
+        add_header_option("AMMUNITION", self.projectile_type)
+        add_header_option("ESTIMATION CURVE", self.ballistic_method)
         self.warning_banner = QLabel()
         self.warning_banner.setWordWrap(True)
         self.warning_banner.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -600,21 +631,35 @@ class MainWindow(QMainWindow):
             "background:#111610; border-top:1px solid #343d31; "
             "padding:4px 14px; color:#d8c96d;"
         )
-        self.measurement = QLabel("READY / Place the gun position on the map")
-        self.measurement.setObjectName("eyebrow")
-        self.measurement.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
-        self.measurement.setWordWrap(True)
-        self.measurement.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
-        self.measurement.setMinimumHeight(34)
-        self.measurement.setStyleSheet(
-            "background:#171e16; border-top:1px solid #394235; padding:5px 14px;"
+        self.elevation_overlay = QCheckBox("Show elevation gradient")
+        self.elevation_overlay.setToolTip(
+            "Show or hide gradient colors only; altitude calculations remain active"
         )
+        self.elevation_overlay.toggled.connect(
+            self.view.set_elevation_overlay_visible
+        )
+        self.grayscale_map = QCheckBox("Grayscale map")
+        self.grayscale_map.setToolTip("Show the PAK minimap mask in grayscale")
+        self.grayscale_map.toggled.connect(
+            lambda checked: self._set_map_style(
+                "Grayscale" if checked else "Parchment"
+            )
+        )
+        display_options_bar = QFrame()
+        display_options_bar.setObjectName("toolbar")
+        self.display_options_bar = display_options_bar
+        display_options_layout = QHBoxLayout(display_options_bar)
+        display_options_layout.setContentsMargins(14, 5, 14, 5)
+        display_options_layout.setSpacing(18)
+        display_options_layout.addStretch()
+        display_options_layout.addWidget(self.grayscale_map)
+        display_options_layout.addWidget(self.elevation_overlay)
         workspace_layout.addWidget(toolbar)
         workspace_layout.addWidget(self.warning_banner)
         workspace_layout.addWidget(self.view, 1)
         workspace_layout.addWidget(self.marker_legend)
         workspace_layout.addWidget(self.cursor_readout)
-        workspace_layout.addWidget(self.measurement)
+        workspace_layout.addWidget(display_options_bar)
 
         control_panel = QWidget()
         control_panel.setObjectName("controlPanel")
@@ -622,30 +667,6 @@ class MainWindow(QMainWindow):
         controls = QVBoxLayout(control_panel)
         controls.setContentsMargins(12, 12, 12, 12)
         controls.setSpacing(10)
-        weapon_card = QFrame()
-        weapon_card.setObjectName("panelCard")
-        weapon_layout = QVBoxLayout(weapon_card)
-        weapon_layout.setContentsMargins(13, 12, 13, 13)
-        weapon_layout.setSpacing(7)
-        weapon_title = QLabel("WEAPON CONFIGURATION")
-        weapon_title.setObjectName("sectionTitle")
-        cannon_label = QLabel("CANNON")
-        cannon_label.setObjectName("fieldLabel")
-        round_label = QLabel("AMMUNITION")
-        round_label.setObjectName("fieldLabel")
-        weapon_layout.addWidget(weapon_title)
-        weapon_layout.addWidget(cannon_label)
-        weapon_layout.addWidget(self.cannon_type)
-        weapon_layout.addWidget(round_label)
-        weapon_layout.addWidget(self.projectile_type)
-        profile_grid = QGridLayout()
-        profile_grid.setSpacing(8)
-        velocity_frame, self.muzzle_velocity = self._make_readout("MUZZLE VELOCITY", "—")
-        drag_frame, self.drag_factor = self._make_readout("DRAG FACTOR", "—")
-        profile_grid.addWidget(velocity_frame, 0, 0)
-        profile_grid.addWidget(drag_frame, 0, 1)
-        weapon_layout.addLayout(profile_grid)
-
         mission_card = QFrame()
         mission_card.setObjectName("panelCard")
         mission_layout = QVBoxLayout(mission_card)
@@ -661,15 +682,13 @@ class MainWindow(QMainWindow):
         tof_frame, self.solution_tof = self._make_readout("FUZE / FLIGHT TIME", "—")
         primary_solution_grid.addWidget(range_frame, 0, 0, 1, 2)
         mission_layout.addLayout(primary_solution_grid)
-        ballistic_method_label = QLabel("ELEVATION METHOD")
-        ballistic_method_label.setObjectName("fieldLabel")
-        self.ballistic_method = QComboBox()
-        self.ballistic_method.setEnabled(False)
-        self.ballistic_method.setToolTip(
-            "Choose the curve used to calculate the required gun elevation"
-        )
-        mission_layout.addWidget(ballistic_method_label)
-        mission_layout.addWidget(self.ballistic_method)
+        profile_grid = QGridLayout()
+        profile_grid.setSpacing(8)
+        velocity_frame, self.muzzle_velocity = self._make_readout("MUZZLE VELOCITY", "—")
+        drag_frame, self.drag_factor = self._make_readout("DRAG FACTOR", "—")
+        profile_grid.addWidget(velocity_frame, 0, 0)
+        profile_grid.addWidget(drag_frame, 0, 1)
+        mission_layout.addLayout(profile_grid)
         bearing_label = QLabel("BEARING")
         bearing_label.setObjectName("fieldLabel")
         self.solution_bearing = BearingCompass()
@@ -680,19 +699,26 @@ class MainWindow(QMainWindow):
         secondary_solution_grid.addWidget(elevation_frame, 0, 0)
         secondary_solution_grid.addWidget(tof_frame, 0, 1)
         mission_layout.addLayout(secondary_solution_grid)
-        clearance_label = QLabel("ROUTE CLEARANCE · ESTIMATED")
-        clearance_label.setObjectName("fieldLabel")
-        self.clearance_status = QLabel("Place gun and target to analyze the route")
+        self.clearance_status = QLabel("ESTIMATED ROUTE: —")
         self.clearance_status.setWordWrap(True)
-        self.clearance_status.setObjectName("muted")
+        self.clearance_status.setTextFormat(Qt.TextFormat.RichText)
+        self.clearance_status.setStyleSheet(
+            "color:#eee9d5; font-family:Consolas;"
+        )
         self.clearance_details = QLabel()
         self.clearance_details.setWordWrap(True)
         self.clearance_details.setTextInteractionFlags(
             Qt.TextInteractionFlag.TextSelectableByMouse
         )
+        self.clearance_details.setStyleSheet(
+            "background:#1a2119; border:1px solid #465442; "
+            "border-radius:2px; padding:8px;"
+        )
         self.clearance_details.hide()
         self.trajectory_profile = TrajectoryProfilePlot()
-        mission_layout.addWidget(clearance_label)
+        self.solution_bearing.setStyleSheet(
+            "background:#10160f; border:1px solid #465442; border-radius:2px;"
+        )
         mission_layout.addWidget(self.clearance_status)
         mission_layout.addWidget(self.clearance_details)
         mission_layout.addWidget(self.trajectory_profile)
@@ -705,16 +731,12 @@ class MainWindow(QMainWindow):
         map_title = QLabel("MAP DATA")
         map_title.setObjectName("sectionTitle")
         map_layout.addWidget(map_title)
-        self.elevation_overlay = QCheckBox("Show elevation gradient")
-        self.elevation_overlay.setToolTip(
-            "Show or hide gradient colors only; altitude calculations remain active"
+        self.map_info.setStyleSheet(
+            "background:#1a2119; border:1px solid #465442; "
+            "border-radius:2px; padding:8px;"
         )
-        self.elevation_overlay.toggled.connect(
-            self.view.set_elevation_overlay_visible
-        )
-        map_layout.addWidget(self.elevation_overlay)
         map_layout.addWidget(self.map_info)
-        controls.addWidget(weapon_card)
+
         controls.addWidget(mission_card)
         controls.addWidget(map_card)
         controls.addStretch()
@@ -727,9 +749,14 @@ class MainWindow(QMainWindow):
         )
         control_scroll.setFrameShape(QFrame.Shape.NoFrame)
         control_scroll.setFixedWidth(358)
-        control_scroll.setStyleSheet("border:0; background:#151b14;")
+        control_scroll.setStyleSheet(
+            "QScrollArea#controlPanelScroll {"
+            "border:0; background:#121811;"
+            "}"
+        )
         control_scroll.setWidget(control_panel)
         self.control_scroll = control_scroll
+
         layout.addWidget(workspace, 1)
         layout.addWidget(control_scroll)
         self._weapon_changed()
@@ -751,12 +778,6 @@ class MainWindow(QMainWindow):
 
     def _set_map_style(self, style: str) -> None:
         self.view.set_map_style(style)
-
-    def _toggle_sidebar(self) -> None:
-        visible = self.sidebar.isVisible()
-        self.sidebar.setVisible(not visible)
-        self.sidebar_toggle.setText("›" if visible else "‹")
-        self.sidebar_toggle.setToolTip("Expand map selector" if visible else "Collapse map selector")
 
     def _select_map(self, record: MapRecord) -> None:
         pixmap = QPixmap(str(record.image_path))
@@ -805,14 +826,17 @@ class MainWindow(QMainWindow):
                 parent = parent.parent()
         self.view.set_interaction_enabled(True)
         self.warning_banner.hide()
-        self.measurement.setText("READY / Place the gun position on the map")
         self._refresh_measurement()
 
     def _add_measurement_point(self, point: QPointF) -> None:
         if self.transform is None:
             return
         if not self.points:
-            self.points.append(point)
+            retained_target = self.view.retained_target_point()
+            if retained_target is None:
+                self.points.append(point)
+            else:
+                self.points = [point, retained_target]
         elif len(self.points) == 1:
             self.points.append(point)
         else:
@@ -821,10 +845,7 @@ class MainWindow(QMainWindow):
         self._refresh_measurement()
 
     def _measurement_points_changed(self, points: list[QPointF]) -> None:
-        count_changed = len(points) != len(self.points)
         self.points = points
-        if count_changed:
-            self.view.set_points(self.points)
         self._refresh_measurement()
 
     def _map_position_hovered(self, point: QPointF | None) -> None:
@@ -857,7 +878,6 @@ class MainWindow(QMainWindow):
             self.current_flight_time_text = "—"
             self.view.clear_target_solution()
             self._set_clearance_result(None)
-            self.measurement.setText("READY / Place the gun position on the map")
             self.solution_range.setText("—")
             self.solution_bearing.clear_bearing()
             self.solution_elevation.setText("—")
@@ -867,7 +887,6 @@ class MainWindow(QMainWindow):
             self.current_flight_time_text = "—"
             self.view.clear_target_solution()
             self._set_clearance_result(None)
-            self.measurement.setText("GUN SET / Place the target position")
             self.solution_range.setText("—")
             self.solution_bearing.clear_bearing()
             self.solution_elevation.setText("—")
@@ -942,15 +961,6 @@ class MainWindow(QMainWindow):
                 )
             self.solution_bearing.set_bearing(bearing)
             self.solution_tof.setText(flight_time_text)
-            terrain_status = (
-                f" / ΔH {elevation_change:+.1f} M / 3D"
-                if elevation_change is not None
-                else " / HORIZONTAL / NO ELEVATION SAMPLE"
-            )
-            self.measurement.setText(
-                f"FIRE SOLUTION READY / {cannon_type.upper()} / "
-                f"{projectile_type.upper()}{terrain_status}"
-            )
             self._update_ballistic_solution(
                 horizontal_range,
                 elevation_change if elevation_change is not None else 0.0,
@@ -1080,18 +1090,16 @@ class MainWindow(QMainWindow):
         self.trajectory_profile.set_result(result)
         if result is None:
             self.clearance_status.setText(
-                "Route clearance unavailable · sampled elevation required"
+                'ESTIMATED ROUTE: <span style="color:#9ba392;">UNAVAILABLE</span>'
             )
-            self.clearance_status.setStyleSheet("color:#9ba392;")
             self.clearance_details.clear()
             self.clearance_details.hide()
             self.view.clear_trajectory_overlay()
             return
-        confidence = result.confidence.upper()
         if result.obstructed:
-            self.clearance_status.setText(f"{confidence} · ROUTE OBSTRUCTED")
-            self.clearance_status.setStyleSheet(
-                "color:#ff7a70; font-weight:700; font-family:Consolas;"
+            self.clearance_status.setText(
+                'ESTIMATED ROUTE: <span style="color:#ff7a70; '
+                'font-weight:700;">OBSTRUCTED</span>'
             )
             obstruction = (
                 f"{result.first_obstruction_yards:,.0f} yd"
@@ -1123,9 +1131,9 @@ class MainWindow(QMainWindow):
                 f"Downrange impact: {impact}"
             )
         else:
-            self.clearance_status.setText(f"{confidence} · ROUTE CLEAR")
-            self.clearance_status.setStyleSheet(
-                "color:#63d785; font-weight:700; font-family:Consolas;"
+            self.clearance_status.setText(
+                'ESTIMATED ROUTE: <span style="color:#63d785; '
+                'font-weight:700;">CLEAR</span>'
             )
             minimum = (
                 f"{result.minimum_clearance_metres:+.1f} m"
@@ -1176,7 +1184,6 @@ class MainWindow(QMainWindow):
         self.solution_bearing.clear_bearing()
         self.solution_elevation.setText("—")
         self.solution_tof.setText("—")
-        self.measurement.setText("READY / Place the gun position on the map")
 
     def _update_map_info(self) -> None:
         width, height = self.current_image_size
@@ -1228,7 +1235,6 @@ class MainWindow(QMainWindow):
             self.calibrate_button.setText("Recalibrate…")
             self.calibrate_button.setStyleSheet("")
             self.warning_banner.hide()
-            self.measurement.setText("Calibration saved. Click two points to calculate their distance.")
 
 
 def run() -> int:

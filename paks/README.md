@@ -5,6 +5,21 @@ are readable without a key, but their local ZIP headers use Windows backslashes
 while the central directory uses forward slashes. `extract_cryengine_paks.py`
 handles that legacy mismatch.
 
+## Direct runtime extraction
+
+The distribution extractor accepts either the installed `Assets` directory or
+its parent game directory and builds all runtime map data in one pass:
+
+```powershell
+.\.venv\Scripts\python.exe extract_assets.py `
+  "D:\path\to\War of Rights\Assets"
+```
+
+It reads `Minimaps_*.pak` and `LevelsLooseFiles.pak` directly, converts the
+gameplay-area DDS alpha channels with Pillow, copies the required battlefield
+`level.pak` archives, and writes the converted minimaps and calibration catalog
+under `paks/`. FFmpeg is not required for this workflow.
+
 ## Extracted data
 
 The default extraction keeps the useful map-analysis files and omits the very

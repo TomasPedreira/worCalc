@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from math import cos, hypot, isclose, radians, sin
+from math import cos, hypot, isclose, isfinite, radians, sin, sqrt
 from typing import Any
 
 from PySide6.QtCore import QPoint, QPointF, QRectF, Qt
@@ -9,6 +9,7 @@ from PySide6.QtGui import (
     QBrush,
     QColor,
     QFont,
+    QFontMetricsF,
     QImage,
     QMouseEvent,
     QPainter,
@@ -26,6 +27,7 @@ from PySide6.QtWidgets import (
     QGraphicsSceneMouseEvent,
     QGraphicsSimpleTextItem,
     QGraphicsView,
+    QInputDialog,
 )
 
 from ..domain.calibration import AffineCalibration, METRES_TO_YARDS, Point
@@ -95,14 +97,113 @@ def compass_direction_angles() -> dict[str, float]:
     }
 
 
+def circle_intersections(
+    first_center: Point,
+    first_radius: float,
+    second_center: Point,
+    second_radius: float,
+) -> list[Point]:
+    """Return the zero, one, or two intersections of two circles."""
+    values = (
+        first_center.x,
+        first_center.y,
+        first_radius,
+        second_center.x,
+        second_center.y,
+        second_radius,
+    )
+    if not all(isfinite(value) for value in values):
+        return []
+    if first_radius <= 0 or second_radius <= 0:
+        return []
+    dx = second_center.x - first_center.x
+    dy = second_center.y - first_center.y
+    distance = hypot(dx, dy)
+    tolerance = 1e-9 * max(first_radius, second_radius, distance, 1.0)
+    if (
+        distance <= tolerance
+        or distance > first_radius + second_radius + tolerance
+        or distance < abs(first_radius - second_radius) - tolerance
+    ):
+        return []
+
+    along = (
+        first_radius * first_radius
+        - second_radius * second_radius
+        + distance * distance
+    ) / (2 * distance)
+    height_squared = max(first_radius * first_radius - along * along, 0.0)
+    base_x = first_center.x + along * dx / distance
+    base_y = first_center.y + along * dy / distance
+    if height_squared <= tolerance * tolerance:
+        return [Point(base_x, base_y)]
+
+    height = sqrt(height_squared)
+    offset_x = -dy * height / distance
+    offset_y = dx * height / distance
+    return [
+        Point(base_x + offset_x, base_y + offset_y),
+        Point(base_x - offset_x, base_y - offset_y),
+    ]
+
+
+def common_circle_intersections(
+    circles: list[tuple[Point, float]],
+    tolerance_ratio: float = 0.01,
+) -> list[Point]:
+    """Return distinct pairwise intersections that agree with every circle."""
+    if len(circles) < 2:
+        return []
+    candidates: list[Point] = []
+    for first_index, first in enumerate(circles):
+        for second in circles[first_index + 1 :]:
+            for candidate in circle_intersections(
+                first[0], first[1], second[0], second[1]
+            ):
+                agrees = all(
+                    abs(
+                        hypot(
+                            candidate.x - center.x,
+                            candidate.y - center.y,
+                        )
+                        - radius
+                    )
+                    <= max(radius * tolerance_ratio, 1e-6)
+                    for center, radius in circles
+                )
+                if not agrees:
+                    continue
+                duplicate_tolerance = max(
+                    max(radius for _center, radius in circles) * 1e-6,
+                    1e-6,
+                )
+                if any(
+                    hypot(candidate.x - existing.x, candidate.y - existing.y)
+                    <= duplicate_tolerance
+                    for existing in candidates
+                ):
+                    continue
+                candidates.append(candidate)
+    return candidates
+
+
 def elevation_color(
     elevation_metres: float,
     minimum_metres: float,
     maximum_metres: float,
+    midpoint_metres: float | None = None,
 ) -> QColor:
-    """Blue-cyan-yellow-red diagnostic ramp with stable end points."""
-    span = max(maximum_metres - minimum_metres, 1e-9)
-    value = min(max((elevation_metres - minimum_metres) / span, 0.0), 1.0)
+    """Blue-cyan-yellow-red diagnostic ramp with a configurable midpoint."""
+    value = elevation_gradient_position(
+        elevation_metres,
+        minimum_metres,
+        (
+            (minimum_metres + maximum_metres) / 2.0
+            if midpoint_metres is None
+            else midpoint_metres
+        ),
+        maximum_metres,
+    )
     stops = (
         (0.0, (40, 76, 190)),
         (0.35, (31, 190, 210)),
@@ -119,17 +220,52 @@ def elevation_color(
     return QColor(*stops[-1][1], 180)
 
 
+def elevation_gradient_position(
+    elevation_metres: float,
+    minimum_metres: float,
+    midpoint_metres: float,
+    maximum_metres: float,
+) -> float:
+    """Normalize elevation while pinning the sampled median to the ramp midpoint."""
+    midpoint = min(max(midpoint_metres, minimum_metres), maximum_metres)
+    if elevation_metres < midpoint:
+        span = midpoint - minimum_metres
+        value = 0.0 if span <= 0 else 0.5 * (
+            elevation_metres - minimum_metres
+        ) / span
+    elif elevation_metres > midpoint:
+        span = maximum_metres - midpoint
+        value = 1.0 if span <= 0 else 0.5 + 0.5 * (
+            elevation_metres - midpoint
+        ) / span
+    else:
+        value = 0.5
+    return min(max(value, 0.0), 1.0)
+
+
+def elevation_gradient_anchors(
+    field: ElevationField,
+) -> tuple[float, float, float] | None:
+    """Return outlier-resistant low, median, and high anchors for the ramp."""
+    contrast_range = field.contrast_range_metres()
+    midpoint = field.percentile_metres(0.5)
+    if contrast_range is None or midpoint is None:
+        return None
+    minimum, maximum = contrast_range
+    return minimum, midpoint, maximum
+
+
 def elevation_overlay_pixmap(
     field: ElevationField,
     width: int,
     height: int,
     grid_size: int = 80,
 ) -> QPixmap:
-    """Render a gradient spanning this map's sampled minimum and maximum."""
-    gradient_range = field.gradient_range_metres()
-    if gradient_range is None or width <= 0 or height <= 0:
+    """Render an outlier-resistant gradient centered on the map's median."""
+    anchors = elevation_gradient_anchors(field)
+    if anchors is None or width <= 0 or height <= 0:
         return QPixmap()
-    minimum, maximum = gradient_range
+    minimum, midpoint, maximum = anchors
     grid_width = max(2, grid_size)
     grid_height = max(2, round(grid_size * height / width))
     image = QImage(grid_width, grid_height, QImage.Format.Format_ARGB32)
@@ -139,7 +275,7 @@ def elevation_overlay_pixmap(
             pixel_x = x * width / max(grid_width - 1, 1)
             elevation = field.elevation_at(Point(pixel_x, pixel_y))
             color = (
-                elevation_color(elevation, minimum, maximum)
+                elevation_color(elevation, minimum, maximum, midpoint)
                 if elevation is not None
                 else QColor(0, 0, 0, 0)
             )
@@ -161,23 +297,28 @@ class CircleEntity(QGraphicsEllipseItem):
         changed: Callable[["CircleEntity", Any, Any], Any],
         remove: Callable[["CircleEntity"], None],
         color: QColor,
+        label: str,
+        role: str,
         *,
         movable: bool,
         removable: bool,
     ) -> None:
-        radius = 5
+        radius = 10
         super().__init__(-radius, -radius, radius * 2, radius * 2)
         self._ready = False
         self._changed = changed
         self._remove = remove
         self._movable = movable
         self._removable = removable
-        pen = QPen(color, 2)
+        self.label = label
+        self.role = role
+        self.label_color = (
+            QColor("#fff0e5") if role == "target" else QColor("#211b0e")
+        )
+        pen = QPen(QColor("#2b2412"), 2)
         pen.setCosmetic(True)
         self.setPen(pen)
-        fill = QColor(color)
-        fill.setAlpha(150)
-        self.setBrush(fill)
+        self.setBrush(QColor(color))
         self.setCursor(
             Qt.CursorShape.OpenHandCursor if movable else Qt.CursorShape.ArrowCursor
         )
@@ -201,6 +342,20 @@ class CircleEntity(QGraphicsEllipseItem):
         self.setPos(position)
         self._ready = True
 
+    def paint(self, painter: QPainter, option: Any, widget: Any = None) -> None:
+        super().paint(painter, option, widget)
+        font = QFont("Arial", 9)
+        font.setBold(True)
+        painter.setFont(font)
+        painter.setPen(self.label_color)
+        bounds = QFontMetricsF(font).tightBoundingRect(self.label)
+        center = self.rect().center()
+        origin = QPointF(
+            center.x() - bounds.center().x(),
+            center.y() - bounds.center().y(),
+        )
+        painter.drawText(origin, self.label)
+
     def itemChange(self, change: QGraphicsItem.GraphicsItemChange, value: Any) -> Any:
         if self._ready:
             return self._changed(self, change, value)
@@ -222,6 +377,32 @@ class CircleEntity(QGraphicsEllipseItem):
         super().mouseReleaseEvent(event)
 
 
+class EstimationHitMarker(QGraphicsEllipseItem):
+    """A recorded shot marker that can remove its associated range circle."""
+
+    def __init__(
+        self,
+        position: QPointF,
+        color: QColor,
+        remove: Callable[[], None],
+    ) -> None:
+        super().__init__(QRectF(-6, -6, 12, 12))
+        self._remove = remove
+        self.setPen(QPen(QColor("#101820"), 2))
+        self.setBrush(QBrush(color))
+        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIgnoresTransformations)
+        self.setAcceptedMouseButtons(Qt.MouseButton.RightButton)
+        self.setPos(position)
+        self.setZValue(5)
+
+    def mousePressEvent(self, event: QGraphicsSceneMouseEvent) -> None:
+        if event.button() == Qt.MouseButton.RightButton:
+            self._remove()
+            event.accept()
+            return
+        super().mousePressEvent(event)
+
+
 class MapView(QGraphicsView):
     """Zoomable map with fire-mission endpoints and live coordinate reporting."""
 
@@ -230,6 +411,9 @@ class MapView(QGraphicsView):
         point_clicked: Callable[[QPointF], None],
         points_changed: Callable[[list[QPointF]], None] | None = None,
         position_hovered: Callable[[QPointF | None], None] | None = None,
+        estimation_range_requested: (
+            Callable[[float | None], float | None] | None
+        ) = None,
     ) -> None:
         super().__init__()
         self._scene = QGraphicsScene(self)
@@ -241,6 +425,7 @@ class MapView(QGraphicsView):
         self._elevation_field: ElevationField | None = None
         self._elevation_overlay_visible = False
         self._markers: list[CircleEntity] = []
+        self._retained_target: CircleEntity | None = None
         self._location_items: list[QGraphicsEllipseItem] = []
         self._line = None
         self._rings = []
@@ -251,12 +436,19 @@ class MapView(QGraphicsView):
         self._target_solution_label: QGraphicsSimpleTextItem | None = None
         self._target_solution_background: QGraphicsRectItem | None = None
         self._trajectory_items: list[QGraphicsItem] = []
+        self._estimation_hits: list[tuple[QPointF, float]] = []
+        self._estimation_items: list[QGraphicsItem] = []
+        self._estimation_candidates: list[QPointF] = []
         self._range_transform: AffineCalibration | None = None
         self._yards_per_pixel: float | None = None
         self._point_clicked = point_clicked
         self._points_changed = points_changed
         self._position_hovered = position_hovered
+        self._estimation_range_requested = (
+            estimation_range_requested or self._prompt_for_estimation_range
+        )
         self._press_position: QPoint | None = None
+        self._middle_press_position: QPoint | None = None
         self._press_on_marker = False
         self._interaction_enabled = True
         self.setMouseTracking(True)
@@ -267,10 +459,16 @@ class MapView(QGraphicsView):
         self.setViewportUpdateMode(QGraphicsView.ViewportUpdateMode.FullViewportUpdate)
         self.setTransformationAnchor(QGraphicsView.ViewportAnchor.AnchorUnderMouse)
         self.setResizeAnchor(QGraphicsView.ViewportAnchor.AnchorViewCenter)
+        self.setToolTip(
+            "Left-click to place the gun and target. "
+            "Middle-click a shot impact to record a position-estimate circle "
+            "with an independently observed range."
+        )
 
     def set_map(self, pixmap: QPixmap) -> None:
         self._scene.clear()
         self._markers.clear()
+        self._retained_target = None
         self._location_items.clear()
         self._line = None
         self._rings.clear()
@@ -281,6 +479,9 @@ class MapView(QGraphicsView):
         self._target_solution_label = None
         self._target_solution_background = None
         self._trajectory_items.clear()
+        self._estimation_hits.clear()
+        self._estimation_items.clear()
+        self._estimation_candidates.clear()
         self._source_pixmap = pixmap
         self._pixmap_item = self._scene.addPixmap(styled_map_pixmap(pixmap, self._map_style))
         self._elevation_item = None
@@ -291,6 +492,7 @@ class MapView(QGraphicsView):
     def clear_map(self) -> None:
         self._scene.clear()
         self._markers.clear()
+        self._retained_target = None
         self._location_items.clear()
         self._line = None
         self._rings.clear()
@@ -301,6 +503,9 @@ class MapView(QGraphicsView):
         self._target_solution_label = None
         self._target_solution_background = None
         self._trajectory_items.clear()
+        self._estimation_hits.clear()
+        self._estimation_items.clear()
+        self._estimation_candidates.clear()
         self._pixmap_item = None
         self._elevation_item = None
         self._elevation_field = None
@@ -411,11 +616,17 @@ class MapView(QGraphicsView):
         self._range_transform = transform
         self._yards_per_pixel = transform.mean_yards_per_pixel if transform else None
         self._sync_geometry(notify=False)
+        self._draw_estimation_overlay()
 
     def clear_points(self) -> None:
+        self._clear_fire_mission_points()
+        self.clear_estimation_hits()
+
+    def _clear_fire_mission_points(self) -> None:
         for marker in self._markers:
             self._scene.removeItem(marker)
         self._markers.clear()
+        self._retained_target = None
         if self._line is not None:
             self._scene.removeItem(self._line)
             self._line = None
@@ -435,6 +646,8 @@ class MapView(QGraphicsView):
         for item in self._trajectory_items:
             self._scene.removeItem(item)
         self._trajectory_items.clear()
+        if self._line is not None:
+            self._line.setVisible(True)
 
     def set_trajectory_overlay(
         self,
@@ -458,41 +671,58 @@ class MapView(QGraphicsView):
 
         if obstruction_range_yards is not None:
             obstruction = route_point(obstruction_range_yards)
+            if self._line is not None:
+                self._line.setVisible(False)
             blocked_line = self._scene.addLine(
                 gun.x(),
                 gun.y(),
                 obstruction.x(),
                 obstruction.y(),
-                QPen(QColor("#e34f4f"), 2.5, Qt.PenStyle.DashLine),
+                QPen(QColor("#d94149"), 2.5, Qt.PenStyle.SolidLine),
             )
             obstruction_marker = self._scene.addEllipse(
                 QRectF(-5, -5, 10, 10),
                 QPen(QColor("#ffd0c8"), 1.5),
-                QBrush(QColor("#e34f4f")),
+                QBrush(QColor("#d94149")),
             )
             obstruction_marker.setPos(obstruction)
             self._trajectory_items.extend((blocked_line, obstruction_marker))
+            continuation_end = (
+                route_point(impact_range_yards)
+                if impact_range_yards is not None
+                else target
+            )
+            skipped_line = self._scene.addLine(
+                obstruction.x(),
+                obstruction.y(),
+                continuation_end.x(),
+                continuation_end.y(),
+                QPen(QColor("#d94149"), 2, Qt.PenStyle.DashLine),
+            )
+            self._trajectory_items.append(skipped_line)
 
         if impact_range_yards is not None:
             impact = route_point(impact_range_yards)
-            continuation = self._scene.addLine(
-                target.x(),
-                target.y(),
-                impact.x(),
-                impact.y(),
-                QPen(QColor("#e2c85d"), 2, Qt.PenStyle.DashLine),
-            )
+            if obstruction_range_yards is None:
+                continuation = self._scene.addLine(
+                    target.x(),
+                    target.y(),
+                    impact.x(),
+                    impact.y(),
+                    QPen(QColor("#d94149"), 2, Qt.PenStyle.DashLine),
+                )
+                self._trajectory_items.append(continuation)
             impact_marker = self._scene.addEllipse(
                 QRectF(-5, -5, 10, 10),
-                QPen(QColor("#fff1a8"), 1.5),
-                QBrush(QColor("#e2c85d")),
+                QPen(QColor("#ffc9c9"), 1.5),
+                QBrush(QColor("#d94149")),
             )
             impact_marker.setPos(impact)
-            self._trajectory_items.extend((continuation, impact_marker))
+            self._trajectory_items.append(impact_marker)
 
         for item in self._trajectory_items:
             item.setAcceptedMouseButtons(Qt.MouseButton.NoButton)
-            item.setZValue(7.5)
+            item.setZValue(1.5)
 
     def set_target_solution(
         self,
@@ -550,21 +780,29 @@ class MapView(QGraphicsView):
         ):
             return
         target = self._markers[1].scenePos()
-        position = QPointF(target.x() + 14, target.y() - 62)
+        background = self._target_solution_background.rect()
+        position = QPointF(
+            target.x() + 26,
+            target.y() - background.height() / 2,
+        )
         self._target_solution_label.setPos(position)
         self._target_solution_background.setPos(position)
 
     def set_points(self, points: list[QPointF]) -> None:
-        self.clear_points()
+        self._clear_fire_mission_points()
         if not self._pixmap_item:
             return
-        colors = (QColor("#35c46a"), QColor("#ff5a4f"))
+        colors = (QColor("#f2c94c"), QColor("#9f2f38"))
+        labels = ("G", "T")
+        roles = ("gun", "target")
         for index, point in enumerate(points):
             marker = CircleEntity(
                 point,
                 self._entity_changed,
                 self._remove_entity,
                 colors[min(index, len(colors) - 1)],
+                labels[min(index, len(labels) - 1)],
+                roles[min(index, len(roles) - 1)],
                 movable=True,
                 removable=True,
             )
@@ -577,8 +815,153 @@ class MapView(QGraphicsView):
             self._markers.append(marker)
         self._sync_geometry(notify=False)
 
+    def add_estimation_hit(self, point: QPointF, radius_yards: float) -> bool:
+        """Record an independently ranged shot impact."""
+        if self._range_transform is None:
+            return False
+        if not isfinite(radius_yards) or radius_yards <= 0:
+            return False
+        self._estimation_hits.append((QPointF(point), radius_yards))
+        self._draw_estimation_overlay()
+        return True
+
+    def _current_map_range_yards(self) -> float | None:
+        points = self.entity_points()
+        if len(points) != 2 or self._range_transform is None:
+            return None
+        radius_yards = self._range_transform.distance_yards(
+            Point(points[0].x(), points[0].y()),
+            Point(points[1].x(), points[1].y()),
+        )
+        return radius_yards if isfinite(radius_yards) and radius_yards > 0 else None
+
+    def _prompt_for_estimation_range(
+        self, suggested_yards: float | None
+    ) -> float | None:
+        value, accepted = QInputDialog.getDouble(
+            self,
+            "Record observed shot range",
+            "Gun-to-impact horizontal range (yards):",
+            suggested_yards if suggested_yards is not None else 1000.0,
+            0.01,
+            1_000_000.0,
+            2,
+        )
+        return value if accepted else None
+
+    def _request_estimation_hit(self, point: QPointF) -> bool:
+        if self._range_transform is None:
+            return False
+        radius_yards = self._estimation_range_requested(
+            self._current_map_range_yards()
+        )
+        if radius_yards is None:
+            return False
+        return self.add_estimation_hit(point, radius_yards)
+
+    def clear_estimation_hits(self) -> None:
+        self._estimation_hits.clear()
+        self._draw_estimation_overlay()
+
+    def _remove_estimation_hit(self, index: int) -> None:
+        if 0 <= index < len(self._estimation_hits):
+            del self._estimation_hits[index]
+            self._draw_estimation_overlay()
+
+    def _draw_estimation_overlay(self) -> None:
+        for item in self._estimation_items:
+            if item.scene() is self._scene:
+                self._scene.removeItem(item)
+        self._estimation_items.clear()
+        self._estimation_candidates.clear()
+        if self._range_transform is None:
+            return
+
+        colors = (
+            QColor("#35c9ff"),
+            QColor("#ff9d3d"),
+            QColor("#d76bff"),
+            QColor("#ffe14f"),
+            QColor("#67e480"),
+        )
+        for index, (center, radius_yards) in enumerate(self._estimation_hits):
+            color = colors[index % len(colors)]
+            halo_pen = QPen(QColor(10, 16, 20, 220), 5)
+            halo_pen.setCosmetic(True)
+            halo_pen.setStyle(Qt.PenStyle.DashLine)
+            ring_pen = QPen(color, 2.4)
+            ring_pen.setCosmetic(True)
+            ring_pen.setStyle(Qt.PenStyle.DashLine)
+            path = self._range_ring_path(center, radius_yards)
+            for path_item in (
+                self._scene.addPath(path, halo_pen),
+                self._scene.addPath(path, ring_pen),
+            ):
+                path_item.setAcceptedMouseButtons(Qt.MouseButton.NoButton)
+                path_item.setZValue(4.0)
+                path_item.setToolTip(
+                    f"Shot {index + 1}: {radius_yards:,.1f} yd position estimate"
+                )
+                self._estimation_items.append(path_item)
+
+            marker = EstimationHitMarker(
+                center,
+                color,
+                lambda hit_index=index: self._remove_estimation_hit(hit_index),
+            )
+            self._scene.addItem(marker)
+            marker.setToolTip(
+                f"Recorded shot {index + 1} — {radius_yards:,.1f} yd — "
+                "right-click to remove"
+            )
+            self._estimation_items.append(marker)
+
+        if len(self._estimation_hits) < 2:
+            return
+        world_circles: list[tuple[Point, float]] = []
+        for center, radius_yards in self._estimation_hits:
+            world_circles.append(
+                (
+                    self._range_transform.world_delta(center.x(), center.y()),
+                    radius_yards / METRES_TO_YARDS,
+                )
+            )
+        intersections = common_circle_intersections(world_circles)
+        bounds = self._pixmap_item.sceneBoundingRect() if self._pixmap_item else QRectF()
+        for intersection in intersections:
+            pixel = self._range_transform.pixel_delta_for_world_units(
+                intersection.x, intersection.y
+            )
+            candidate = QPointF(pixel.x, pixel.y)
+            if not bounds.contains(candidate):
+                continue
+            self._estimation_candidates.append(candidate)
+            candidate_item = self._scene.addEllipse(
+                QRectF(-8, -8, 16, 16),
+                QPen(QColor("#ffffff"), 2.5),
+                QBrush(QColor("#2de2a6")),
+            )
+            candidate_item.setFlag(
+                QGraphicsItem.GraphicsItemFlag.ItemIgnoresTransformations
+            )
+            candidate_item.setAcceptedMouseButtons(Qt.MouseButton.NoButton)
+            candidate_item.setPos(candidate)
+            candidate_item.setZValue(6)
+            candidate_item.setToolTip(
+                f"Possible gun position matching all {len(self._estimation_hits)} "
+                "recorded shots"
+            )
+            self._estimation_items.append(candidate_item)
+
     def entity_points(self) -> list[QPointF]:
+        if self._retained_target is not None:
+            return []
         return [marker.scenePos() for marker in self._markers]
+
+    def retained_target_point(self) -> QPointF | None:
+        if self._retained_target is None:
+            return None
+        return QPointF(self._retained_target.scenePos())
 
     def _entity_changed(self, marker: CircleEntity, change: Any, value: Any) -> Any:
         if change == QGraphicsItem.GraphicsItemChange.ItemPositionChange and self._pixmap_item:
@@ -599,15 +982,21 @@ class MapView(QGraphicsView):
     def _remove_entity(self, marker: CircleEntity) -> None:
         if marker not in self._markers:
             return
+        if marker.role == "gun" and len(self._markers) == 2:
+            self._retained_target = self._markers[1]
         self._markers.remove(marker)
         self._scene.removeItem(marker)
+        if marker is self._retained_target:
+            self._retained_target = None
+        self.clear_target_solution()
+        self.clear_trajectory_overlay()
         self._sync_geometry(notify=True)
 
     def _sync_geometry(self, notify: bool) -> None:
         points = self.entity_points()
         if len(points) == 2:
             if self._line is None:
-                pen = QPen(QColor("#e2c85d"), 2)
+                pen = QPen(QColor("#a83b42"), 2)
                 pen.setCosmetic(True)
                 self._line = self._scene.addLine(0, 0, 0, 0, pen)
                 self._line.setZValue(1)
@@ -830,6 +1219,8 @@ class MapView(QGraphicsView):
         if event.button() == Qt.MouseButton.LeftButton:
             self._press_position = event.position().toPoint()
             self._press_on_marker = isinstance(self.itemAt(self._press_position), CircleEntity)
+        elif event.button() == Qt.MouseButton.MiddleButton:
+            self._middle_press_position = event.position().toPoint()
         super().mousePressEvent(event)
 
     def mouseMoveEvent(self, event: QMouseEvent) -> None:
@@ -858,14 +1249,23 @@ class MapView(QGraphicsView):
             and not self._press_on_marker
             and (release_position - self._press_position).manhattanLength() <= 4
         )
+        was_middle_click = (
+            event.button() == Qt.MouseButton.MiddleButton
+            and self._middle_press_position is not None
+            and (release_position - self._middle_press_position).manhattanLength() <= 4
+        )
         self._press_position = None
+        self._middle_press_position = None
         self._press_on_marker = False
         super().mouseReleaseEvent(event)
-        if was_click and self._pixmap_item and self._interaction_enabled:
+        if (was_click or was_middle_click) and self._pixmap_item and self._interaction_enabled:
             scene_point = self.mapToScene(release_position)
             local_point = self._pixmap_item.mapFromScene(scene_point)
             if self._pixmap_item.contains(local_point):
-                self._point_clicked(scene_point)
+                if was_middle_click:
+                    self._request_estimation_hit(scene_point)
+                else:
+                    self._point_clicked(scene_point)
 
     def wheelEvent(self, event: QWheelEvent) -> None:
         if not self._pixmap_item:
