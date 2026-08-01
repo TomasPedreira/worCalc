@@ -1,5 +1,6 @@
 import unittest
 
+from worcalc.domain.projectile import ARTILLERY_MUZZLE_HEIGHT_METRES
 from worcalc.domain.trajectory import (
     TerrainProfilePoint,
     analyze_trajectory_clearance,
@@ -17,8 +18,29 @@ def flat_profile(length_yards: int, spacing_yards: int = 10):
 class TrajectoryTests(unittest.TestCase):
     def test_shell_starts_at_muzzle_height(self):
         self.assertAlmostEqual(
-            shell_height_at_distance(0, 5, 370, 0.1, 9.1, 0.762),
-            0.762,
+            shell_height_at_distance(
+                0,
+                5,
+                370,
+                0.1,
+                9.1,
+                ARTILLERY_MUZZLE_HEIGHT_METRES,
+            ),
+            1.4,
+        )
+
+    def test_clearance_uses_artillery_muzzle_height_by_default(self):
+        result = analyze_trajectory_clearance(
+            flat_profile(100),
+            target_range_yards=100,
+            original_elevation_deg=3,
+            speed_metres_per_second=370,
+            drag_per_second=0.1,
+        )
+
+        self.assertAlmostEqual(
+            result.original_trajectory[0].shell_elevation_metres,
+            1.4,
         )
 
     def test_flat_route_is_clear_and_impacts_at_calibrated_target(self):

@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from math import cos, exp, isfinite, log, radians, sin
 
 from .calibration import METRES_TO_YARDS
+from .projectile import ARTILLERY_MUZZLE_HEIGHT_METRES
 
 
 YARDS_TO_METRES = 1.0 / METRES_TO_YARDS
@@ -98,7 +99,7 @@ def analyze_trajectory_clearance(
     speed_metres_per_second: float,
     drag_per_second: float,
     gravity_metres_per_second_squared: float = 9.1,
-    muzzle_height_metres: float = 0.762,
+    muzzle_height_metres: float = ARTILLERY_MUZZLE_HEIGHT_METRES,
     safety_margin_metres: float = 0.01,
     maximum_elevation_deg: float = 75.0,
     confidence: str = "estimated",

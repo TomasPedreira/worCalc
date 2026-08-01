@@ -1,6 +1,10 @@
 import unittest
 
-from worcalc.domain.projectile import artillery_time_of_flight, three_inch_time_of_flight
+from worcalc.domain.projectile import (
+    artillery_range_for_flight_time,
+    artillery_time_of_flight,
+    three_inch_time_of_flight,
+)
 
 
 class ProjectileTests(unittest.TestCase):
@@ -50,6 +54,23 @@ class ProjectileTests(unittest.TestCase):
     def test_invalid_distance_is_rejected(self):
         with self.assertRaises(ValueError):
             three_inch_time_of_flight(-1)
+
+    def test_fuze_time_converts_back_to_horizontal_range(self):
+        range_yards = artillery_range_for_flight_time(
+            0.8265,
+            "3-inch Ordnance",
+            "Shell",
+        )
+
+        self.assertAlmostEqual(range_yards, 321, delta=0.02)
+
+    def test_invalid_fuze_time_is_rejected(self):
+        with self.assertRaises(ValueError):
+            artillery_range_for_flight_time(
+                -1,
+                "3-inch Ordnance",
+                "Shell",
+            )
 
 
 if __name__ == "__main__":

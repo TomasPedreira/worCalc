@@ -53,6 +53,10 @@ class FireMissionUiTests(unittest.TestCase):
         overlay = self.window.view._target_solution_label
         self.assertIsNotNone(overlay)
         assert overlay is not None
+        overlay_background = self.window.view._target_solution_background
+        self.assertIsNotNone(overlay_background)
+        assert overlay_background is not None
+        self.assertEqual(overlay_background.brush().color().alpha(), 160)
         self.assertIn("SLANT", overlay.text())
         self.assertIn("FUZE", overlay.text())
         self.assertIn("ELEV", overlay.text())
@@ -104,6 +108,12 @@ class FireMissionUiTests(unittest.TestCase):
         assert solver is not None
         self.assertEqual(self.window.ballistic_method.currentText(), "Polynomial degree 3")
         self.assertEqual(solver.method_name, "Polynomial degree 3")
+        self.assertEqual(
+            self.window.ballistic_method.itemText(
+                self.window.ballistic_method.count() - 1
+            ),
+            "Theoretical physics",
+        )
 
         self.window._select_map(discover_maps(self.maps_dir)[0])
         record = self.window.current_map

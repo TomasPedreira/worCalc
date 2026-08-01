@@ -55,15 +55,21 @@ class PositionEstimationViewTests(unittest.TestCase):
         cls.app = QApplication.instance() or QApplication([])
 
     def setUp(self) -> None:
-        self.range_requests: list[float | None] = []
+        self.fuze_requests = 0
+        self.converted_fuzes: list[float] = []
 
-        def request_range(suggested: float | None) -> float:
-            self.range_requests.append(suggested)
+        def request_fuze() -> float:
+            self.fuze_requests += 1
+            return 0.5
+
+        def range_for_fuze(fuze_seconds: float) -> float:
+            self.converted_fuzes.append(fuze_seconds)
             return 175.0
 
         self.view = MapView(
             lambda _point: None,
-            estimation_range_requested=request_range,
+            estimation_fuze_requested=request_fuze,
+            estimation_range_for_fuze=range_for_fuze,
         )
         self.view.resize(500, 500)
         self.view.set_map(QPixmap(500, 500))
@@ -123,13 +129,13 @@ class PositionEstimationViewTests(unittest.TestCase):
         self.assertAlmostEqual(self.view._estimation_hits[0][0].x(), 250, delta=1)
         self.assertAlmostEqual(self.view._estimation_hits[0][0].y(), 250, delta=1)
         self.assertEqual(self.view._estimation_hits[0][1], 175)
-        self.assertEqual(len(self.range_requests), 1)
-        self.assertAlmostEqual(
-            self.range_requests[0],
-            100 * 1.0936132983377078,
-        )
+        self.assertEqual(self.fuze_requests, 1)
+        self.assertEqual(self.converted_fuzes, [0.5])
+        marker = self.view._estimation_items[-1]
+        self.assertIn("0.500 s fuze", marker.toolTip())
+        self.assertNotIn("175", marker.toolTip())
 
-    def test_middle_click_without_markers_requests_an_independent_range(self) -> None:
+    def test_middle_click_without_markers_requests_an_observed_fuze(self) -> None:
         viewport_point = self.view.mapFromScene(QPointF(250, 250))
 
         QTest.mouseClick(
@@ -139,11 +145,12 @@ class PositionEstimationViewTests(unittest.TestCase):
             viewport_point,
         )
 
-        self.assertEqual(self.range_requests, [None])
+        self.assertEqual(self.fuze_requests, 1)
+        self.assertEqual(self.converted_fuzes, [0.5])
         self.assertEqual(self.view._estimation_hits[0][1], 175)
 
-    def test_cancelled_range_request_does_not_record_hit(self) -> None:
-        self.view._estimation_range_requested = lambda _suggested: None
+    def test_cancelled_fuze_request_does_not_record_hit(self) -> None:
+        self.view._estimation_fuze_requested = lambda: None
         viewport_point = self.view.mapFromScene(QPointF(250, 250))
 
         QTest.mouseClick(

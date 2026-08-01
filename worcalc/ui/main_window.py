@@ -37,7 +37,11 @@ from ..domain.calibration import (
     write_calibration,
 )
 from ..domain.ballistic_solution import BallisticSolutionEngine
-from ..domain.projectile import ARTILLERY_PHYSICS, artillery_time_of_flight
+from ..domain.projectile import (
+    ARTILLERY_PHYSICS,
+    artillery_range_for_flight_time,
+    artillery_time_of_flight,
+)
 from ..domain.ranging import RangeMeasurement
 from ..domain.trajectory import TrajectoryClearanceResult
 from ..maps.catalog import MapRecord, load_map_catalog
@@ -598,6 +602,7 @@ class MainWindow(QMainWindow):
             self._add_measurement_point,
             self._measurement_points_changed,
             self._map_position_hovered,
+            estimation_range_for_fuze=self._estimation_range_for_fuze,
         )
         self.view.setStyleSheet("border:0; background:#0d110d;")
         self.map_info = QLabel()
@@ -975,10 +980,19 @@ class MainWindow(QMainWindow):
             velocity, drag = ARTILLERY_PHYSICS[cannon][projectile]
             self.muzzle_velocity.setText(f"{velocity:g} m/s")
             self.drag_factor.setText(f"{drag:g} s⁻¹")
+            if self.ballistic_solver is not None:
+                self.ballistic_solver.set_physics_profile(velocity, drag)
         except KeyError:
             self.muzzle_velocity.setText("—")
             self.drag_factor.setText("—")
         self._refresh_measurement()
+
+    def _estimation_range_for_fuze(self, fuze_seconds: float) -> float:
+        return artillery_range_for_flight_time(
+            fuze_seconds,
+            self.cannon_type.currentText(),
+            self.projectile_type.currentText(),
+        )
 
     def _update_ballistic_solution(
         self,

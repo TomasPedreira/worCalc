@@ -118,10 +118,12 @@ The explorer plots the official 3-inch rifled-cannon reference data and switches
 among linear interpolation, PCHIP, quadratic fit, and cubic fit. It is a standalone
 developer tool and is no longer embedded in the main application. The application
 uses the same domain models directly through its elevation-method selector, which
-defaults to the cubic least-squares fit. Ranges outside the official 380–4,180 yard
-table are calculated by extrapolating the selected curve. The curve is inverted using
-horizontal range, then corrected by the signed gun-to-target sight angle, so uphill
-targets increase the indicated elevation and downhill targets decrease it.
+also offers a theoretical gravity/linear-drag curve and defaults to the cubic
+least-squares fit. The theoretical option follows the selected cannon and ammunition
+physics profile. Ranges outside the official 380–4,180 yard table are calculated by
+extrapolating the selected curve. The curve is inverted using horizontal range, then
+corrected by the signed gun-to-target sight angle, so uphill targets increase the
+indicated elevation and downhill targets decrease it.
 
 The fire-mission panel also performs an estimated route-clearance analysis. It
 samples the current elevation field along the firing bearing, plots the terrain and
@@ -144,7 +146,7 @@ least-squares polynomial fits, and the theoretical gravity/linear-drag trajector
 
 The theoretical curve reads velocity and drag from the installed profiles in
 `worcalc/domain/projectile.py`, uses the ammo definition's 9.1 m/s² gravity,
-and launches 2.5 ft above the impact plane. By default, its bore angle is
+and launches 1.4 m (about 4.59 ft) above the impact plane. By default, its bore angle is
 calibrated so the physics curve hits the table's first (0°, 380 yd) boresight
 point. Use `--cannon`, `--projectile`, `--gravity`, `--muzzle-height-feet`, or
 `--angle-offset` to test other assumptions; omit `--no-show` for an interactive

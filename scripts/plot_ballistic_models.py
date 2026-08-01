@@ -20,6 +20,7 @@ from worcalc.domain.ballistics import (  # noqa: E402
 )
 from worcalc.domain.projectile import (  # noqa: E402
     ARTILLERY_GRAVITY_METRES_PER_SECOND_SQUARED,
+    ARTILLERY_MUZZLE_HEIGHT_METRES,
     ARTILLERY_PHYSICS,
 )
 
@@ -65,8 +66,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--muzzle-height-feet",
         type=float,
-        default=2.5,
-        help="Muzzle height above the impact plane in feet (default: 2.5).",
+        default=ARTILLERY_MUZZLE_HEIGHT_METRES / 0.3048,
+        help="Muzzle height above the impact plane in feet (default: 1.4 m / 4.59 ft).",
     )
     parser.add_argument(
         "--gravity",

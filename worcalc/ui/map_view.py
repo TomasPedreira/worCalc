@@ -411,9 +411,8 @@ class MapView(QGraphicsView):
         point_clicked: Callable[[QPointF], None],
         points_changed: Callable[[list[QPointF]], None] | None = None,
         position_hovered: Callable[[QPointF | None], None] | None = None,
-        estimation_range_requested: (
-            Callable[[float | None], float | None] | None
-        ) = None,
+        estimation_fuze_requested: Callable[[], float | None] | None = None,
+        estimation_range_for_fuze: Callable[[float], float] | None = None,
     ) -> None:
         super().__init__()
         self._scene = QGraphicsScene(self)
@@ -437,6 +436,7 @@ class MapView(QGraphicsView):
         self._target_solution_background: QGraphicsRectItem | None = None
         self._trajectory_items: list[QGraphicsItem] = []
         self._estimation_hits: list[tuple[QPointF, float]] = []
+        self._estimation_fuzes: list[float | None] = []
         self._estimation_items: list[QGraphicsItem] = []
         self._estimation_candidates: list[QPointF] = []
         self._range_transform: AffineCalibration | None = None
@@ -444,9 +444,10 @@ class MapView(QGraphicsView):
         self._point_clicked = point_clicked
         self._points_changed = points_changed
         self._position_hovered = position_hovered
-        self._estimation_range_requested = (
-            estimation_range_requested or self._prompt_for_estimation_range
+        self._estimation_fuze_requested = (
+            estimation_fuze_requested or self._prompt_for_estimation_fuze
         )
+        self._estimation_range_for_fuze = estimation_range_for_fuze
         self._press_position: QPoint | None = None
         self._middle_press_position: QPoint | None = None
         self._press_on_marker = False
@@ -462,7 +463,7 @@ class MapView(QGraphicsView):
         self.setToolTip(
             "Left-click to place the gun and target. "
             "Middle-click a shot impact to record a position-estimate circle "
-            "with an independently observed range."
+            "from its observed fuze time."
         )
 
     def set_map(self, pixmap: QPixmap) -> None:
@@ -480,6 +481,7 @@ class MapView(QGraphicsView):
         self._target_solution_background = None
         self._trajectory_items.clear()
         self._estimation_hits.clear()
+        self._estimation_fuzes.clear()
         self._estimation_items.clear()
         self._estimation_candidates.clear()
         self._source_pixmap = pixmap
@@ -504,6 +506,7 @@ class MapView(QGraphicsView):
         self._target_solution_background = None
         self._trajectory_items.clear()
         self._estimation_hits.clear()
+        self._estimation_fuzes.clear()
         self._estimation_items.clear()
         self._estimation_candidates.clear()
         self._pixmap_item = None
@@ -755,7 +758,7 @@ class MapView(QGraphicsView):
             self._target_solution_background = self._scene.addRect(
                 QRectF(),
                 QPen(QColor("#e34f4f"), 1.4),
-                QBrush(QColor(17, 22, 16, 235)),
+                QBrush(QColor(17, 22, 16, 160)),
             )
             self._target_solution_background.setFlag(
                 QGraphicsItem.GraphicsItemFlag.ItemIgnoresTransformations
@@ -815,57 +818,62 @@ class MapView(QGraphicsView):
             self._markers.append(marker)
         self._sync_geometry(notify=False)
 
-    def add_estimation_hit(self, point: QPointF, radius_yards: float) -> bool:
-        """Record an independently ranged shot impact."""
+    def add_estimation_hit(
+        self,
+        point: QPointF,
+        radius_yards: float,
+        fuze_seconds: float | None = None,
+    ) -> bool:
+        """Record a shot impact with its internally estimated range."""
         if self._range_transform is None:
             return False
         if not isfinite(radius_yards) or radius_yards <= 0:
             return False
+        if fuze_seconds is not None and (
+            not isfinite(fuze_seconds) or fuze_seconds <= 0
+        ):
+            return False
         self._estimation_hits.append((QPointF(point), radius_yards))
+        self._estimation_fuzes.append(fuze_seconds)
         self._draw_estimation_overlay()
         return True
 
-    def _current_map_range_yards(self) -> float | None:
-        points = self.entity_points()
-        if len(points) != 2 or self._range_transform is None:
-            return None
-        radius_yards = self._range_transform.distance_yards(
-            Point(points[0].x(), points[0].y()),
-            Point(points[1].x(), points[1].y()),
-        )
-        return radius_yards if isfinite(radius_yards) and radius_yards > 0 else None
-
-    def _prompt_for_estimation_range(
-        self, suggested_yards: float | None
-    ) -> float | None:
+    def _prompt_for_estimation_fuze(self) -> float | None:
         value, accepted = QInputDialog.getDouble(
             self,
-            "Record observed shot range",
-            "Gun-to-impact horizontal range (yards):",
-            suggested_yards if suggested_yards is not None else 1000.0,
-            0.01,
-            1_000_000.0,
-            2,
+            "Record observed shot fuze",
+            "Fuze / flight time (seconds; range estimated at 0°):",
+            1.0,
+            0.001,
+            3_600.0,
+            3,
         )
         return value if accepted else None
 
     def _request_estimation_hit(self, point: QPointF) -> bool:
-        if self._range_transform is None:
+        if (
+            self._range_transform is None
+            or self._estimation_range_for_fuze is None
+        ):
             return False
-        radius_yards = self._estimation_range_requested(
-            self._current_map_range_yards()
-        )
-        if radius_yards is None:
+        fuze_seconds = self._estimation_fuze_requested()
+        if fuze_seconds is None:
             return False
-        return self.add_estimation_hit(point, radius_yards)
+        try:
+            radius_yards = self._estimation_range_for_fuze(fuze_seconds)
+        except ValueError:
+            return False
+        return self.add_estimation_hit(point, radius_yards, fuze_seconds)
 
     def clear_estimation_hits(self) -> None:
         self._estimation_hits.clear()
+        self._estimation_fuzes.clear()
         self._draw_estimation_overlay()
 
     def _remove_estimation_hit(self, index: int) -> None:
         if 0 <= index < len(self._estimation_hits):
             del self._estimation_hits[index]
+            del self._estimation_fuzes[index]
             self._draw_estimation_overlay()
 
     def _draw_estimation_overlay(self) -> None:
@@ -885,6 +893,12 @@ class MapView(QGraphicsView):
             QColor("#67e480"),
         )
         for index, (center, radius_yards) in enumerate(self._estimation_hits):
+            fuze_seconds = self._estimation_fuzes[index]
+            estimate_text = (
+                f"{fuze_seconds:.3f} s fuze"
+                if fuze_seconds is not None
+                else "range-derived"
+            )
             color = colors[index % len(colors)]
             halo_pen = QPen(QColor(10, 16, 20, 220), 5)
             halo_pen.setCosmetic(True)
@@ -900,7 +914,7 @@ class MapView(QGraphicsView):
                 path_item.setAcceptedMouseButtons(Qt.MouseButton.NoButton)
                 path_item.setZValue(4.0)
                 path_item.setToolTip(
-                    f"Shot {index + 1}: {radius_yards:,.1f} yd position estimate"
+                    f"Shot {index + 1}: {estimate_text} position estimate"
                 )
                 self._estimation_items.append(path_item)
 
@@ -911,7 +925,7 @@ class MapView(QGraphicsView):
             )
             self._scene.addItem(marker)
             marker.setToolTip(
-                f"Recorded shot {index + 1} — {radius_yards:,.1f} yd — "
+                f"Recorded shot {index + 1} — {estimate_text} — "
                 "right-click to remove"
             )
             self._estimation_items.append(marker)
