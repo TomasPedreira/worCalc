@@ -59,6 +59,19 @@ remove it. The first map click places the cannon, the second places the target, 
 later map clicks relocate only the target. Use **Clear** to reset the complete fire
 mission. The mouse wheel zooms and dragging the map pans.
 
+The collapsible **Target history** card keeps numbered targets for the current app
+session. Save the current gun/target pair as `T1`, `T2`, and so on, then use **New
+target** to retain the user-placed gun while starting another mission. Left-clicking
+a numbered map marker or history row selects it; clicking the selected target again
+collapses its map solution and impact marks. Only the selected target's observed shots
+are drawn, keeping the map uncluttered.
+
+**Record impact** logs an observed round as over/short and left/right yard offsets
+from the selected target. Positive values mean over and right; negative values mean
+short and left. Each shot is kept under its target and rendered as a compact `S1`,
+`S2`, etc. marker at its estimated landing position. Elevation fired, fuze, and an
+optional note can be stored with the observation.
+
 ### Terrain-aware distance and coordinate diagnostics
 
 Sampled altitude is always active. The app estimates gun and target elevations from
@@ -83,6 +96,10 @@ projected pixel coordinates. These make systematic crop or projection offsets
 reproducible. Hovering anywhere inside the map continuously shows pixel X/Y, world
 X/Y, and interpolated elevation. The compass uses the game transform without the
 former extra 90-degree display rotation.
+
+Game-file location markers are reference landmarks only. They are not treated as
+confirmed artillery positions; the yellow `G` marker is the gun position placed by
+the user for the current fire mission.
 
 The green endpoint is the origin and the red endpoint is the target. Range rings
 appear every 50 yards around the origin, with 100-yard rings emphasized and the final

@@ -25,7 +25,7 @@ class TrajectoryProfilePlot(QWidget):
     def paintEvent(self, _event) -> None:
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-        painter.fillRect(self.rect(), QColor("#10150f"))
+        painter.fillRect(self.rect(), QColor("#121811"))
         plot = QRectF(40, 18, max(1, self.width() - 52), max(1, self.height() - 48))
         painter.setPen(QPen(QColor("#394235"), 1))
         painter.drawRect(plot)

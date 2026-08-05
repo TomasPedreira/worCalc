@@ -31,6 +31,7 @@ from PySide6.QtWidgets import (
 )
 
 from ..domain.calibration import AffineCalibration, METRES_TO_YARDS, Point
+from ..domain.shot_history import FireTarget, correction_summary, observed_impact_point
 from ..maps.elevation import ElevationField
 from ..maps.entities import MapLocation
 
@@ -337,7 +338,7 @@ class CircleEntity(QGraphicsEllipseItem):
         self.setToolTip(
             "Cannon position — use CLEAR to replace"
             if not movable
-            else "Target position — drag or click elsewhere to relocate"
+            else "Position marker — drag to adjust"
         )
         self.setPos(position)
         self._ready = True
@@ -403,6 +404,93 @@ class EstimationHitMarker(QGraphicsEllipseItem):
         super().mousePressEvent(event)
 
 
+class SavedTargetMarker(QGraphicsEllipseItem):
+    """A compact selectable marker for a user-saved fire target."""
+
+    def __init__(
+        self,
+        target: FireTarget,
+        selected: bool,
+        select: Callable[[int], None],
+        move: Callable[[int, QPointF], None],
+        remove: Callable[[int], None],
+    ) -> None:
+        radius = 12 if selected else 10
+        super().__init__(-radius, -radius, radius * 2, radius * 2)
+        self.target_id = target.identifier
+        self.label = f"T{target.identifier}"
+        self._select = select
+        self._move = move
+        self._remove = remove
+        self._press_position: QPointF | None = None
+        pen = QPen(QColor("#fff0d2") if selected else QColor("#74474a"), 2)
+        pen.setCosmetic(True)
+        self.setPen(pen)
+        self.setBrush(
+            QBrush(
+                QColor(159, 47, 56, 235)
+                if selected
+                else QColor(72, 74, 68, 225)
+            )
+        )
+        self.setFlags(
+            QGraphicsItem.GraphicsItemFlag.ItemIgnoresTransformations
+            | QGraphicsItem.GraphicsItemFlag.ItemIsMovable
+            | QGraphicsItem.GraphicsItemFlag.ItemIsSelectable
+        )
+        self.setAcceptedMouseButtons(
+            Qt.MouseButton.LeftButton | Qt.MouseButton.RightButton
+        )
+        self.setCursor(Qt.CursorShape.OpenHandCursor)
+        self.setPos(target.target.x, target.target.y)
+        self.setZValue(7.0)
+        self.setToolTip(
+            f"{self.label} — drag to move; left-click to "
+            f"{'collapse' if selected else 'select'}; right-click to remove"
+        )
+
+    def paint(self, painter: QPainter, option: Any, widget: Any = None) -> None:
+        super().paint(painter, option, widget)
+        font = QFont("Arial", 7)
+        font.setBold(True)
+        painter.setFont(font)
+        painter.setPen(QColor("#fff4db"))
+        bounds = QFontMetricsF(font).tightBoundingRect(self.label)
+        center = self.rect().center()
+        painter.drawText(
+            QPointF(
+                center.x() - bounds.center().x(),
+                center.y() - bounds.center().y(),
+            ),
+            self.label,
+        )
+
+    def mousePressEvent(self, event: QGraphicsSceneMouseEvent) -> None:
+        if event.button() == Qt.MouseButton.RightButton:
+            self._remove(self.target_id)
+            event.accept()
+            return
+        if event.button() == Qt.MouseButton.LeftButton:
+            self._press_position = QPointF(self.scenePos())
+            self.setCursor(Qt.CursorShape.ClosedHandCursor)
+        super().mousePressEvent(event)
+
+    def mouseReleaseEvent(self, event: QGraphicsSceneMouseEvent) -> None:
+        super().mouseReleaseEvent(event)
+        if event.button() != Qt.MouseButton.LeftButton:
+            return
+        self.setCursor(Qt.CursorShape.OpenHandCursor)
+        press_position = self._press_position
+        self._press_position = None
+        if press_position is None:
+            return
+        current_position = QPointF(self.scenePos())
+        if (current_position - press_position).manhattanLength() > 1:
+            self._move(self.target_id, current_position)
+        else:
+            self._select(self.target_id)
+
+
 class MapView(QGraphicsView):
     """Zoomable map with fire-mission endpoints and live coordinate reporting."""
 
@@ -413,6 +501,9 @@ class MapView(QGraphicsView):
         position_hovered: Callable[[QPointF | None], None] | None = None,
         estimation_fuze_requested: Callable[[], float | None] | None = None,
         estimation_range_for_fuze: Callable[[float], float] | None = None,
+        saved_target_selected: Callable[[int], None] | None = None,
+        saved_target_moved: Callable[[int, QPointF], None] | None = None,
+        saved_target_removed: Callable[[int], None] | None = None,
     ) -> None:
         super().__init__()
         self._scene = QGraphicsScene(self)
@@ -439,6 +530,8 @@ class MapView(QGraphicsView):
         self._estimation_fuzes: list[float | None] = []
         self._estimation_items: list[QGraphicsItem] = []
         self._estimation_candidates: list[QPointF] = []
+        self._target_history_items: list[QGraphicsItem] = []
+        self._saved_target_markers: dict[int, SavedTargetMarker] = {}
         self._range_transform: AffineCalibration | None = None
         self._yards_per_pixel: float | None = None
         self._point_clicked = point_clicked
@@ -448,20 +541,25 @@ class MapView(QGraphicsView):
             estimation_fuze_requested or self._prompt_for_estimation_fuze
         )
         self._estimation_range_for_fuze = estimation_range_for_fuze
+        self._saved_target_selected = saved_target_selected or (lambda _target_id: None)
+        self._saved_target_moved = saved_target_moved or (
+            lambda _target_id, _point: None
+        )
+        self._saved_target_removed = saved_target_removed or (lambda _target_id: None)
         self._press_position: QPoint | None = None
         self._middle_press_position: QPoint | None = None
         self._press_on_marker = False
         self._interaction_enabled = True
         self.setMouseTracking(True)
         self.viewport().setMouseTracking(True)
-        self.setBackgroundBrush(QColor("#202124"))
+        self.setBackgroundBrush(QColor("#121811"))
         self.setRenderHint(QPainter.RenderHint.Antialiasing)
         self.setDragMode(QGraphicsView.DragMode.ScrollHandDrag)
         self.setViewportUpdateMode(QGraphicsView.ViewportUpdateMode.FullViewportUpdate)
         self.setTransformationAnchor(QGraphicsView.ViewportAnchor.AnchorUnderMouse)
         self.setResizeAnchor(QGraphicsView.ViewportAnchor.AnchorViewCenter)
         self.setToolTip(
-            "Left-click to place the gun and target. "
+            "Left-click once to place the gun; each later click saves a new target. "
             "Middle-click a shot impact to record a position-estimate circle "
             "from its observed fuze time."
         )
@@ -484,6 +582,8 @@ class MapView(QGraphicsView):
         self._estimation_fuzes.clear()
         self._estimation_items.clear()
         self._estimation_candidates.clear()
+        self._target_history_items.clear()
+        self._saved_target_markers.clear()
         self._source_pixmap = pixmap
         self._pixmap_item = self._scene.addPixmap(styled_map_pixmap(pixmap, self._map_style))
         self._elevation_item = None
@@ -509,6 +609,8 @@ class MapView(QGraphicsView):
         self._estimation_fuzes.clear()
         self._estimation_items.clear()
         self._estimation_candidates.clear()
+        self._target_history_items.clear()
+        self._saved_target_markers.clear()
         self._pixmap_item = None
         self._elevation_item = None
         self._elevation_field = None
@@ -547,7 +649,11 @@ class MapView(QGraphicsView):
             item.setBrush(QBrush(color))
             item.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIgnoresTransformations)
             item.setAcceptedMouseButtons(Qt.MouseButton.NoButton)
-            label = location.kind.title()
+            label = (
+                "Game-file reference (not a confirmed gun)"
+                if location.kind == "battery"
+                else location.kind.title()
+            )
             if location.faction:
                 label = f"{location.faction} {label}"
             details = [label, location.name]
@@ -563,6 +669,79 @@ class MapView(QGraphicsView):
             item.setZValue(6)
             self._scene.addItem(item)
             self._location_items.append(item)
+
+    def set_target_history(
+        self,
+        targets: list[FireTarget],
+        selected_target_id: int | None,
+    ) -> None:
+        """Render saved targets and only the selected target's spotted impacts."""
+
+        for item in self._target_history_items:
+            if item.scene() is self._scene:
+                self._scene.removeItem(item)
+        self._target_history_items.clear()
+        self._saved_target_markers.clear()
+        if self._pixmap_item is None:
+            return
+
+        selected_target: FireTarget | None = None
+        for target in targets:
+            selected = target.identifier == selected_target_id
+            marker = SavedTargetMarker(
+                target,
+                selected,
+                self._saved_target_selected,
+                self._saved_target_moved,
+                self._saved_target_removed,
+            )
+            self._scene.addItem(marker)
+            self._target_history_items.append(marker)
+            self._saved_target_markers[target.identifier] = marker
+            if selected:
+                selected_target = target
+
+        if selected_target is None or self._range_transform is None:
+            return
+        for index, shot in enumerate(selected_target.shots, start=1):
+            try:
+                impact = observed_impact_point(
+                    self._range_transform,
+                    selected_target.gun,
+                    selected_target.target,
+                    shot,
+                )
+            except ValueError:
+                continue
+            marker = self._scene.addEllipse(
+                QRectF(-6, -6, 12, 12),
+                QPen(QColor("#27190d"), 2),
+                QBrush(QColor("#ff9d3d")),
+            )
+            marker.setFlag(
+                QGraphicsItem.GraphicsItemFlag.ItemIgnoresTransformations
+            )
+            marker.setAcceptedMouseButtons(Qt.MouseButton.NoButton)
+            marker.setPos(impact.x, impact.y)
+            marker.setZValue(6.6)
+            marker.setToolTip(
+                f"T{selected_target.identifier} shot {index}: "
+                f"{correction_summary(shot)}"
+            )
+            label = self._scene.addSimpleText(f"S{index}")
+            font = QFont("Consolas", 9)
+            font.setWeight(QFont.Weight.DemiBold)
+            label.setFont(font)
+            label.setBrush(QColor("#fff0d2"))
+            label.setPen(QPen(QColor("#17100a"), 1))
+            label.setFlag(
+                QGraphicsItem.GraphicsItemFlag.ItemIgnoresTransformations
+            )
+            label.setAcceptedMouseButtons(Qt.MouseButton.NoButton)
+            label.setPos(impact.x + 8, impact.y - 10)
+            label.setZValue(6.7)
+            label.setToolTip(marker.toolTip())
+            self._target_history_items.extend((marker, label))
 
     def set_elevation_field(self, field: ElevationField | None) -> None:
         self._elevation_field = field
@@ -812,7 +991,7 @@ class MapView(QGraphicsView):
             marker.setToolTip(
                 "Cannon position — drag or right-click to remove"
                 if index == 0
-                else "Target position — drag, right-click, or click elsewhere"
+                else "Target position — drag to adjust or right-click to remove"
             )
             self._scene.addItem(marker)
             self._markers.append(marker)
@@ -1232,7 +1411,10 @@ class MapView(QGraphicsView):
     def mousePressEvent(self, event: QMouseEvent) -> None:
         if event.button() == Qt.MouseButton.LeftButton:
             self._press_position = event.position().toPoint()
-            self._press_on_marker = isinstance(self.itemAt(self._press_position), CircleEntity)
+            self._press_on_marker = isinstance(
+                self.itemAt(self._press_position),
+                (CircleEntity, SavedTargetMarker),
+            )
         elif event.button() == Qt.MouseButton.MiddleButton:
             self._middle_press_position = event.position().toPoint()
         super().mousePressEvent(event)

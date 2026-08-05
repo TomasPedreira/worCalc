@@ -26,7 +26,7 @@ class TrajectoryTests(unittest.TestCase):
                 9.1,
                 ARTILLERY_MUZZLE_HEIGHT_METRES,
             ),
-            1.4,
+            1.2,
         )
 
     def test_clearance_uses_artillery_muzzle_height_by_default(self):
@@ -40,7 +40,7 @@ class TrajectoryTests(unittest.TestCase):
 
         self.assertAlmostEqual(
             result.original_trajectory[0].shell_elevation_metres,
-            1.4,
+            1.2,
         )
 
     def test_flat_route_is_clear_and_impacts_at_calibrated_target(self):

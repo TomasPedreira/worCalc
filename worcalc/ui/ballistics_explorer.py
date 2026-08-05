@@ -49,7 +49,7 @@ class CurvePlot(QWidget):
     def paintEvent(self, _event) -> None:
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-        painter.fillRect(self.rect(), QColor("#202124"))
+        painter.fillRect(self.rect(), QColor("#121811"))
         plot = QRectF(76, 28, self.width() - 105, self.height() - 88)
         min_x, max_x = self.points[0].elevation_deg, self.points[-1].elevation_deg
         max_y = 4500.0
@@ -155,7 +155,7 @@ class ExplorerWindow(QMainWindow):
         controls.addWidget(self.details)
         self.comparison = QLabel()
         self.comparison.setWordWrap(True)
-        self.comparison.setStyleSheet("background: #34383e; padding: 10px; border-radius: 5px;")
+        self.comparison.setStyleSheet("background: #121811; padding: 10px; border-radius: 5px;")
         controls.addWidget(self.comparison)
         controls.addStretch()
         control_widget = QWidget()
