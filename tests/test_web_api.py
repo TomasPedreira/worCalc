@@ -35,6 +35,8 @@ class WebApiTests(unittest.TestCase):
         self.assertNotIn('id="pan-mode"', page.text)
         self.assertNotIn('id="zoom-in"', page.text)
         self.assertNotIn('id="zoom-out"', page.text)
+        self.assertNotIn('id="solve"', page.text)
+        self.assertNotIn('id="clear"', page.text)
         self.assertEqual(page.text.count('id="elevation"'), 1)
         self.assertEqual(page.text.count('id="fuze"'), 1)
         script = self.client.get("/static/app.js")
@@ -46,6 +48,15 @@ class WebApiTests(unittest.TestCase):
         self.assertIn("function battlefieldLabel(name)", script.text)
         self.assertIn("function rebaseRemainingPointer()", script.text)
         self.assertIn("startTranslation = {x:translateX, y:translateY}", script.text)
+        self.assertIn('toggle.setAttribute("aria-expanded", String(expanded))', script.text)
+        self.assertIn("modeGroups.hidden = !expanded", script.text)
+        self.assertIn('modeToggle.setAttribute("aria-expanded", String(modeExpanded))', script.text)
+        self.assertIn("mapCards.hidden = !modeExpanded", script.text)
+        self.assertIn("if (shouldRequestSolution && gun && target) requestSolution()", script.text)
+        move_marker = script.text.split("function moveMarker", 1)[1].split(
+            "function locationClass", 1
+        )[0]
+        self.assertNotIn("clearSolution()", move_marker)
         maps = self.client.get("/api/maps")
         self.assertEqual(maps.status_code, 200)
         self.assertEqual(maps.json()[0]["identifier"], "map-1")

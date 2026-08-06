@@ -26,6 +26,9 @@ let sceneHeight = 1;
 let gun = null;
 let target = null;
 let latestSolution = null;
+let expandedBattlefield = null;
+const expandedModes = new Map();
+let solutionRequestSequence = 0;
 
 const pointers = new Map();
 let primaryPointerId = null;
@@ -33,6 +36,7 @@ let pointerStart = null;
 let startTranslation = null;
 let dragged = false;
 let draggingMarker = null;
+let markerMoveStarted = false;
 let pendingPlacement = null;
 let pinching = false;
 let pinchStartDistance = 0;
@@ -119,7 +123,6 @@ function updateMissionGeometry() {
   if (!gun || !target) {
     shotLine.hidden = true;
     rangeChip.hidden = true;
-    $("#solve").disabled = true;
     return;
   }
   const gx = gun.x * baseScale;
@@ -134,11 +137,15 @@ function updateMissionGeometry() {
   shotLine.style.transform = `rotate(${Math.atan2(dy, dx)}rad)`;
   shotLine.hidden = false;
   rangeChip.hidden = !latestSolution;
-  $("#solve").disabled = false;
   updateRangeChipPosition();
 }
 
+function cancelPendingSolution() {
+  solutionRequestSequence += 1;
+}
+
 function clearSolution() {
+  cancelPendingSolution();
   latestSolution = null;
   for (const id of ["elevation", "fuze"]) {
     $(`#${id}`).textContent = "—";
@@ -175,7 +182,6 @@ function moveMarker(name, clientX, clientY) {
   const point = imagePoint(clientX, clientY);
   if (name === "gun") gun = point;
   else target = point;
-  clearSolution();
   updateMissionGeometry();
 }
 
@@ -185,6 +191,28 @@ function locationClass(location) {
 
 function battlefieldLabel(name) {
   return name.replace(/([a-z])([A-Z])/g, "$1 $2");
+}
+
+function createMapCard(map) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = `map-card${map.identifier === currentMap?.identifier ? " active" : ""}`;
+  const image = document.createElement("img");
+  image.src = map.image_url;
+  image.alt = "";
+  image.loading = "lazy";
+  const copy = document.createElement("div");
+  const name = document.createElement("b");
+  name.textContent = map.name;
+  const detail = document.createElement("small");
+  detail.textContent = `Area ${String(map.gameplay_area + 1).padStart(2, "0")}`;
+  copy.append(name, detail);
+  button.append(image, copy);
+  button.addEventListener("click", () => {
+    selectMap(map);
+    closePanels();
+  });
+  return button;
 }
 
 function renderLocations() {
@@ -215,39 +243,76 @@ function renderMapList(filter = "") {
   $("#map-list").replaceChildren(...Array.from(grouped, ([battlefield, variants]) => {
     const group = document.createElement("section");
     group.className = "map-group";
+    const expanded = term ? true : battlefield === expandedBattlefield;
     const heading = document.createElement("h3");
     heading.className = "map-group-title";
-    heading.textContent = battlefieldLabel(battlefield);
-    const list = document.createElement("div");
-    list.className = "map-variants";
-    list.append(...variants.map((map) => {
-      const button = document.createElement("button");
-      button.type = "button";
-      button.className = `map-card${map.identifier === currentMap?.identifier ? " active" : ""}`;
-      const image = document.createElement("img");
-      image.src = map.image_url;
-      image.alt = "";
-      image.loading = "lazy";
-      const copy = document.createElement("div");
-      const name = document.createElement("b");
-      name.textContent = map.name;
-      const detail = document.createElement("small");
-      detail.textContent = `${map.mode} · Area ${String(map.gameplay_area + 1).padStart(2, "0")}`;
-      copy.append(name, detail);
-      button.append(image, copy);
-      button.addEventListener("click", () => {
-        selectMap(map);
-        closePanels();
+    const toggle = document.createElement("button");
+    toggle.type = "button";
+    toggle.className = "map-group-toggle";
+    toggle.setAttribute("aria-expanded", String(expanded));
+    const groupName = document.createElement("span");
+    groupName.textContent = battlefieldLabel(battlefield);
+    const groupMeta = document.createElement("span");
+    groupMeta.className = "map-group-meta";
+    groupMeta.textContent = `${variants.length} maps`;
+    const chevron = document.createElement("span");
+    chevron.className = "map-group-chevron";
+    chevron.textContent = "⌄";
+    toggle.append(groupName, groupMeta, chevron);
+    toggle.addEventListener("click", () => {
+      expandedBattlefield = expandedBattlefield === battlefield ? null : battlefield;
+      renderMapList($("#map-search").value);
+    });
+    heading.append(toggle);
+    const modes = new Map();
+    for (const map of variants) {
+      if (!modes.has(map.mode)) modes.set(map.mode, []);
+      modes.get(map.mode).push(map);
+    }
+    const modeGroups = document.createElement("div");
+    modeGroups.className = "mode-groups";
+    modeGroups.hidden = !expanded;
+    modeGroups.append(...Array.from(modes, ([gameMode, modeMaps]) => {
+      const modeGroup = document.createElement("section");
+      modeGroup.className = "mode-group";
+      const modeExpanded = term ? true : expandedModes.get(battlefield) === gameMode;
+      const modeHeading = document.createElement("h4");
+      modeHeading.className = "mode-group-title";
+      const modeToggle = document.createElement("button");
+      modeToggle.type = "button";
+      modeToggle.className = "mode-group-toggle";
+      modeToggle.setAttribute("aria-expanded", String(modeExpanded));
+      const modeName = document.createElement("span");
+      modeName.textContent = gameMode;
+      const modeMeta = document.createElement("span");
+      modeMeta.className = "mode-group-meta";
+      modeMeta.textContent = String(modeMaps.length);
+      const modeChevron = document.createElement("span");
+      modeChevron.className = "mode-group-chevron";
+      modeChevron.textContent = "⌄";
+      modeToggle.append(modeName, modeMeta, modeChevron);
+      modeToggle.addEventListener("click", () => {
+        if (expandedModes.get(battlefield) === gameMode) expandedModes.delete(battlefield);
+        else expandedModes.set(battlefield, gameMode);
+        renderMapList($("#map-search").value);
       });
-      return button;
+      modeHeading.append(modeToggle);
+      const mapCards = document.createElement("div");
+      mapCards.className = "map-variants";
+      mapCards.hidden = !modeExpanded;
+      mapCards.append(...modeMaps.map(createMapCard));
+      modeGroup.append(modeHeading, mapCards);
+      return modeGroup;
     }));
-    group.append(heading, list);
+    group.append(heading, modeGroups);
     return group;
   }));
 }
 
 async function selectMap(map) {
   currentMap = map;
+  expandedBattlefield = map.battlefield;
+  expandedModes.set(map.battlefield, map.mode);
   $("#map-name").textContent = map.name;
   $("#map-subtitle").textContent = `${map.battlefield.toUpperCase()} / ${map.mode.toUpperCase()} / AREA ${String(map.gameplay_area + 1).padStart(2, "0")}`;
   locations = [];
@@ -335,6 +400,7 @@ function beginPinch() {
   startTranslation = null;
   dragged = false;
   draggingMarker = null;
+  markerMoveStarted = false;
   pendingPlacement = null;
 }
 
@@ -347,6 +413,7 @@ function rebaseRemainingPointer() {
   startTranslation = {x:translateX, y:translateY};
   dragged = false;
   draggingMarker = null;
+  markerMoveStarted = false;
   pendingPlacement = null;
 }
 
@@ -373,6 +440,7 @@ mapWrap.addEventListener("pointerdown", (event) => {
   dragged = false;
   const marker = event.target.closest("[data-marker]");
   draggingMarker = marker?.dataset.marker || null;
+  markerMoveStarted = false;
   pendingPlacement = marker ? null : (mode === "gun" ? "gun" : mode === "target" ? "target" : null);
 });
 
@@ -384,7 +452,13 @@ mapWrap.addEventListener("pointermove", (event) => {
   const dx = event.clientX - pointerStart.x;
   const dy = event.clientY - pointerStart.y;
   if (Math.hypot(dx, dy) > 4) dragged = true;
-  if (draggingMarker) moveMarker(draggingMarker, event.clientX, event.clientY);
+  if (draggingMarker && dragged) {
+    if (!markerMoveStarted) {
+      cancelPendingSolution();
+      markerMoveStarted = true;
+    }
+    moveMarker(draggingMarker, event.clientX, event.clientY);
+  }
   else if (dragged) {
     translateX = startTranslation.x + dx;
     translateY = startTranslation.y + dy;
@@ -401,16 +475,21 @@ function endPointer(event) {
     return;
   }
   if (event.pointerId === primaryPointerId) {
+    let shouldRequestSolution = draggingMarker && markerMoveStarted;
     if (pendingPlacement && !dragged) {
+      cancelPendingSolution();
       moveMarker(pendingPlacement, event.clientX, event.clientY);
       setMode("pan");
+      shouldRequestSolution = true;
     }
     primaryPointerId = null;
     pointerStart = null;
     startTranslation = null;
     draggingMarker = null;
+    markerMoveStarted = false;
     pendingPlacement = null;
     dragged = false;
+    if (shouldRequestSolution && gun && target) requestSolution();
   }
 }
 
@@ -419,7 +498,6 @@ mapWrap.addEventListener("pointercancel", endPointer);
 mapImage.addEventListener("load", resetView);
 $("#gun-mode").addEventListener("click", () => setMode(mode === "gun" ? "pan" : "gun"));
 $("#target-mode").addEventListener("click", () => setMode(mode === "target" ? "pan" : "target"));
-$("#clear").addEventListener("click", () => clearMission(true));
 $("#open-drawer").addEventListener("click", () => openPanel(drawer));
 $("#open-sheet").addEventListener("click", () => openPanel(sheet));
 backdrop.addEventListener("click", closePanels);
@@ -429,18 +507,20 @@ $("#cannon-select").addEventListener("change", () => refreshProjectiles());
 $("#projectile-select").addEventListener("change", updatePhysics);
 $("#method-select").addEventListener("change", clearSolution);
 
-$("#solve").addEventListener("click", async () => {
-  if (!gun || !target) return;
-  $("#solve").disabled = true;
-  $("#solve").textContent = "CALCULATING…";
+async function requestSolution() {
+  if (!gun || !target || !currentMap) return;
+  const requestId = ++solutionRequestSequence;
+  const requestedGun = {...gun};
+  const requestedTarget = {...target};
+  updateMissionGeometry();
   try {
     const response = await fetch("/api/solutions", {
       method:"POST",
       headers:{"Content-Type":"application/json"},
       body:JSON.stringify({
         map_id:currentMap.identifier,
-        gun,
-        target,
+        gun:requestedGun,
+        target:requestedTarget,
         cannon:$("#cannon-select").value,
         projectile:$("#projectile-select").value,
         method:$("#method-select").value,
@@ -448,6 +528,7 @@ $("#solve").addEventListener("click", async () => {
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data.detail || "Calculation failed");
+    if (requestId !== solutionRequestSequence) return;
     latestSolution = data;
     $("#distance").textContent = `${data.slant_range_yards.toFixed(0)} yd`;
     $("#bearing").textContent = `${data.bearing_degrees.toFixed(0).padStart(3,"0")}° ${data.bearing_direction}`;
@@ -456,12 +537,13 @@ $("#solve").addEventListener("click", async () => {
     $("#fuze").textContent = data.fuze_seconds == null ? "N/A" : `${data.fuze_seconds.toFixed(3)} s`;
     updateMissionGeometry();
   } catch (error) {
-    modePill.textContent = error.message.toUpperCase();
+    if (requestId === solutionRequestSequence) modePill.textContent = error.message.toUpperCase();
   } finally {
-    $("#solve").textContent = "CALCULATE FIRE SOLUTION";
-    $("#solve").disabled = false;
+    if (requestId === solutionRequestSequence) {
+      updateMissionGeometry();
+    }
   }
-});
+}
 
 window.addEventListener("resize", resetView);
 load();
