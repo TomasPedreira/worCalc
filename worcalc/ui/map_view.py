@@ -674,6 +674,7 @@ class MapView(QGraphicsView):
         self,
         targets: list[FireTarget],
         selected_target_id: int | None,
+        active_gun: Point | None,
     ) -> None:
         """Render saved targets and only the selected target's spotted impacts."""
 
@@ -701,13 +702,17 @@ class MapView(QGraphicsView):
             if selected:
                 selected_target = target
 
-        if selected_target is None or self._range_transform is None:
+        if (
+            selected_target is None
+            or active_gun is None
+            or self._range_transform is None
+        ):
             return
         for index, shot in enumerate(selected_target.shots, start=1):
             try:
                 impact = observed_impact_point(
                     self._range_transform,
-                    selected_target.gun,
+                    active_gun,
                     selected_target.target,
                     shot,
                 )

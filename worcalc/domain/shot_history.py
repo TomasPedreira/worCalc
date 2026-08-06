@@ -25,10 +25,9 @@ class ObservedShot:
 
 @dataclass
 class FireTarget:
-    """A user-saved gun/target pair with its observed shots."""
+    """A saved target position with its observed shots."""
 
     identifier: int
-    gun: Point
     target: Point
     shots: list[ObservedShot] = field(default_factory=list)
 

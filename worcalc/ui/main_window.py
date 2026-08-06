@@ -70,8 +70,8 @@ QWidget#sidebarPages, QWidget#sidebarSelectedTools, QWidget#historyBody {
 }
 QFrame#sidebarSection {
     background: #121811;
-    border: 0;
-    border-radius: 0;
+    border: 1px solid #465442;
+    border-radius: 3px;
 }
 QPushButton#sidebarSectionTitle {
     background: #121811;
@@ -110,7 +110,11 @@ QTreeWidget#targetHistoryTree::item:selected {
     border-color: #cdb36b;
     color: #e8d77e;
 }
-QWidget#mapWorkspace { background: #121811; }
+QFrame#mapWorkspace {
+    background: #121811;
+    border: 1px solid #465442;
+    border-radius: 2px;
+}
 QFrame#toolbar, QFrame#panelCard, QFrame#instructionCard {
     background: #121811;
     border: 1px solid #465442;
@@ -455,6 +459,7 @@ class MainWindow(QMainWindow):
         self.map_items: dict[Path, QTreeWidgetItem] = {}
         self.ballistic_solver: BallisticSolutionEngine | None = None
         self.target_histories: dict[Path, list[FireTarget]] = {}
+        self.active_guns: dict[Path, Point] = {}
         self._target_summary_cache: dict[tuple[object, ...], str] = {}
         self.selected_target_id: int | None = None
         self._target_overlay_suppressed = False
@@ -548,15 +553,22 @@ class MainWindow(QMainWindow):
         library_layout = QVBoxLayout(library_page)
         library_layout.setContentsMargins(0, 0, 0, 0)
         library_layout.setSpacing(12)
+        library_card = QFrame()
+        library_card.setObjectName("sidebarSection")
+        library_card_layout = QVBoxLayout(library_card)
+        library_card_layout.setContentsMargins(12, 10, 12, 12)
+        library_card_layout.setSpacing(10)
+        self.map_library_card = library_card
+        library_layout.addWidget(library_card, 1)
         library_label = QLabel("MAP LIBRARY")
         library_label.setObjectName("sectionTitle")
-        library_layout.addWidget(library_label)
+        library_card_layout.addWidget(library_label)
 
         self.map_search = QLineEdit()
         self.map_search.setPlaceholderText("SEARCH OPERATION AREA")
         self.map_search.setClearButtonEnabled(True)
         self.map_search.textChanged.connect(self._filter_map_tree)
-        library_layout.addWidget(self.map_search)
+        library_card_layout.addWidget(self.map_search)
 
         self.map_tree = QTreeWidget()
         self.map_tree.setHeaderHidden(True)
@@ -602,7 +614,7 @@ class MainWindow(QMainWindow):
                 )
                 self.map_items[record.image_path] = parent
         self.map_tree.collapseAll()
-        library_layout.addWidget(self.map_tree, 1)
+        library_card_layout.addWidget(self.map_tree, 1)
 
         instructions = QFrame()
         instructions.setObjectName("instructionCard")
@@ -633,6 +645,8 @@ class MainWindow(QMainWindow):
 
         map_data_title = QLabel("MAP DATA")
         map_data_title.setObjectName("sectionTitle")
+        self.map_data_title = map_data_title
+        self.sidebar_selected_layout.addStretch()
         self.sidebar_selected_layout.addWidget(map_data_title)
 
         self.map_info = QLabel()
@@ -656,7 +670,6 @@ class MainWindow(QMainWindow):
             "background:#121811; border:0; padding:8px 0;"
         )
         self.sidebar_selected_layout.addWidget(self.map_info)
-        self.sidebar_selected_layout.addStretch()
 
         selected_scroll = QScrollArea()
         selected_scroll.setObjectName("sidebarToolScroll")
@@ -726,10 +739,10 @@ class MainWindow(QMainWindow):
         layout = QHBoxLayout(page)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
-        workspace = QWidget()
+        workspace = QFrame()
         workspace.setObjectName("mapWorkspace")
         workspace_layout = QVBoxLayout(workspace)
-        workspace_layout.setContentsMargins(0, 0, 0, 0)
+        workspace_layout.setContentsMargins(1, 1, 1, 1)
         workspace_layout.setSpacing(0)
         toolbar = QFrame()
         toolbar.setObjectName("toolbar")
@@ -931,7 +944,7 @@ class MainWindow(QMainWindow):
             QSizePolicy.Policy.Maximum,
         )
         history_layout = QVBoxLayout(history_card)
-        history_layout.setContentsMargins(0, 0, 0, 0)
+        history_layout.setContentsMargins(12, 10, 12, 12)
         history_layout.setSpacing(8)
         self.history_toggle = QPushButton("TARGET HISTORY · 0")
         self.history_toggle.setObjectName("sidebarSectionTitle")
@@ -946,6 +959,8 @@ class MainWindow(QMainWindow):
         self.target_history_tree = QTreeWidget()
         self.target_history_tree.setObjectName("targetHistoryTree")
         self.target_history_tree.setHeaderHidden(True)
+        self.target_history_tree.setRootIsDecorated(False)
+        self.target_history_tree.setIndentation(0)
         self.target_history_tree.setFixedHeight(220)
         self.target_history_tree.itemClicked.connect(self._history_item_clicked)
         history_body_layout.addWidget(self.target_history_tree)
@@ -1015,7 +1030,12 @@ class MainWindow(QMainWindow):
         self.transform = record.calibration
         self.resolution = record.calibration.mean_yards_per_pixel
         self.current_image_size = (pixmap.width(), pixmap.height())
-        self.points.clear()
+        active_gun = self.active_guns.get(record.image_path)
+        self.points = (
+            [QPointF(active_gun.x, active_gun.y)]
+            if active_gun is not None
+            else []
+        )
         self._target_summary_cache.clear()
         self.selected_target_id = None
         self._target_overlay_suppressed = False
@@ -1057,6 +1077,7 @@ class MainWindow(QMainWindow):
                 parent.setExpanded(True)
                 parent = parent.parent()
         self.view.set_interaction_enabled(True)
+        self.view.set_points(self.points)
         self.warning_banner.hide()
         self._refresh_measurement()
 
@@ -1065,6 +1086,7 @@ class MainWindow(QMainWindow):
             return
         if not self.points:
             retained_target = self.view.retained_target_point()
+            self._set_active_gun(point)
             if retained_target is None:
                 self.points = [point]
             else:
@@ -1074,7 +1096,12 @@ class MainWindow(QMainWindow):
             self._refresh_measurement()
             return
 
-        gun = QPointF(self.points[0])
+        active_gun = self._active_gun()
+        gun = (
+            QPointF(active_gun.x, active_gun.y)
+            if active_gun is not None
+            else QPointF(self.points[0])
+        )
         self.selected_target_id = None
         self._target_overlay_suppressed = False
         self.points = [gun, point]
@@ -1084,13 +1111,32 @@ class MainWindow(QMainWindow):
 
     def _measurement_points_changed(self, points: list[QPointF]) -> None:
         self.points = points
+        self._set_active_gun(points[0] if points else None)
         self._sync_selected_target_from_points()
+        self._refresh_target_history()
         self._refresh_measurement()
 
     def _current_targets(self) -> list[FireTarget]:
         if self.current_map is None:
             return []
         return self.target_histories.setdefault(self.current_map.image_path, [])
+
+    def _active_gun(self) -> Point | None:
+        if self.current_map is None:
+            return None
+        return self.active_guns.get(self.current_map.image_path)
+
+    def _set_active_gun(self, point: QPointF | Point | None) -> None:
+        if self.current_map is None:
+            return
+        if point is None:
+            self.active_guns.pop(self.current_map.image_path, None)
+        else:
+            self.active_guns[self.current_map.image_path] = Point(
+                point.x() if isinstance(point, QPointF) else point.x,
+                point.y() if isinstance(point, QPointF) else point.y,
+            )
+        self._target_summary_cache.clear()
 
     def _target_by_id(self, target_id: int | None) -> FireTarget | None:
         if target_id is None:
@@ -1108,9 +1154,7 @@ class MainWindow(QMainWindow):
         target = self._target_by_id(self.selected_target_id)
         if target is None or len(self.points) != 2:
             return
-        target.gun = Point(self.points[0].x(), self.points[0].y())
         target.target = Point(self.points[1].x(), self.points[1].y())
-        self._refresh_target_history()
 
     def _autosave_current_target(self) -> None:
         if len(self.points) != 2:
@@ -1120,13 +1164,11 @@ class MainWindow(QMainWindow):
             targets = self._current_targets()
             target = FireTarget(
                 max((item.identifier for item in targets), default=0) + 1,
-                Point(self.points[0].x(), self.points[0].y()),
                 Point(self.points[1].x(), self.points[1].y()),
             )
             targets.append(target)
             self.selected_target_id = target.identifier
         else:
-            target.gun = Point(self.points[0].x(), self.points[0].y())
             target.target = Point(self.points[1].x(), self.points[1].y())
         self._target_overlay_suppressed = False
         self._refresh_target_history()
@@ -1144,10 +1186,15 @@ class MainWindow(QMainWindow):
             return
         self.selected_target_id = target_id
         self._target_overlay_suppressed = False
-        self.points = [
-            QPointF(target.gun.x, target.gun.y),
-            QPointF(target.target.x, target.target.y),
-        ]
+        active_gun = self._active_gun()
+        self.points = (
+            [
+                QPointF(active_gun.x, active_gun.y),
+                QPointF(target.target.x, target.target.y),
+            ]
+            if active_gun is not None
+            else []
+        )
         self.view.set_points(self.points)
         self._refresh_measurement()
         self._refresh_target_history()
@@ -1161,7 +1208,12 @@ class MainWindow(QMainWindow):
         if self.selected_target_id == target_id:
             self.selected_target_id = None
             self._target_overlay_suppressed = False
-            self.points = [QPointF(target.gun.x, target.gun.y)]
+            active_gun = self._active_gun()
+            self.points = (
+                [QPointF(active_gun.x, active_gun.y)]
+                if active_gun is not None
+                else []
+            )
             self.view.set_points(self.points)
             self._refresh_measurement()
         self._refresh_target_history()
@@ -1178,10 +1230,12 @@ class MainWindow(QMainWindow):
         target.target = Point(clamped.x(), clamped.y())
         self.selected_target_id = target_id
         self._target_overlay_suppressed = False
-        self.points = [
-            QPointF(target.gun.x, target.gun.y),
-            clamped,
-        ]
+        active_gun = self._active_gun()
+        self.points = (
+            [QPointF(active_gun.x, active_gun.y), clamped]
+            if active_gun is not None
+            else []
+        )
         self.view.set_points(self.points)
         self._refresh_measurement()
         self._refresh_target_history()
@@ -1194,8 +1248,9 @@ class MainWindow(QMainWindow):
             self._select_saved_target(target_id)
 
     def _target_history_summary(self, target: FireTarget) -> str:
-        if self.transform is None:
-            return f"T{target.identifier} · ELEV —\nCLEARANCE — · FUZE —"
+        active_gun = self._active_gun()
+        if self.transform is None or active_gun is None:
+            return f"T{target.identifier} · — · —"
         method_index = (
             self.ballistic_solver.method_index
             if self.ballistic_solver is not None
@@ -1204,8 +1259,8 @@ class MainWindow(QMainWindow):
         cache_key = (
             self.current_map.image_path if self.current_map is not None else None,
             target.identifier,
-            target.gun.x,
-            target.gun.y,
+            active_gun.x,
+            active_gun.y,
             target.target.x,
             target.target.y,
             self.cannon_type.currentText(),
@@ -1215,9 +1270,9 @@ class MainWindow(QMainWindow):
         cached = self._target_summary_cache.get(cache_key)
         if cached is not None:
             return cached
-        horizontal_range = self.transform.distance_yards(target.gun, target.target)
+        horizontal_range = self.transform.distance_yards(active_gun, target.target)
         gun_elevation = (
-            self.elevation_field.elevation_at(target.gun)
+            self.elevation_field.elevation_at(active_gun)
             if self.elevation_field is not None
             else None
         )
@@ -1250,36 +1305,7 @@ class MainWindow(QMainWindow):
             fuze_text = f"{fuze_seconds:.2f} s"
         except ValueError:
             fuze_text = "—"
-        clearance_text = "—"
-        if (
-            self.ballistic_solver is not None
-            and self.elevation_field is not None
-            and self.elevation_field.samples
-        ):
-            profile = self._terrain_profile_for_route(
-                target.gun,
-                target.target,
-                horizontal_range,
-            )
-            try:
-                speed, drag = ARTILLERY_PHYSICS[self.cannon_type.currentText()][
-                    self.projectile_type.currentText()
-                ]
-                clearance = self.ballistic_solver.analyze_clearance(
-                    horizontal_range,
-                    elevation_change if elevation_change is not None else 0.0,
-                    profile,
-                    speed,
-                    drag,
-                )
-            except (KeyError, ValueError):
-                clearance = None
-            if clearance is not None and clearance.minimum_clearance_metres is not None:
-                clearance_text = f"{clearance.minimum_clearance_metres:+.1f} m"
-        summary = (
-            f"T{target.identifier} · ELEV {elevation_text}\n"
-            f"CLEARANCE {clearance_text} · FUZE {fuze_text}"
-        )
+        summary = f"T{target.identifier} · {elevation_text} · {fuze_text}"
         self._target_summary_cache[cache_key] = summary
         return summary
 
@@ -1293,7 +1319,7 @@ class MainWindow(QMainWindow):
         for target in targets:
             summary = self._target_history_summary(target)
             target_item = QTreeWidgetItem([summary])
-            target_item.setSizeHint(0, QSize(0, 62))
+            target_item.setSizeHint(0, QSize(0, 38))
             target_item.setData(
                 0,
                 Qt.ItemDataRole.UserRole,
@@ -1316,13 +1342,17 @@ class MainWindow(QMainWindow):
                 selected_item = target_item
         self.target_history_tree.setCurrentItem(selected_item)
         self._updating_target_history = False
-        target_height = len(targets) * 62
+        target_height = len(targets) * 44
         shot_height = sum(len(target.shots) for target in targets) * 36
         self.target_history_tree.setFixedHeight(
             min(420, max(220, target_height + shot_height + 16))
         )
         self.history_toggle.setText(f"TARGET HISTORY · {len(targets)}")
-        self.view.set_target_history(targets, self.selected_target_id)
+        self.view.set_target_history(
+            targets,
+            self.selected_target_id,
+            self._active_gun(),
+        )
         self._update_history_controls()
 
     def _update_history_controls(self) -> None:
@@ -1704,6 +1734,7 @@ class MainWindow(QMainWindow):
 
     def _reset_measurement(self) -> None:
         self.points.clear()
+        self._set_active_gun(None)
         self.selected_target_id = None
         self._target_overlay_suppressed = False
         self.current_range_measurement = None
@@ -1760,6 +1791,7 @@ class MainWindow(QMainWindow):
         if self.current_map and self.current_map.image_path == image_path:
             self.resolution = scale
             self.points.clear()
+            self._set_active_gun(None)
             self.view.set_interaction_enabled(True)
             self.view.set_range_scale(scale)
             self._update_map_info()

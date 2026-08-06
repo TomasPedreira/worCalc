@@ -199,6 +199,34 @@ class FireMissionUiTests(unittest.TestCase):
         self.assertIn(1, self.window.view._saved_target_markers)
         self.assertIn(2, self.window.view._saved_target_markers)
 
+    def test_saved_targets_share_the_single_active_gun(self) -> None:
+        self.window._select_map(discover_maps(self.maps_dir)[0])
+        first_gun = QPointF(100, 120)
+        moved_gun = QPointF(180, 200)
+        first_target = QPointF(300, 320)
+        second_target = QPointF(500, 520)
+        self.window._add_measurement_point(first_gun)
+        self.window._add_measurement_point(first_target)
+        self.window._add_measurement_point(second_target)
+        targets = self.window._current_targets()
+        before = self.window.target_history_tree.topLevelItem(0).text(0)
+
+        self.window._measurement_points_changed([moved_gun, second_target])
+        self.window._select_saved_target(1)
+
+        self.assertEqual(
+            self.window._active_gun(),
+            Point(moved_gun.x(), moved_gun.y()),
+        )
+        self.assertTrue(all(not hasattr(target, "gun") for target in targets))
+        self.assertEqual(targets[0].target, Point(first_target.x(), first_target.y()))
+        self.assertEqual(targets[1].target, Point(second_target.x(), second_target.y()))
+        self.assertEqual(self.window.points[0], moved_gun)
+        self.assertNotEqual(
+            self.window.target_history_tree.topLevelItem(0).text(0),
+            before,
+        )
+
     def test_markers_are_labeled_yellow_gun_and_red_target(self) -> None:
         self.window._select_map(discover_maps(self.maps_dir)[0])
         self.window._add_measurement_point(QPointF(100, 120))
@@ -226,17 +254,12 @@ class FireMissionUiTests(unittest.TestCase):
         self.assertEqual(len(self.window._current_targets()[0].shots), 1)
         target_item = self.window.target_history_tree.topLevelItem(0)
         self.assertTrue(target_item.text(0).startswith("T1 ·"))
-        self.assertIn("ELEV", target_item.text(0))
-        self.assertIn("CLEARANCE", target_item.text(0))
-        self.assertIn("FUZE", target_item.text(0))
+        self.assertNotIn("ELEV", target_item.text(0))
+        self.assertNotIn("FUZE", target_item.text(0))
         self.assertNotIn("yd", target_item.text(0))
-        self.assertRegex(
-            target_item.text(0),
-            r"CLEARANCE [+-]\d+\.\d m",
-        )
-        self.assertNotIn("OBSTRUCTED", target_item.text(0))
-        self.assertNotIn("CLEAR ·", target_item.text(0))
+        self.assertNotIn("CLEARANCE", target_item.text(0))
         self.assertEqual(target_item.text(0).count("°"), 1)
+        self.assertTrue(target_item.text(0).endswith(" s"))
         self.assertIn("75 SHORT, 20 RIGHT", target_item.child(0).text(0))
         self.assertIn(1, self.window.view._saved_target_markers)
         self.assertEqual(len(self.window.view._target_history_items), 3)
@@ -505,6 +528,15 @@ class FireMissionUiTests(unittest.TestCase):
             ),
             1,
         )
+        map_data_index = self.window.sidebar_selected_layout.indexOf(
+            self.window.map_data_title
+        )
+        self.assertGreater(map_data_index, 1)
+        self.assertIsNotNone(
+            self.window.sidebar_selected_layout.itemAt(
+                map_data_index - 1
+            ).spacerItem()
+        )
 
         self.window._show_map_library()
         self.assertIs(
@@ -516,6 +548,7 @@ class FireMissionUiTests(unittest.TestCase):
         style = self.window.styleSheet()
         self.assertIn("QWidget#sidebar { border-right: 1px solid #465442; }", style)
         self.assertIn("QFrame#sidebarSection", style)
+        self.assertIn("QFrame#mapWorkspace", style)
         self.assertIn("background: #121811", style)
         self.assertIn(
             "QTreeWidget#targetHistoryTree::item:selected",
@@ -528,6 +561,12 @@ class FireMissionUiTests(unittest.TestCase):
         self.assertIn("background:#121811", self.window.map_info.styleSheet())
         self.assertIn("border:0", self.window.map_info.styleSheet())
         self.assertEqual(self.window.history_toggle.objectName(), "sidebarSectionTitle")
+        self.assertFalse(self.window.target_history_tree.rootIsDecorated())
+        self.assertEqual(self.window.target_history_tree.indentation(), 0)
+        self.assertEqual(self.window.map_library_card.objectName(), "sidebarSection")
+        self.assertTrue(
+            self.window.sidebar.isAncestorOf(self.window.map_library_card)
+        )
         self.assertEqual(
             self.window.record_impact_button.objectName(),
             "sidebarActionButton",
