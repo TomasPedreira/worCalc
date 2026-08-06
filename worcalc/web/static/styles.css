@@ -35,12 +35,14 @@ button:disabled { opacity:.45; }
 
 .map-wrap { position:relative; overflow:hidden; background:#b6a96e; touch-action:none; }
 .scene { position:absolute; left:0; top:0; transform-origin:0 0; will-change:transform; --inverse-zoom:1; }
-.map-image { position:absolute; inset:0; width:100%; height:100%; display:block; user-select:none; }
+.map-image { position:absolute; inset:0; width:100%; height:100%; display:block; user-select:none; transition:opacity .15s ease; }
+.map-wrap.map-loading .map-image { opacity:.58; }
 .location-layer { position:absolute; inset:0; pointer-events:none; }
 .map-name { position:absolute; top:10px; left:10px; z-index:14; max-width:62%; padding:8px 10px; background:rgba(10,17,11,.88); border:1px solid var(--line); border-radius:6px; }
 .map-name b { display:block; overflow:hidden; font-size:15px; text-overflow:ellipsis; white-space:nowrap; }
 .map-name small { display:block; overflow:hidden; color:var(--accent); font:9px monospace; letter-spacing:.08em; text-overflow:ellipsis; white-space:nowrap; }
 .mode-pill { position:absolute; left:50%; top:12px; transform:translateX(-50%); z-index:16; background:rgba(10,17,11,.9); border:1px solid var(--line); border-radius:999px; padding:7px 11px; color:var(--accent); font:10px monospace; white-space:nowrap; }
+.map-wrap.solution-loading .mode-pill { border-color:var(--accent); box-shadow:0 0 0 2px rgba(213,181,85,.18); }
 
 .marker-anchor,.location-anchor { position:absolute; width:0; height:0; z-index:8; }
 .marker-anchor { pointer-events:auto; touch-action:none; }

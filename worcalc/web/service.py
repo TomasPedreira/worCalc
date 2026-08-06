@@ -129,14 +129,42 @@ class FireMissionCalculator:
     def parchment_image_bytes(self, map_id: str) -> bytes:
         """Render the grayscale map mask with the desktop parchment palette."""
 
+        styled = self._parchment_image(map_id)
+        output = BytesIO()
+        styled.save(output, format="PNG")
+        return output.getvalue()
+
+    @lru_cache(maxsize=32)
+    def parchment_thumbnail_bytes(
+        self,
+        map_id: str,
+        max_size: int = 320,
+    ) -> bytes:
+        """Render a compact selector thumbnail without transferring the full map."""
+
+        if max_size <= 0:
+            raise ValueError("Thumbnail size must be positive")
+        styled = self._parchment_image(map_id)
+        styled.thumbnail((max_size, max_size), Image.Resampling.LANCZOS)
+        output = BytesIO()
+        styled.save(output, format="WEBP", quality=72, method=4)
+        return output.getvalue()
+
+    @lru_cache(maxsize=4)
+    def parchment_webp_image_bytes(self, map_id: str) -> bytes:
+        """Render the full map in a phone-friendly format with its dimensions intact."""
+
+        styled = self._parchment_image(map_id)
+        output = BytesIO()
+        styled.save(output, format="WEBP", quality=85, method=4)
+        return output.getvalue()
+
+    def _parchment_image(self, map_id: str) -> Image.Image:
         with Image.open(self.image_path(map_id)) as source:
             mask = source.convert("L")
-            paper = Image.new("RGB", mask.size, (222, 205, 151))
-            ink = Image.new("RGB", mask.size, (45, 36, 22))
-            styled = Image.composite(ink, paper, mask)
-            output = BytesIO()
-            styled.save(output, format="PNG")
-        return output.getvalue()
+        paper = Image.new("RGB", mask.size, (222, 205, 151))
+        ink = Image.new("RGB", mask.size, (45, 36, 22))
+        return Image.composite(ink, paper, mask)
 
     @lru_cache(maxsize=8)
     def map_locations(self, map_id: str) -> tuple[MapLocation, ...]:

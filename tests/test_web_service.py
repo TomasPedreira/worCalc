@@ -103,6 +103,28 @@ class FireMissionCalculatorTests(unittest.TestCase):
                 self.assertEqual(image.mode, "RGB")
                 self.assertEqual(image.getpixel((0, 0)), (133, 120, 86))
 
+    def test_renders_compact_webp_map_thumbnail(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            calculator = make_test_calculator(Path(directory))
+
+            content = calculator.parchment_thumbnail_bytes("map-1", max_size=80)
+
+            with Image.open(BytesIO(content)) as image:
+                self.assertEqual(image.format, "WEBP")
+                self.assertEqual(image.mode, "RGB")
+                self.assertEqual(image.size, (80, 60))
+
+    def test_renders_full_webp_map_without_changing_dimensions(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            calculator = make_test_calculator(Path(directory))
+
+            content = calculator.parchment_webp_image_bytes("map-1")
+
+            with Image.open(BytesIO(content)) as image:
+                self.assertEqual(image.format, "WEBP")
+                self.assertEqual(image.mode, "RGB")
+                self.assertEqual(image.size, (200, 150))
+
     def test_returns_projected_game_file_locations(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

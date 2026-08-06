@@ -29,6 +29,8 @@ let latestSolution = null;
 let expandedBattlefield = null;
 const expandedModes = new Map();
 let solutionRequestSequence = 0;
+let thumbnailPrefetchController = null;
+let mapImageRequestSequence = 0;
 
 const pointers = new Map();
 let primaryPointerId = null;
@@ -142,6 +144,8 @@ function updateMissionGeometry() {
 
 function cancelPendingSolution() {
   solutionRequestSequence += 1;
+  mapWrap.classList.remove("solution-loading");
+  if (!mapWrap.classList.contains("map-loading")) setMode(mode);
 }
 
 function clearSolution() {
@@ -193,12 +197,12 @@ function battlefieldLabel(name) {
   return name.replace(/([a-z])([A-Z])/g, "$1 $2");
 }
 
-function createMapCard(map) {
+function createMapCard(map, loadThumbnail) {
   const button = document.createElement("button");
   button.type = "button";
   button.className = `map-card${map.identifier === currentMap?.identifier ? " active" : ""}`;
   const image = document.createElement("img");
-  image.src = map.image_url;
+  if (loadThumbnail) image.src = map.thumbnail_url;
   image.alt = "";
   image.loading = "lazy";
   const copy = document.createElement("div");
@@ -213,6 +217,34 @@ function createMapCard(map) {
     closePanels();
   });
   return button;
+}
+
+function cancelThumbnailPrefetch() {
+  thumbnailPrefetchController?.abort();
+  thumbnailPrefetchController = null;
+}
+
+async function prefetchSkirmishThumbnails(battlefield) {
+  cancelThumbnailPrefetch();
+  const skirmishMaps = maps.filter((map) =>
+    map.battlefield === battlefield && map.mode.toLowerCase() === "skirmish");
+  if (!skirmishMaps.length) return;
+  const controller = new AbortController();
+  thumbnailPrefetchController = controller;
+  try {
+    for (const map of skirmishMaps) {
+      const response = await fetch(map.thumbnail_url, {
+        signal: controller.signal,
+        cache: "force-cache",
+      });
+      if (!response.ok) break;
+      await response.blob();
+    }
+  } catch (error) {
+    if (error.name !== "AbortError") console.warn("Thumbnail prefetch failed", error);
+  } finally {
+    if (thumbnailPrefetchController === controller) thumbnailPrefetchController = null;
+  }
 }
 
 function renderLocations() {
@@ -260,8 +292,12 @@ function renderMapList(filter = "") {
     chevron.textContent = "⌄";
     toggle.append(groupName, groupMeta, chevron);
     toggle.addEventListener("click", () => {
-      expandedBattlefield = expandedBattlefield === battlefield ? null : battlefield;
+      const nextBattlefield = expandedBattlefield === battlefield ? null : battlefield;
+      cancelThumbnailPrefetch();
+      expandedBattlefield = nextBattlefield;
+      if (nextBattlefield) expandedModes.delete(nextBattlefield);
       renderMapList($("#map-search").value);
+      if (nextBattlefield) prefetchSkirmishThumbnails(nextBattlefield);
     });
     heading.append(toggle);
     const modes = new Map();
@@ -293,14 +329,17 @@ function renderMapList(filter = "") {
       modeToggle.append(modeName, modeMeta, modeChevron);
       modeToggle.addEventListener("click", () => {
         if (expandedModes.get(battlefield) === gameMode) expandedModes.delete(battlefield);
-        else expandedModes.set(battlefield, gameMode);
+        else {
+          expandedModes.set(battlefield, gameMode);
+          if (gameMode.toLowerCase() !== "skirmish") cancelThumbnailPrefetch();
+        }
         renderMapList($("#map-search").value);
       });
       modeHeading.append(modeToggle);
       const mapCards = document.createElement("div");
       mapCards.className = "map-variants";
       mapCards.hidden = !modeExpanded;
-      mapCards.append(...modeMaps.map(createMapCard));
+      mapCards.append(...modeMaps.map((map) => createMapCard(map, modeExpanded)));
       modeGroup.append(modeHeading, mapCards);
       return modeGroup;
     }));
@@ -310,15 +349,14 @@ function renderMapList(filter = "") {
 }
 
 async function selectMap(map) {
+  cancelThumbnailPrefetch();
   currentMap = map;
-  expandedBattlefield = map.battlefield;
-  expandedModes.set(map.battlefield, map.mode);
   $("#map-name").textContent = map.name;
   $("#map-subtitle").textContent = `${map.battlefield.toUpperCase()} / ${map.mode.toUpperCase()} / AREA ${String(map.gameplay_area + 1).padStart(2, "0")}`;
   locations = [];
   renderLocations();
   clearMission(false);
-  mapImage.src = map.image_url;
+  loadMapImage(map);
   renderMapList($("#map-search").value);
   try {
     const response = await fetch(`/api/maps/${encodeURIComponent(map.identifier)}/locations`);
@@ -331,6 +369,25 @@ async function selectMap(map) {
   } catch (error) {
     modePill.textContent = error.message.toUpperCase();
   }
+}
+
+function loadMapImage(map) {
+  const requestId = ++mapImageRequestSequence;
+  const preloader = new Image();
+  mapWrap.classList.add("map-loading");
+  modePill.textContent = "LOADING SELECTED MAP...";
+  preloader.addEventListener("load", () => {
+    if (requestId !== mapImageRequestSequence || currentMap?.identifier !== map.identifier) return;
+    mapImage.src = preloader.src;
+    mapWrap.classList.remove("map-loading");
+    setMode(mode);
+  });
+  preloader.addEventListener("error", () => {
+    if (requestId !== mapImageRequestSequence || currentMap?.identifier !== map.identifier) return;
+    mapWrap.classList.remove("map-loading");
+    modePill.textContent = "SELECTED MAP FAILED TO LOAD";
+  });
+  preloader.src = map.image_url;
 }
 
 function updatePhysics() {
@@ -502,7 +559,10 @@ $("#open-drawer").addEventListener("click", () => openPanel(drawer));
 $("#open-sheet").addEventListener("click", () => openPanel(sheet));
 backdrop.addEventListener("click", closePanels);
 document.querySelectorAll(".close").forEach((button) => button.addEventListener("click", closePanels));
-$("#map-search").addEventListener("input", (event) => renderMapList(event.target.value));
+$("#map-search").addEventListener("input", (event) => {
+  cancelThumbnailPrefetch();
+  renderMapList(event.target.value);
+});
 $("#cannon-select").addEventListener("change", () => refreshProjectiles());
 $("#projectile-select").addEventListener("change", updatePhysics);
 $("#method-select").addEventListener("change", clearSolution);
@@ -512,6 +572,9 @@ async function requestSolution() {
   const requestId = ++solutionRequestSequence;
   const requestedGun = {...gun};
   const requestedTarget = {...target};
+  let succeeded = false;
+  mapWrap.classList.add("solution-loading");
+  modePill.textContent = "CALCULATING FIRE SOLUTION...";
   updateMissionGeometry();
   try {
     const response = await fetch("/api/solutions", {
@@ -535,11 +598,14 @@ async function requestSolution() {
     $("#height").textContent = data.height_difference_metres == null ? "N/A" : `${data.height_difference_metres.toFixed(1)} m`;
     $("#elevation").textContent = data.elevation_degrees == null ? "N/A" : `${data.elevation_degrees.toFixed(3)}°`;
     $("#fuze").textContent = data.fuze_seconds == null ? "N/A" : `${data.fuze_seconds.toFixed(3)} s`;
+    succeeded = true;
     updateMissionGeometry();
   } catch (error) {
     if (requestId === solutionRequestSequence) modePill.textContent = error.message.toUpperCase();
   } finally {
     if (requestId === solutionRequestSequence) {
+      mapWrap.classList.remove("solution-loading");
+      if (succeeded) setMode(mode);
       updateMissionGeometry();
     }
   }

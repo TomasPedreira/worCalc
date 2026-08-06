@@ -39,6 +39,16 @@ address, for example:
 If Windows Firewall asks, allow Python on private networks. This server has no
 login and should only be used on a trusted local network.
 
+Remote web calculator through Tailscale
+---------------------------------------
+
+Double-click START_REMOTE_WORCALC.bat and approve the Administrator prompt.
+The launcher starts worCalc on localhost, waits for it to become ready, and runs
+"tailscale serve --bg 8000". It then prints the private HTTPS address to open on
+your phone. Tailscale must already be installed, connected, and signed in on both
+devices. The PC must remain powered on; the Python server stays in a minimized
+window until that window is closed or the PC is restarted.
+
 Map data
 --------
 

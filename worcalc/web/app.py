@@ -16,6 +16,7 @@ from .service import FireMissionCalculator, MapNotFoundError
 
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
+MAP_CACHE_HEADERS = {"Cache-Control": "private, max-age=604800"}
 
 
 class PointRequest(BaseModel):
@@ -65,25 +66,58 @@ def create_app(
             {
                 **asdict(info),
                 "image_url": (
-                    f"/api/maps/{info.identifier}/image?style=parchment"
+                    f"/api/maps/{info.identifier}/image?style=parchment&format=webp"
                 ),
+                "thumbnail_url": f"/api/maps/{info.identifier}/thumbnail",
             }
             for info in calculator.list_maps()
         ]
 
     @app.get("/api/maps/{map_id}/image")
-    def map_image(map_id: str, style: str = "parchment") -> Response:
+    def map_image(
+        map_id: str,
+        style: str = "parchment",
+        format: str = "png",
+    ) -> Response:
         try:
             path = calculator.image_path(map_id)
         except MapNotFoundError as error:
             raise HTTPException(status_code=404, detail=str(error)) from error
         if style == "raw":
-            return FileResponse(path, media_type="image/png")
+            return FileResponse(
+                path,
+                media_type="image/png",
+                headers=MAP_CACHE_HEADERS,
+            )
         if style != "parchment":
             raise HTTPException(status_code=400, detail=f"Unknown map style: {style}")
+        if format == "webp":
+            return Response(
+                content=calculator.parchment_webp_image_bytes(map_id),
+                media_type="image/webp",
+                headers=MAP_CACHE_HEADERS,
+            )
+        if format != "png":
+            raise HTTPException(
+                status_code=400,
+                detail=f"Unknown map image format: {format}",
+            )
         return Response(
             content=calculator.parchment_image_bytes(map_id),
             media_type="image/png",
+            headers=MAP_CACHE_HEADERS,
+        )
+
+    @app.get("/api/maps/{map_id}/thumbnail")
+    def map_thumbnail(map_id: str) -> Response:
+        try:
+            content = calculator.parchment_thumbnail_bytes(map_id)
+        except MapNotFoundError as error:
+            raise HTTPException(status_code=404, detail=str(error)) from error
+        return Response(
+            content=content,
+            media_type="image/webp",
+            headers=MAP_CACHE_HEADERS,
         )
 
     @app.get("/api/maps/{map_id}/locations")

@@ -32,6 +32,7 @@ class WebApiTests(unittest.TestCase):
         self.assertIn("MOBILE FIRE DIRECTION", page.text)
         self.assertIn('id="gun-mode"', page.text)
         self.assertIn('id="target-mode"', page.text)
+        self.assertIn('id="mode-pill" role="status" aria-live="polite"', page.text)
         self.assertNotIn('id="pan-mode"', page.text)
         self.assertNotIn('id="zoom-in"', page.text)
         self.assertNotIn('id="zoom-out"', page.text)
@@ -52,17 +53,35 @@ class WebApiTests(unittest.TestCase):
         self.assertIn("modeGroups.hidden = !expanded", script.text)
         self.assertIn('modeToggle.setAttribute("aria-expanded", String(modeExpanded))', script.text)
         self.assertIn("mapCards.hidden = !modeExpanded", script.text)
+        self.assertIn("function prefetchSkirmishThumbnails(battlefield)", script.text)
+        self.assertIn("function loadMapImage(map)", script.text)
+        self.assertIn('modePill.textContent = "LOADING SELECTED MAP..."', script.text)
+        self.assertIn('modePill.textContent = "SELECTED MAP FAILED TO LOAD"', script.text)
+        self.assertIn('modePill.textContent = "CALCULATING FIRE SOLUTION..."', script.text)
+        self.assertIn('mapWrap.classList.add("solution-loading")', script.text)
+        self.assertIn('mapWrap.classList.remove("solution-loading")', script.text)
+        self.assertIn("if (loadThumbnail) image.src = map.thumbnail_url", script.text)
+        self.assertIn("if (nextBattlefield) prefetchSkirmishThumbnails(nextBattlefield)", script.text)
+        self.assertIn('if (gameMode.toLowerCase() !== "skirmish") cancelThumbnailPrefetch()', script.text)
         self.assertIn("if (shouldRequestSolution && gun && target) requestSolution()", script.text)
         move_marker = script.text.split("function moveMarker", 1)[1].split(
             "function locationClass", 1
         )[0]
         self.assertNotIn("clearSolution()", move_marker)
+        request_solution = script.text.split("async function requestSolution", 1)[1].split(
+            "window.addEventListener", 1
+        )[0]
+        self.assertNotIn("clearSolution()", request_solution)
         maps = self.client.get("/api/maps")
         self.assertEqual(maps.status_code, 200)
         self.assertEqual(maps.json()[0]["identifier"], "map-1")
         self.assertEqual(
             maps.json()[0]["image_url"],
-            "/api/maps/map-1/image?style=parchment",
+            "/api/maps/map-1/image?style=parchment&format=webp",
+        )
+        self.assertEqual(
+            maps.json()[0]["thumbnail_url"],
+            "/api/maps/map-1/thumbnail",
         )
 
         image = self.client.get("/api/maps/map-1/image")
@@ -70,6 +89,28 @@ class WebApiTests(unittest.TestCase):
         self.assertEqual(image.headers["content-type"], "image/png")
         with Image.open(BytesIO(image.content)) as styled:
             self.assertEqual(styled.getpixel((0, 0)), (133, 120, 86))
+        self.assertEqual(image.headers["cache-control"], "private, max-age=604800")
+
+        webp_image = self.client.get(
+            "/api/maps/map-1/image?style=parchment&format=webp"
+        )
+        self.assertEqual(webp_image.status_code, 200)
+        self.assertEqual(webp_image.headers["content-type"], "image/webp")
+        with Image.open(BytesIO(webp_image.content)) as selected_map:
+            self.assertEqual(selected_map.size, (200, 150))
+
+        thumbnail = self.client.get("/api/maps/map-1/thumbnail")
+        self.assertEqual(thumbnail.status_code, 200)
+        self.assertEqual(thumbnail.headers["content-type"], "image/webp")
+        self.assertEqual(thumbnail.headers["cache-control"], "private, max-age=604800")
+        with Image.open(BytesIO(thumbnail.content)) as preview:
+            self.assertEqual(preview.size, (200, 150))
+
+        select_map = script.text.split("async function selectMap", 1)[1].split(
+            "function updatePhysics", 1
+        )[0]
+        self.assertNotIn("expandedBattlefield = map.battlefield", select_map)
+        self.assertNotIn("expandedModes.set(map.battlefield, map.mode)", select_map)
 
         raw_image = self.client.get("/api/maps/map-1/image?style=raw")
         with Image.open(BytesIO(raw_image.content)) as raw:
