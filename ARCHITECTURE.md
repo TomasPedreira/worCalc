@@ -9,6 +9,7 @@ worcalc/
   domain/      Pure calibration, ranging, projectile, trajectory, and ballistic math
   maps/        PAK catalog, entity decoding, projection, and elevation sampling
   ui/          Qt widgets and application composition
+  web/         FastAPI composition and browser assets
   paths.py     Shared repository data locations
 scripts/       Thin developer-tool entry points
 tests/         Tests grouped by the production boundary they exercise
@@ -26,6 +27,8 @@ domain  <-  maps  <-  ui
 - `domain` must not import Qt, map assets, or UI code.
 - `maps` may use domain primitives but must not import Qt.
 - `ui` composes both layers and owns rendering only.
+- `web` is an alternate presentation/integration boundary that composes `domain`
+  and `maps` without importing Qt or `ui`.
 - `scripts` are entry points; reusable code belongs under `worcalc`.
 - Production code must never import from `scripts` or the compatibility `src`
   package.

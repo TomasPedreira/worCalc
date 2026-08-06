@@ -23,6 +23,22 @@ Launch
 
 For subsequent launches, only the launch command is required.
 
+LAN web calculator
+------------------
+
+To serve the browser calculator to devices on the same network, run:
+
+    .\.venv\Scripts\python.exe -m worcalc.web
+
+Open http://localhost:8000 on this computer. To open it from a phone, run
+"ipconfig", find this computer's IPv4 Address, and browse to port 8000 at that
+address, for example:
+
+    http://192.168.1.20:8000
+
+If Windows Firewall asks, allow Python on private networks. This server has no
+login and should only be used on a trusted local network.
+
 Map data
 --------
 

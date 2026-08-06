@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+  <meta name="theme-color" content="#101810">
+  <title>worCalc Mobile</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <button class="icon-btn" id="open-drawer" aria-label="Open map library">☰</button>
+      <div class="brand"><strong>WORCALC</strong><span>MOBILE FIRE DIRECTION</span></div>
+      <button class="icon-btn" id="open-sheet" aria-label="Open fire controls">⌃</button>
+    </header>
+
+    <nav class="placement-bar" aria-label="Fire mission tools">
+      <button id="gun-mode">PLACE GUN</button>
+      <button id="target-mode">PLACE TARGET</button>
+      <button id="clear" aria-label="Clear fire mission">↺</button>
+    </nav>
+
+    <main class="map-wrap" id="map-wrap">
+      <div class="scene" id="scene">
+        <img class="map-image" id="map-image" alt="Selected battlefield map" draggable="false">
+        <div class="location-layer" id="location-layer" aria-hidden="true"></div>
+        <div class="shot-line" id="shot-line" hidden></div>
+        <div class="marker-anchor" id="gun-anchor" data-marker="gun" hidden>
+          <div class="marker gun"><span>GUN</span></div>
+        </div>
+        <div class="marker-anchor" id="target-anchor" data-marker="target" hidden>
+          <div class="marker target"><span>TARGET</span></div>
+        </div>
+      </div>
+
+      <div class="map-name"><b id="map-name">Loading maps…</b><small id="map-subtitle">WORCALC</small></div>
+      <div class="mode-pill" id="mode-pill">DRAG OR PINCH MAP</div>
+      <div class="range-chip" id="range-chip" hidden>
+        <div><small>CLEARANCE</small><b id="elevation">—</b></div>
+        <span aria-hidden="true"></span>
+        <div><small>FUZE</small><b id="fuze">—</b></div>
+      </div>
+      <div class="status-bar">
+        <div class="metric"><small>Distance</small><b id="distance">—</b></div>
+        <div class="metric"><small>Bearing</small><b id="bearing">—</b></div>
+        <div class="metric"><small>Δ Height</small><b id="height">—</b></div>
+      </div>
+      <button class="solve-btn" id="solve" disabled>CALCULATE FIRE SOLUTION</button>
+    </main>
+  </div>
+
+  <div class="backdrop" id="backdrop"></div>
+
+  <aside class="drawer" id="drawer" aria-label="Map library">
+    <div class="panel-head"><h2>Map library</h2><button class="icon-btn close" aria-label="Close map library">×</button></div>
+    <input class="search" id="map-search" type="search" placeholder="Filter battlefield, mode, or map">
+    <div class="map-list" id="map-list"></div>
+  </aside>
+
+  <section class="sheet" id="sheet" aria-label="Fire controls">
+    <div class="handle"></div>
+    <div class="panel-head"><h2>Fire controls</h2><button class="icon-btn close" aria-label="Close fire controls">×</button></div>
+    <div class="form-grid">
+      <div class="field"><label for="cannon-select">Cannon</label><select id="cannon-select"></select></div>
+      <div class="field"><label for="projectile-select">Ammunition</label><select id="projectile-select"></select></div>
+      <div class="field"><label for="muzzle-velocity">Muzzle velocity</label><input id="muzzle-velocity" readonly></div>
+      <div class="field"><label for="drag-factor">Drag factor</label><input id="drag-factor" readonly></div>
+      <div class="field full"><label for="method-select">Elevation method</label><select id="method-select"></select></div>
+    </div>
+  </section>
+
+  <script src="/static/app.js" defer></script>
+</body>
+</html>

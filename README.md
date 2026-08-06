@@ -42,6 +42,26 @@ py -3.12 -m venv .venv
 .\.venv\Scripts\python.exe -m worcalc
 ```
 
+## LAN web calculator
+
+To use worCalc from another device on the same network, start the FastAPI server:
+
+```powershell
+.\.venv\Scripts\python.exe -m worcalc.web
+```
+
+Open `http://localhost:8000` on the computer running worCalc. On a phone or
+another computer, replace `localhost` with the server computer's IPv4 address,
+shown by `ipconfig` (for example, `http://192.168.1.20:8000`). Allow Python on
+private networks if Windows Firewall prompts.
+
+The browser workflow supports one fire mission at a time. Choose a grouped map
+from the map drawer, use **Place gun** and **Place target**, then request the
+solution. Drag the map to pan, pinch to zoom, and drag either marker to refine
+its position. Cannon, ammunition, and elevation-model settings are available
+from the fire-controls panel. The server has no authentication and should only
+be exposed on a trusted local network.
+
 Choose a map from the Battlefield → Mode → gameplay-area selector, then click two
 points to see their distance in yards and an estimated 3-inch shell time of flight.
 The estimate uses the installed shell physics values of 370 m/s and 0.1 air
