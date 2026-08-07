@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import asdict
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -16,7 +16,12 @@ from .service import FireMissionCalculator, MapNotFoundError
 
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
-MAP_CACHE_HEADERS = {"Cache-Control": "private, max-age=604800"}
+NO_STORE_HEADERS = {
+    "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+    "Pragma": "no-cache",
+}
+MAP_CACHE_HEADERS = NO_STORE_HEADERS
+WEB_ASSET_CACHE_HEADERS = NO_STORE_HEADERS
 
 
 class PointRequest(BaseModel):
@@ -43,9 +48,19 @@ def create_app(
     app.state.calculator = calculator
     app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
+    @app.middleware("http")
+    async def prevent_stale_web_ui(request: Request, call_next):
+        response = await call_next(request)
+        if request.url.path == "/" or request.url.path.startswith("/static/"):
+            response.headers.update(WEB_ASSET_CACHE_HEADERS)
+        return response
+
     @app.get("/", include_in_schema=False)
     def index() -> FileResponse:
-        return FileResponse(STATIC_DIR / "index.html")
+        return FileResponse(
+            STATIC_DIR / "index.html",
+            headers=WEB_ASSET_CACHE_HEADERS,
+        )
 
     @app.get("/api/options")
     def options() -> dict[str, object]:

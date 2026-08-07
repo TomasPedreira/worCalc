@@ -94,6 +94,27 @@ class FireMissionCalculatorTests(unittest.TestCase):
             self.assertIsNone(result.height_difference_metres)
             self.assertIsNotNone(result.elevation_degrees)
             self.assertIsNotNone(result.fuze_seconds)
+            self.assertIsNone(result.clearance_status)
+            self.assertIsNone(result.height_above_target_metres)
+
+    def test_calculates_terrain_clearance_and_height_over_target(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            calculator = make_test_calculator(root)
+            add_test_locations(root)
+
+            result = calculator.calculate(
+                "map-1",
+                Point(10, 20),
+                Point(110, 20),
+                "3-inch Ordnance",
+                "Shell",
+                calculator.default_method,
+            )
+
+            self.assertIn(result.clearance_status, {"clear", "obstructed"})
+            self.assertIsNotNone(result.height_above_target_metres)
+            self.assertIsNotNone(result.elevation_degrees)
 
     def test_renders_map_with_desktop_parchment_palette(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

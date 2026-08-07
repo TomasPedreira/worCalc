@@ -49,6 +49,8 @@ class FireSolution:
     bearing_direction: str
     elevation_degrees: float | None
     fuze_seconds: float | None
+    clearance_status: str | None
+    height_above_target_metres: float | None
 
 
 class FireMissionCalculator:
@@ -221,6 +223,29 @@ class FireMissionCalculator:
         )
         measurement = RangeMeasurement(horizontal_range, height_difference)
         elevation = solver.solve(horizontal_range, height_difference or 0.0)
+        clearance = None
+        if elevation is not None and field.samples:
+            try:
+                terrain_profile = field.profile_along_line(
+                    gun,
+                    target,
+                    horizontal_range,
+                    spacing_yards=5.0,
+                )
+                clearance = solver.analyze_clearance(
+                    horizontal_range,
+                    height_difference or 0.0,
+                    terrain_profile,
+                    speed,
+                    drag,
+                )
+            except ValueError:
+                clearance = None
+        solution_elevation = (
+            clearance.clearing_elevation_deg
+            if clearance is not None
+            else elevation
+        )
         try:
             fuze = artillery_time_of_flight(
                 measurement.slant_yards,
@@ -243,8 +268,18 @@ class FireMissionCalculator:
             height_difference_metres=height_difference,
             bearing_degrees=bearing,
             bearing_direction=self._bearing_direction(bearing),
-            elevation_degrees=elevation,
+            elevation_degrees=solution_elevation,
             fuze_seconds=fuze,
+            clearance_status=(
+                "obstructed" if clearance is not None and clearance.obstructed
+                else "clear" if clearance is not None
+                else None
+            ),
+            height_above_target_metres=(
+                clearance.height_above_target_metres
+                if clearance is not None
+                else None
+            ),
         )
 
     def _elevation_field(self, map_id: str) -> ElevationField:

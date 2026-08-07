@@ -57,14 +57,16 @@ button:disabled { opacity:.45; }
 .location-dot.spawn.csa { background:#e34f4f; }
 .location-dot.spawn:not(.usa):not(.csa) { background:#9aa0a6; }
 .location-dot.objective { width:21px; height:21px; background:#b75cff; }
-.shot-line { position:absolute; height:2px; transform-origin:0 50%; z-index:7; pointer-events:none; background:repeating-linear-gradient(90deg,var(--danger) 0 8px,transparent 8px 13px); }
+.shot-line { position:absolute; height:2px; transform-origin:0 50%; z-index:7; pointer-events:none; background:repeating-linear-gradient(90deg,var(--muted) 0 8px,transparent 8px 13px); }
+.shot-line.clear { background:repeating-linear-gradient(90deg,#63d785 0 8px,transparent 8px 13px); }
+.shot-line.obstructed { background:repeating-linear-gradient(90deg,var(--danger) 0 8px,transparent 8px 13px); }
 .range-chip { position:absolute; left:50%; top:42%; transform:translate(-50%,-50%); z-index:17; display:grid; grid-template-columns:1fr 1px 1fr; gap:10px; align-items:center; min-width:190px; padding:8px 11px; background:rgba(9,15,10,.94); border:1px solid var(--accent); border-radius:6px; box-shadow:0 4px 18px rgba(0,0,0,.3); pointer-events:none; }
 .range-chip[hidden] { display:none; }
 .range-chip div { min-width:0; text-align:center; }
 .range-chip small { display:block; color:var(--muted); font:8px monospace; }
 .range-chip b { display:block; margin-top:2px; color:var(--accent); font:14px monospace; white-space:nowrap; }
 .range-chip > span { width:1px; height:26px; background:var(--line); }
-.status-bar { position:absolute; left:8px; right:8px; bottom:calc(7px + var(--safe-bottom)); z-index:20; display:grid; grid-template-columns:repeat(3,1fr); gap:5px; padding:6px; background:rgba(10,17,11,.9); border:1px solid var(--line); border-radius:6px; }
+.status-bar { position:absolute; left:8px; right:8px; bottom:calc(7px + var(--safe-bottom)); z-index:20; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:5px; padding:6px; background:rgba(10,17,11,.9); border:1px solid var(--line); border-radius:6px; }
 .metric { min-width:0; text-align:center; }
 .metric small { display:block; color:var(--muted); font:8px monospace; text-transform:uppercase; }
 .metric b { display:block; font:12px monospace; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }

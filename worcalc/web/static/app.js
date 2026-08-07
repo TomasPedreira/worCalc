@@ -31,6 +31,10 @@ const expandedModes = new Map();
 let solutionRequestSequence = 0;
 let thumbnailPrefetchController = null;
 let mapImageRequestSequence = 0;
+let mapImageFetchController = null;
+let currentMapObjectUrl = null;
+const thumbnailObjectUrls = new Map();
+const thumbnailLoads = new Map();
 
 const pointers = new Map();
 let primaryPointerId = null;
@@ -156,8 +160,9 @@ function clearSolution() {
   }
   rangeChip.hidden = true;
   $("#distance").textContent = "—";
-  $("#bearing").textContent = "—";
   $("#height").textContent = "—";
+  $("#explosion-height").textContent = "—";
+  shotLine.classList.remove("clear", "obstructed");
   updateMissionGeometry();
 }
 
@@ -202,7 +207,7 @@ function createMapCard(map, loadThumbnail) {
   button.type = "button";
   button.className = `map-card${map.identifier === currentMap?.identifier ? " active" : ""}`;
   const image = document.createElement("img");
-  if (loadThumbnail) image.src = map.thumbnail_url;
+  if (loadThumbnail) loadThumbnailInto(image, map);
   image.alt = "";
   image.loading = "lazy";
   const copy = document.createElement("div");
@@ -219,6 +224,48 @@ function createMapCard(map, loadThumbnail) {
   return button;
 }
 
+async function thumbnailObjectUrl(map, signal = undefined) {
+  if (thumbnailObjectUrls.has(map.identifier)) {
+    return thumbnailObjectUrls.get(map.identifier);
+  }
+  if (thumbnailLoads.has(map.identifier)) {
+    return thumbnailLoads.get(map.identifier);
+  }
+  const load = (async () => {
+    const response = await fetch(map.thumbnail_url, {signal, cache:"no-store"});
+    if (!response.ok) throw new Error(`Could not load thumbnail: ${map.name}`);
+    const objectUrl = URL.createObjectURL(await response.blob());
+    thumbnailObjectUrls.set(map.identifier, objectUrl);
+    return objectUrl;
+  })();
+  thumbnailLoads.set(map.identifier, load);
+  try {
+    return await load;
+  } finally {
+    if (thumbnailLoads.get(map.identifier) === load) {
+      thumbnailLoads.delete(map.identifier);
+    }
+  }
+}
+
+async function loadThumbnailInto(image, map) {
+  try {
+    const objectUrl = await thumbnailObjectUrl(map);
+    if (image.isConnected) image.src = objectUrl;
+  } catch (error) {
+    if (error.name !== "AbortError") {
+      console.warn("Thumbnail load failed", error);
+      return;
+    }
+    try {
+      const objectUrl = await thumbnailObjectUrl(map);
+      if (image.isConnected) image.src = objectUrl;
+    } catch (retryError) {
+      if (retryError.name !== "AbortError") console.warn("Thumbnail load failed", retryError);
+    }
+  }
+}
+
 function cancelThumbnailPrefetch() {
   thumbnailPrefetchController?.abort();
   thumbnailPrefetchController = null;
@@ -233,12 +280,7 @@ async function prefetchSkirmishThumbnails(battlefield) {
   thumbnailPrefetchController = controller;
   try {
     for (const map of skirmishMaps) {
-      const response = await fetch(map.thumbnail_url, {
-        signal: controller.signal,
-        cache: "force-cache",
-      });
-      if (!response.ok) break;
-      await response.blob();
+      await thumbnailObjectUrl(map, controller.signal);
     }
   } catch (error) {
     if (error.name !== "AbortError") console.warn("Thumbnail prefetch failed", error);
@@ -371,23 +413,53 @@ async function selectMap(map) {
   }
 }
 
-function loadMapImage(map) {
+async function loadMapImage(map) {
   const requestId = ++mapImageRequestSequence;
-  const preloader = new Image();
+  mapImageFetchController?.abort();
+  const controller = new AbortController();
+  mapImageFetchController = controller;
   mapWrap.classList.add("map-loading");
   modePill.textContent = "LOADING SELECTED MAP...";
-  preloader.addEventListener("load", () => {
+  try {
+    const response = await fetch(map.image_url, {
+      signal: controller.signal,
+      cache:"no-store",
+    });
+    if (!response.ok) throw new Error("Selected map failed to load");
+    const objectUrl = URL.createObjectURL(await response.blob());
+    if (requestId !== mapImageRequestSequence || currentMap?.identifier !== map.identifier) {
+      URL.revokeObjectURL(objectUrl);
+      return;
+    }
+    const preloader = new Image();
+    preloader.addEventListener("load", () => {
+      if (requestId !== mapImageRequestSequence || currentMap?.identifier !== map.identifier) {
+        URL.revokeObjectURL(objectUrl);
+        return;
+      }
+      const previousObjectUrl = currentMapObjectUrl;
+      currentMapObjectUrl = objectUrl;
+      mapImage.src = objectUrl;
+      if (previousObjectUrl) URL.revokeObjectURL(previousObjectUrl);
+      mapWrap.classList.remove("map-loading");
+      mapImageFetchController = null;
+      setMode(mode);
+    });
+    preloader.addEventListener("error", () => {
+      URL.revokeObjectURL(objectUrl);
+      if (requestId !== mapImageRequestSequence || currentMap?.identifier !== map.identifier) return;
+      mapWrap.classList.remove("map-loading");
+      mapImageFetchController = null;
+      modePill.textContent = "SELECTED MAP FAILED TO LOAD";
+    });
+    preloader.src = objectUrl;
+  } catch (error) {
+    if (error.name === "AbortError") return;
     if (requestId !== mapImageRequestSequence || currentMap?.identifier !== map.identifier) return;
-    mapImage.src = preloader.src;
     mapWrap.classList.remove("map-loading");
-    setMode(mode);
-  });
-  preloader.addEventListener("error", () => {
-    if (requestId !== mapImageRequestSequence || currentMap?.identifier !== map.identifier) return;
-    mapWrap.classList.remove("map-loading");
+    mapImageFetchController = null;
     modePill.textContent = "SELECTED MAP FAILED TO LOAD";
-  });
-  preloader.src = map.image_url;
+  }
 }
 
 function updatePhysics() {
@@ -594,10 +666,14 @@ async function requestSolution() {
     if (requestId !== solutionRequestSequence) return;
     latestSolution = data;
     $("#distance").textContent = `${data.slant_range_yards.toFixed(0)} yd`;
-    $("#bearing").textContent = `${data.bearing_degrees.toFixed(0).padStart(3,"0")}° ${data.bearing_direction}`;
     $("#height").textContent = data.height_difference_metres == null ? "N/A" : `${data.height_difference_metres.toFixed(1)} m`;
     $("#elevation").textContent = data.elevation_degrees == null ? "N/A" : `${data.elevation_degrees.toFixed(3)}°`;
     $("#fuze").textContent = data.fuze_seconds == null ? "N/A" : `${data.fuze_seconds.toFixed(3)} s`;
+    $("#explosion-height").textContent = data.height_above_target_metres == null
+      ? "N/A"
+      : `${data.height_above_target_metres >= 0 ? "+" : ""}${data.height_above_target_metres.toFixed(1)} m`;
+    shotLine.classList.toggle("clear", data.clearance_status === "clear");
+    shotLine.classList.toggle("obstructed", data.clearance_status === "obstructed");
     succeeded = true;
     updateMissionGeometry();
   } catch (error) {
@@ -612,4 +688,10 @@ async function requestSolution() {
 }
 
 window.addEventListener("resize", resetView);
+window.addEventListener("beforeunload", () => {
+  thumbnailPrefetchController?.abort();
+  mapImageFetchController?.abort();
+  for (const objectUrl of thumbnailObjectUrls.values()) URL.revokeObjectURL(objectUrl);
+  if (currentMapObjectUrl) URL.revokeObjectURL(currentMapObjectUrl);
+});
 load();
