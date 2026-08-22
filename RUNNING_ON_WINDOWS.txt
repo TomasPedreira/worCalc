@@ -42,12 +42,25 @@ login and should only be used on a trusted local network.
 Remote web calculator through Tailscale
 ---------------------------------------
 
+Use the "worCalc Remote" desktop shortcut to open the small server controller.
+Click Start and approve the Administrator prompt to enable private access. The
+window shows whether the service is running and provides buttons to open or stop
+it. Closing the controller does not stop the server; reopen it and click Stop
+when finished.
+
 Double-click START_REMOTE_WORCALC.bat and approve the Administrator prompt.
 The launcher starts worCalc on localhost, waits for it to become ready, and runs
 "tailscale serve --bg 8000". It then prints the private HTTPS address to open on
 your phone. Tailscale must already be installed, connected, and signed in on both
-devices. The PC must remain powered on; the Python server stays in a minimized
-window until that window is closed or the PC is restarted.
+devices. The PC must remain powered on; the Python server runs without a console
+window until it is stopped. The launcher remains visible so it can show the
+private address and any startup errors. Python output is saved in
+%TEMP%\worcalc-web.log.
+
+When finished, double-click END_REMOTE_WORCALC.bat and approve the Administrator
+prompt. It disables only the Tailscale Serve endpoint created by the launcher and
+then stops the worCalc web server. It will not stop an unrelated program that is
+using port 8000.
 
 Map data
 --------
