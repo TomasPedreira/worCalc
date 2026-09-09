@@ -121,9 +121,9 @@ class WebInteractionTests(unittest.TestCase):
           assert.equal(targetAnchor.style.top,'58px');
         """)
 
-    def test_obstruction_does_not_hide_firing_values_or_show_warning(self):
+    def test_obstruction_colours_line_without_hiding_values_or_adding_warning(self):
         self.run_scenario(r"""
-          for (const status of ['obstructed', null]) {
+          for (const status of ['obstructed', 'clear', null]) {
             fetch=async()=>({ok:true,json:async()=>({
               slant_range_yards:300,height_difference_metres:0,
               elevation_degrees:status ? 0.1 : null,fuze_seconds:status ? 1.2 : null,clearance_status:status,
@@ -133,7 +133,8 @@ class WebInteractionTests(unittest.TestCase):
             assert.equal($('#elevation').textContent,status ? '0.10°' : 'No solution');
             assert.equal($('#fuze').textContent,status ? '1.200 s' : '—');
             assert.doesNotMatch(modePill.textContent,/BLOCKED/);
-            assert.equal(shotLine.classList.contains('obstructed'),false);
+            assert.equal(shotLine.classList.contains('obstructed'),status === 'obstructed');
+            assert.equal(shotLine.classList.contains('clear'),status === 'clear');
           }
         """)
 

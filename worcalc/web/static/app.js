@@ -866,7 +866,7 @@ async function requestSolution() {
       ? "N/A"
       : `${data.height_above_target_metres >= 0 ? "+" : ""}${data.height_above_target_metres.toFixed(1)} m`;
     shotLine.classList.toggle("clear", data.clearance_status === "clear");
-    shotLine.classList.remove("obstructed");
+    shotLine.classList.toggle("obstructed", data.clearance_status === "obstructed");
     succeeded = true;
     updateMissionGeometry();
   } catch (error) {
