@@ -36,6 +36,13 @@ class SolutionRequest(BaseModel):
     cannon: str
     projectile: str
     method: str
+    calibration_mode: bool = False
+
+
+class ImpactRequest(BaseModel):
+    calculation_id: str
+    impact: PointRequest
+    actual_elevation_degrees: float
 
 
 def create_app(
@@ -155,12 +162,24 @@ def create_app(
                 request.cannon,
                 request.projectile,
                 request.method,
+                request.calibration_mode,
             )
         except MapNotFoundError as error:
             raise HTTPException(status_code=404, detail=str(error)) from error
         except ValueError as error:
             raise HTTPException(status_code=400, detail=str(error)) from error
         return asdict(result)
+
+    @app.post("/api/impacts")
+    def impact(request: ImpactRequest) -> dict:
+        try:
+            return calculator.record_impact(
+                request.calculation_id,
+                Point(request.impact.x, request.impact.y),
+                request.actual_elevation_degrees,
+            )
+        except ValueError as error:
+            raise HTTPException(status_code=400, detail=str(error)) from error
 
     return app
 

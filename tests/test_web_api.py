@@ -34,8 +34,9 @@ class WebApiTests(unittest.TestCase):
             "no-store, no-cache, must-revalidate, max-age=0",
         )
         self.assertIn("MOBILE FIRE DIRECTION", page.text)
-        self.assertIn("styles.css?v=20260807-memory-maps", page.text)
-        self.assertIn("app.js?v=20260807-memory-maps", page.text)
+        self.assertIn("styles.css?v=20260909-fixed-spawn-markers", page.text)
+        self.assertIn("app.js?v=20260909-operational-test-modes", page.text)
+        self.assertIn('id="actual-elevation"', page.text)
         self.assertIn('id="gun-mode"', page.text)
         self.assertIn('id="target-mode"', page.text)
         self.assertIn('id="mode-pill" role="status" aria-live="polite"', page.text)
@@ -56,7 +57,6 @@ class WebApiTests(unittest.TestCase):
             "no-store, no-cache, must-revalidate, max-age=0",
         )
         self.assertIn("baseScale = Math.min(", script.text)
-        self.assertIn("(rect.width - scaledWidth) / 2", script.text)
         self.assertIn("const MAX_ZOOM = 12", script.text)
         self.assertIn('group.className = "map-group"', script.text)
         self.assertIn("function battlefieldLabel(name)", script.text)
@@ -76,7 +76,7 @@ class WebApiTests(unittest.TestCase):
         self.assertIn('data.height_above_target_metres.toFixed(1)', script.text)
         self.assertNotIn('$("#bearing")', script.text)
         self.assertIn('shotLine.classList.toggle("clear", data.clearance_status === "clear")', script.text)
-        self.assertIn('shotLine.classList.toggle("obstructed", data.clearance_status === "obstructed")', script.text)
+        self.assertIn('shotLine.classList.remove("obstructed")', script.text)
         self.assertIn("if (loadThumbnail) loadThumbnailInto(image, map)", script.text)
         self.assertIn('cache:"no-store"', script.text)
         self.assertIn("URL.createObjectURL", script.text)
@@ -90,11 +90,19 @@ class WebApiTests(unittest.TestCase):
         move_marker = script.text.split("function moveMarker", 1)[1].split(
             "function locationClass", 1
         )[0]
-        self.assertNotIn("clearSolution()", move_marker)
+        self.assertIn("clearSolution()", move_marker)
         request_solution = script.text.split("async function requestSolution", 1)[1].split(
             "window.addEventListener", 1
         )[0]
-        self.assertNotIn("clearSolution()", request_solution)
+        self.assertIn("clearSolution()", request_solution)
+        update_physics = script.text.split("function updatePhysics()", 1)[1].split(
+            "function refreshProjectiles", 1
+        )[0]
+        self.assertIn("clearSolution()", update_physics)
+        self.assertIn(
+            "if (gun && target && currentMap) requestSolution()",
+            update_physics,
+        )
         maps = self.client.get("/api/maps")
         self.assertEqual(maps.status_code, 200)
         self.assertEqual(maps.json()[0]["identifier"], "map-1")
@@ -146,6 +154,8 @@ class WebApiTests(unittest.TestCase):
         self.assertIn("grid-template-columns:repeat(3,minmax(0,1fr))", styles.text)
         self.assertIn(".shot-line.clear", styles.text)
         self.assertIn(".shot-line.obstructed", styles.text)
+        marker_rule = styles.text.split(".marker {", 1)[1].split("}", 1)[0]
+        self.assertNotIn("var(--inverse-zoom)", marker_rule)
 
         raw_image = self.client.get("/api/maps/map-1/image?style=raw")
         with Image.open(BytesIO(raw_image.content)) as raw:
@@ -172,6 +182,35 @@ class WebApiTests(unittest.TestCase):
         self.assertGreater(response.json()["fuze_seconds"], 0)
         self.assertIn(response.json()["clearance_status"], {"clear", "obstructed"})
         self.assertIsNotNone(response.json()["height_above_target_metres"])
+        self.assertEqual(response.json()["method"], options["defaults"]["method"])
+        self.assertFalse(response.json()["calibration_mode"])
+        impact = self.client.post("/api/impacts", json={
+            "calculation_id": response.json()["calculation_id"],
+            "impact": {"x": 90, "y": 20},
+            "actual_elevation_degrees": 0.12,
+        })
+        self.assertEqual(impact.status_code, 200)
+        self.assertEqual(impact.json()["actual_elevation_degrees"], 0.12)
+
+        missing_angle = self.client.post("/api/impacts", json={
+            "calculation_id": response.json()["calculation_id"],
+            "impact": {"x": 90, "y": 20},
+        })
+        self.assertEqual(missing_angle.status_code, 422)
+
+        test_response = self.client.post("/api/solutions", json={
+            "map_id": "map-1",
+            "gun": {"x": 10, "y": 20},
+            "target": {"x": 110, "y": 20},
+            "cannon": "3-inch Ordnance",
+            "projectile": "Shell",
+            "method": "Cubic fit",
+            "calibration_mode": True,
+        })
+        self.assertEqual(test_response.status_code, 200)
+        self.assertEqual(test_response.json()["method"], options["defaults"]["method"])
+        self.assertTrue(test_response.json()["calibration_mode"])
+        self.assertEqual(test_response.json()["elevation_source"], "calibration_test")
 
     def test_exposes_projected_map_locations(self) -> None:
         add_test_locations(self.root)

@@ -85,9 +85,9 @@ The editor metadata also provides these maximum terrain heights:
 
 `terrain/terrain.dat` is not a standalone raw heightmap. It is CryEngine's
 compiled runtime terrain chunk and also contains vegetation/object and sector
-data. Its first 28 bytes match CryEngine's `STerrainChunkHeader` and embedded
-`STerrainInfo`, so the height samples are present but still need the engine's
-sector serialization decoded before they can be exported as a 16-bit image.
+data. Its first 32 bytes match CryEngine's `STerrainChunkHeader` and embedded
+`STerrainInfo`. The runtime reader now decodes the version-7 sector samples
+directly from `level.pak`; see [terrain decoding](../docs/terrain-decoding.md).
 
 The copied level/minimap packages do not contain the gameplay-area bounds; the
 full terrain width must not be applied directly to each cropped texture.

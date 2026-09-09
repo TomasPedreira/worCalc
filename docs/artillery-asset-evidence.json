@@ -1,0 +1,801 @@
+{
+  "status": "asset geometry only; runtime projectile spawn point and displayed-angle offset unverified",
+  "guns": [
+    {
+      "archetype": "Vehicles/Artillery/12PdrNapoleon",
+      "category": "Napoleon",
+      "cdf": "Objects/Artillery/12pdr_napoleon_1857.cdf",
+      "cdf_sha256": "8b0d5ee77a65322aff0988d1710a9e6de3311e0f2548d81d289a19e03350087d",
+      "skeleton": "Objects/Artillery/Gun_Carriage_No2/Skeleton_Gun_Carriage_No2.chr",
+      "skeleton_sha256": "b97a8356de964439712e749dbe17fa37c9f2d65d40d91d949a92d6fa4e0464c5",
+      "muzzle_attachment": {
+        "Type": "CA_BONE",
+        "AName": "Muzzle",
+        "RelRotation": "1,0,0,0",
+        "RelPosition": "-3.1974423e-14,0.95272076,1.1920929e-07",
+        "BoneName": "Cannon",
+        "Flags": "0",
+        "ViewDistRatio": "255"
+      },
+      "muzzle_model_position_metres": [
+        6.208715994055332e-07,
+        0.9364306848784224,
+        1.1988818286279075
+      ],
+      "bones": {
+        "root_Gun_Carriage": {
+          "bone_index": 0,
+          "bone_to_model_matrix34": [
+            0.9999999403953552,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.9999999403953552,
+            0.0
+          ],
+          "inverse_validation_max_error": 1.1920928599806757e-07
+        },
+        "Carriage": {
+          "bone_index": 1,
+          "bone_to_model_matrix34": [
+            0.9999999403953552,
+            0.0,
+            0.0,
+            -6.866456487841788e-07,
+            0.0,
+            1.0,
+            0.0,
+            1.2057945752985688e-07,
+            0.0,
+            0.0,
+            0.9999999403953552,
+            0.7646441459655762
+          ],
+          "inverse_validation_max_error": 1.1920928599806757e-07
+        },
+        "Wheel_L": {
+          "bone_index": 2,
+          "bone_to_model_matrix34": [
+            0.9999999403953552,
+            -1.3411039390121005e-07,
+            8.742274104633907e-08,
+            -0.8441206812858582,
+            1.3411037969035533e-07,
+            1.0,
+            8.742276236262114e-08,
+            -4.131111097649409e-07,
+            -8.742275525719378e-08,
+            -8.742274815176643e-08,
+            0.9999999403953552,
+            0.7646408677101135
+          ],
+          "inverse_validation_max_error": 1.1920927067698983e-07
+        },
+        "Wheel_R": {
+          "bone_index": 3,
+          "bone_to_model_matrix34": [
+            0.9999999403953552,
+            -1.4901162614933128e-07,
+            8.742282631146736e-08,
+            0.8441294431686401,
+            1.4901161193847656e-07,
+            0.9999999403953552,
+            8.742270551920228e-08,
+            2.774418703666015e-07,
+            -8.742284052232208e-08,
+            -8.742268420292021e-08,
+            1.0,
+            0.7646463513374329
+          ],
+          "inverse_validation_max_error": 1.1920925613306821e-07
+        },
+        "Cannon": {
+          "bone_index": 4,
+          "bone_to_model_matrix34": [
+            0.9999999403953552,
+            6.516826829283673e-07,
+            8.742272683548435e-08,
+            0.0,
+            -6.516826829283673e-07,
+            0.9999999403953552,
+            -8.742281210061265e-08,
+            -0.01629001833498478,
+            -8.742278367890322e-08,
+            8.742274815176643e-08,
+            1.0,
+            1.1988816261291504
+          ],
+          "inverse_validation_max_error": 1.1920885367722178e-07
+        }
+      },
+      "aiming": {
+        "AimAngle": "0",
+        "MaxAngle": "13.6",
+        "MinAngle": "-8"
+      },
+      "firing": {
+        "FireSound": "Play_Weapon_Artillery_Fire_12PdrNapoleon"
+      },
+      "legacy_fuze_table": [
+        {
+          "angle": "-1",
+          "range": "170",
+          "flighttime": "0.60000002",
+          "fuzetime": "0.5"
+        },
+        {
+          "angle": "0",
+          "range": "300",
+          "flighttime": "0.75",
+          "fuzetime": "0.75"
+        },
+        {
+          "angle": "0.30000001",
+          "range": "425",
+          "flighttime": "1.25",
+          "fuzetime": "1.25"
+        },
+        {
+          "angle": "1",
+          "range": "615",
+          "flighttime": "1.75",
+          "fuzetime": "1.75"
+        },
+        {
+          "angle": "1.3",
+          "range": "700",
+          "flighttime": "2.25",
+          "fuzetime": "2.25"
+        },
+        {
+          "angle": "2",
+          "range": "785",
+          "flighttime": "2.75",
+          "fuzetime": "2.75"
+        },
+        {
+          "angle": "2.3",
+          "range": "925",
+          "flighttime": "3.5",
+          "fuzetime": "3.5"
+        },
+        {
+          "angle": "3",
+          "range": "1080",
+          "flighttime": "4",
+          "fuzetime": "4"
+        },
+        {
+          "angle": "3.45",
+          "range": "1300",
+          "flighttime": "5",
+          "fuzetime": "5"
+        }
+      ]
+    },
+    {
+      "archetype": "Vehicles/Artillery/10PdrParrott",
+      "category": "Ordnance",
+      "cdf": "Objects/Artillery/10pdr_parrott_rifled.cdf",
+      "cdf_sha256": "699c833ec0154e84dea998664921d085c13f4af7e609670588e1a1fb929ae859",
+      "skeleton": "Objects/Artillery/Gun_Carriage/Skeleton_Gun_Carriage_10pdr.chr",
+      "skeleton_sha256": "b3644c8ca559244a70c5c2a4f78adca17982cad29f28dbf964d903992d0293e5",
+      "muzzle_attachment": {
+        "Type": "CA_BONE",
+        "AName": "Muzzle",
+        "RelRotation": "1,0,0,0",
+        "RelPosition": "8.0143607e-09,1.2079128,1.1920929e-07",
+        "BoneName": "Cannon",
+        "Flags": "0",
+        "ViewDistRatio": "255"
+      },
+      "muzzle_model_position_metres": [
+        -1.3962446297053862e-07,
+        1.2171290272833022,
+        1.1586109263693714
+      ],
+      "bones": {
+        "root_Gun_Carriage": {
+          "bone_index": 0,
+          "bone_to_model_matrix34": [
+            0.9999999403953552,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.9999999403953552,
+            0.0
+          ],
+          "inverse_validation_max_error": 1.1920928599806757e-07
+        },
+        "Carriage": {
+          "bone_index": 1,
+          "bone_to_model_matrix34": [
+            0.9999999403953552,
+            8.742277657347586e-08,
+            8.742276236262114e-08,
+            -6.866456487841788e-07,
+            -8.74227694680485e-08,
+            1.0,
+            -8.742277657347586e-08,
+            1.2057945752985688e-07,
+            -8.74227694680485e-08,
+            8.74227694680485e-08,
+            0.9999999403953552,
+            0.7646441459655762
+          ],
+          "inverse_validation_max_error": 1.1920927067698983e-07
+        },
+        "Wheel_L": {
+          "bone_index": 2,
+          "bone_to_model_matrix34": [
+            0.9999999403953552,
+            -1.3411039390121005e-07,
+            8.742274104633907e-08,
+            -0.8441206812858582,
+            1.3411037969035533e-07,
+            1.0,
+            8.742276236262114e-08,
+            -4.131111097649409e-07,
+            -8.742275525719378e-08,
+            -8.742274815176643e-08,
+            0.9999999403953552,
+            0.7646408677101135
+          ],
+          "inverse_validation_max_error": 1.1920927067698983e-07
+        },
+        "Wheel_R": {
+          "bone_index": 3,
+          "bone_to_model_matrix34": [
+            0.9999999403953552,
+            -1.4901162614933128e-07,
+            8.742282631146736e-08,
+            0.8441294431686401,
+            1.4901161193847656e-07,
+            0.9999999403953552,
+            8.742270551920228e-08,
+            2.774418703666015e-07,
+            -8.742284052232208e-08,
+            -8.742268420292021e-08,
+            1.0,
+            0.7646463513374329
+          ],
+          "inverse_validation_max_error": 1.1920925613306821e-07
+        },
+        "Cannon": {
+          "bone_index": 4,
+          "bone_to_model_matrix34": [
+            0.9999999403953552,
+            -2.14568700585005e-07,
+            8.742276236262114e-08,
+            1.1154144630154406e-07,
+            2.145687147958597e-07,
+            0.9999999403953552,
+            -8.742277657347586e-08,
+            0.009216299280524254,
+            -8.742274104633907e-08,
+            8.742279078433057e-08,
+            1.0,
+            1.1586107015609741
+          ],
+          "inverse_validation_max_error": 1.1920923226327318e-07
+        }
+      },
+      "aiming": {
+        "AimAngle": "0",
+        "MaxAngle": "10.5",
+        "MinAngle": "-8"
+      },
+      "firing": {
+        "FireSound": "Play_Weapons_Artillery_Fire"
+      },
+      "legacy_fuze_table": [
+        {
+          "angle": "-1",
+          "range": "170",
+          "flighttime": "0.60000002",
+          "fuzetime": "0.5"
+        },
+        {
+          "angle": "1",
+          "range": "600",
+          "flighttime": "2.5",
+          "fuzetime": "2.5"
+        },
+        {
+          "angle": "2",
+          "range": "930",
+          "flighttime": "3",
+          "fuzetime": "3"
+        },
+        {
+          "angle": "2.75",
+          "range": "1100",
+          "flighttime": "3.25",
+          "fuzetime": "3.25"
+        },
+        {
+          "angle": "3.875",
+          "range": "1460",
+          "flighttime": "4.75",
+          "fuzetime": "4.75"
+        },
+        {
+          "angle": "4.5",
+          "range": "1680",
+          "flighttime": "5.75",
+          "fuzetime": "5.75"
+        },
+        {
+          "angle": "5",
+          "range": "2000",
+          "flighttime": "6.5",
+          "fuzetime": "6.5"
+        },
+        {
+          "angle": "6",
+          "range": "2250",
+          "flighttime": "7.25",
+          "fuzetime": "7.25"
+        },
+        {
+          "angle": "7",
+          "range": "2600",
+          "flighttime": "8.25",
+          "fuzetime": "8.25"
+        },
+        {
+          "angle": "10",
+          "range": "3200",
+          "flighttime": "10.75",
+          "fuzetime": "10.75"
+        },
+        {
+          "angle": "12",
+          "range": "3600",
+          "flighttime": "12.875",
+          "fuzetime": "12.875"
+        },
+        {
+          "angle": "15",
+          "range": "4200",
+          "flighttime": "16",
+          "fuzetime": "16"
+        },
+        {
+          "angle": "20",
+          "range": "5000",
+          "flighttime": "21",
+          "fuzetime": "21"
+        }
+      ]
+    },
+    {
+      "archetype": "Vehicles/Artillery/3InchOrdnanceRifle",
+      "category": "Ordnance",
+      "cdf": "Objects/Artillery/3_inch_ordnance.cdf",
+      "cdf_sha256": "bb37b61ae5f10deeb5b4b8b7b978b4ac994c2e36b633a7363a67c36f4f0257a5",
+      "skeleton": "Objects/Artillery/Gun_Carriage/Skeleton_Gun_Carriage.chr",
+      "skeleton_sha256": "7542a1d31a2087b1e67f53537d305d2081251fe00f11654c8b95719fb8495aa1",
+      "muzzle_attachment": {
+        "Type": "CA_BONE",
+        "AName": "Muzzle",
+        "RelRotation": "1,0,0,0",
+        "RelPosition": "-3.907985e-14,1.0316675,1.1920929e-07",
+        "BoneName": "Cannon",
+        "Flags": "0",
+        "ViewDistRatio": "255"
+      },
+      "muzzle_model_position_metres": [
+        -1.0982213726747883e-07,
+        1.0408837377883389,
+        1.1586109109615161
+      ],
+      "bones": {
+        "root_Gun_Carriage": {
+          "bone_index": 0,
+          "bone_to_model_matrix34": [
+            0.9999999403953552,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.9999999403953552,
+            0.0
+          ],
+          "inverse_validation_max_error": 1.1920928599806757e-07
+        },
+        "Carriage": {
+          "bone_index": 1,
+          "bone_to_model_matrix34": [
+            0.9999999403953552,
+            8.742277657347586e-08,
+            8.742276236262114e-08,
+            -6.866456487841788e-07,
+            -8.74227694680485e-08,
+            1.0,
+            -8.742277657347586e-08,
+            1.2057945752985688e-07,
+            -8.74227694680485e-08,
+            8.74227694680485e-08,
+            0.9999999403953552,
+            0.7646441459655762
+          ],
+          "inverse_validation_max_error": 1.1920927067698983e-07
+        },
+        "Wheel_L": {
+          "bone_index": 2,
+          "bone_to_model_matrix34": [
+            0.9999999403953552,
+            -1.3411039390121005e-07,
+            8.742274104633907e-08,
+            -0.8441206812858582,
+            1.3411037969035533e-07,
+            1.0,
+            8.742276236262114e-08,
+            -4.131111097649409e-07,
+            -8.742275525719378e-08,
+            -8.742274815176643e-08,
+            0.9999999403953552,
+            0.7646408677101135
+          ],
+          "inverse_validation_max_error": 1.1920927067698983e-07
+        },
+        "Wheel_R": {
+          "bone_index": 3,
+          "bone_to_model_matrix34": [
+            0.9999999403953552,
+            -1.4901162614933128e-07,
+            8.742282631146736e-08,
+            0.8441294431686401,
+            1.4901161193847656e-07,
+            0.9999999403953552,
+            8.742270551920228e-08,
+            2.774418703666015e-07,
+            -8.742284052232208e-08,
+            -8.742268420292021e-08,
+            1.0,
+            0.7646463513374329
+          ],
+          "inverse_validation_max_error": 1.1920925613306821e-07
+        },
+        "Cannon": {
+          "bone_index": 4,
+          "bone_to_model_matrix34": [
+            0.9999999403953552,
+            -2.14568700585005e-07,
+            8.742276236262114e-08,
+            1.1154144630154406e-07,
+            2.145687147958597e-07,
+            0.9999999403953552,
+            -8.742277657347586e-08,
+            0.009216299280524254,
+            -8.742274104633907e-08,
+            8.742279078433057e-08,
+            1.0,
+            1.1586107015609741
+          ],
+          "inverse_validation_max_error": 1.1920923226327318e-07
+        }
+      },
+      "aiming": {
+        "AimAngle": "0",
+        "MaxAngle": "13.7",
+        "MinAngle": "-8"
+      },
+      "firing": {
+        "FireSound": "Play_Weapons_Artillery_Fire"
+      },
+      "legacy_fuze_table": [
+        {
+          "angle": "-1",
+          "range": "170",
+          "flighttime": "0.60000002",
+          "fuzetime": "0.5"
+        },
+        {
+          "angle": "0",
+          "range": "380",
+          "flighttime": "1.5",
+          "fuzetime": "1.25"
+        },
+        {
+          "angle": "1",
+          "range": "645",
+          "flighttime": "2",
+          "fuzetime": "1.75"
+        },
+        {
+          "angle": "2",
+          "range": "1010",
+          "flighttime": "3.3",
+          "fuzetime": "2.75"
+        },
+        {
+          "angle": "3",
+          "range": "1310",
+          "flighttime": "4.3000002",
+          "fuzetime": "4"
+        },
+        {
+          "angle": "4",
+          "range": "1525",
+          "flighttime": "5",
+          "fuzetime": "4.75"
+        },
+        {
+          "angle": "5",
+          "range": "1835",
+          "flighttime": "6.5",
+          "fuzetime": "6"
+        },
+        {
+          "angle": "6",
+          "range": "2100",
+          "flighttime": "7.8000002",
+          "fuzetime": "7.25"
+        },
+        {
+          "angle": "7",
+          "range": "2325",
+          "flighttime": "8.5",
+          "fuzetime": "8"
+        },
+        {
+          "angle": "8",
+          "range": "2400",
+          "flighttime": "10",
+          "fuzetime": "9.5"
+        },
+        {
+          "angle": "9",
+          "range": "2790",
+          "flighttime": "11",
+          "fuzetime": "10.5"
+        },
+        {
+          "angle": "10",
+          "range": "2910",
+          "flighttime": "11.5",
+          "fuzetime": "11"
+        },
+        {
+          "angle": "11",
+          "range": "3110",
+          "flighttime": "12.5",
+          "fuzetime": "11.75"
+        },
+        {
+          "angle": "12",
+          "range": "3270",
+          "flighttime": "13.25",
+          "fuzetime": "13"
+        },
+        {
+          "angle": "13",
+          "range": "3410",
+          "flighttime": "14.75",
+          "fuzetime": "15.5"
+        },
+        {
+          "angle": "14",
+          "range": "3710",
+          "flighttime": "15.5",
+          "fuzetime": "15.25"
+        },
+        {
+          "angle": "15",
+          "range": "3820",
+          "flighttime": "16",
+          "fuzetime": "15.5"
+        },
+        {
+          "angle": "16",
+          "range": "4180",
+          "flighttime": "17",
+          "fuzetime": "16"
+        }
+      ]
+    },
+    {
+      "archetype": "Vehicles/Artillery/12PdrNapoleonCSA",
+      "category": "Napoleon",
+      "cdf": "Objects/Artillery/12pdr_napoleon_1861_csa.cdf",
+      "cdf_sha256": "a449d983016e6df0b59f0765387ef1b0021d520124b96a6c51c81f557c4420a1",
+      "skeleton": "Objects/Artillery/Gun_Carriage_No2/Skeleton_Gun_Carriage_No2.chr",
+      "skeleton_sha256": "b97a8356de964439712e749dbe17fa37c9f2d65d40d91d949a92d6fa4e0464c5",
+      "muzzle_attachment": {
+        "Type": "CA_BONE",
+        "AName": "Muzzle",
+        "RelRotation": "1,0,0,0",
+        "RelPosition": "-3.1974423e-14,0.95272076,1.1920929e-07",
+        "BoneName": "Cannon",
+        "Flags": "0",
+        "ViewDistRatio": "255"
+      },
+      "muzzle_model_position_metres": [
+        6.208715994055332e-07,
+        0.9364306848784224,
+        1.1988818286279075
+      ],
+      "bones": {
+        "root_Gun_Carriage": {
+          "bone_index": 0,
+          "bone_to_model_matrix34": [
+            0.9999999403953552,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.9999999403953552,
+            0.0
+          ],
+          "inverse_validation_max_error": 1.1920928599806757e-07
+        },
+        "Carriage": {
+          "bone_index": 1,
+          "bone_to_model_matrix34": [
+            0.9999999403953552,
+            0.0,
+            0.0,
+            -6.866456487841788e-07,
+            0.0,
+            1.0,
+            0.0,
+            1.2057945752985688e-07,
+            0.0,
+            0.0,
+            0.9999999403953552,
+            0.7646441459655762
+          ],
+          "inverse_validation_max_error": 1.1920928599806757e-07
+        },
+        "Wheel_L": {
+          "bone_index": 2,
+          "bone_to_model_matrix34": [
+            0.9999999403953552,
+            -1.3411039390121005e-07,
+            8.742274104633907e-08,
+            -0.8441206812858582,
+            1.3411037969035533e-07,
+            1.0,
+            8.742276236262114e-08,
+            -4.131111097649409e-07,
+            -8.742275525719378e-08,
+            -8.742274815176643e-08,
+            0.9999999403953552,
+            0.7646408677101135
+          ],
+          "inverse_validation_max_error": 1.1920927067698983e-07
+        },
+        "Wheel_R": {
+          "bone_index": 3,
+          "bone_to_model_matrix34": [
+            0.9999999403953552,
+            -1.4901162614933128e-07,
+            8.742282631146736e-08,
+            0.8441294431686401,
+            1.4901161193847656e-07,
+            0.9999999403953552,
+            8.742270551920228e-08,
+            2.774418703666015e-07,
+            -8.742284052232208e-08,
+            -8.742268420292021e-08,
+            1.0,
+            0.7646463513374329
+          ],
+          "inverse_validation_max_error": 1.1920925613306821e-07
+        },
+        "Cannon": {
+          "bone_index": 4,
+          "bone_to_model_matrix34": [
+            0.9999999403953552,
+            6.516826829283673e-07,
+            8.742272683548435e-08,
+            0.0,
+            -6.516826829283673e-07,
+            0.9999999403953552,
+            -8.742281210061265e-08,
+            -0.01629001833498478,
+            -8.742278367890322e-08,
+            8.742274815176643e-08,
+            1.0,
+            1.1988816261291504
+          ],
+          "inverse_validation_max_error": 1.1920885367722178e-07
+        }
+      },
+      "aiming": {
+        "AimAngle": "0",
+        "MaxAngle": "13.6",
+        "MinAngle": "-8"
+      },
+      "firing": {
+        "FireSound": "Play_Weapon_Artillery_Fire_12PdrNapoleon"
+      },
+      "legacy_fuze_table": [
+        {
+          "angle": "-1",
+          "range": "170",
+          "flighttime": "0.60000002",
+          "fuzetime": "0.5"
+        },
+        {
+          "angle": "0",
+          "range": "300",
+          "flighttime": "0.75",
+          "fuzetime": "0.75"
+        },
+        {
+          "angle": "0.30000001",
+          "range": "425",
+          "flighttime": "1.25",
+          "fuzetime": "1.25"
+        },
+        {
+          "angle": "1",
+          "range": "615",
+          "flighttime": "1.75",
+          "fuzetime": "1.75"
+        },
+        {
+          "angle": "1.3",
+          "range": "700",
+          "flighttime": "2.25",
+          "fuzetime": "2.25"
+        },
+        {
+          "angle": "2",
+          "range": "785",
+          "flighttime": "2.75",
+          "fuzetime": "2.75"
+        },
+        {
+          "angle": "2.3",
+          "range": "925",
+          "flighttime": "3.5",
+          "fuzetime": "3.5"
+        },
+        {
+          "angle": "3",
+          "range": "1080",
+          "flighttime": "4",
+          "fuzetime": "4"
+        },
+        {
+          "angle": "3.45",
+          "range": "1300",
+          "flighttime": "5",
+          "fuzetime": "5"
+        }
+      ]
+    }
+  ],
+  "archetype_source": {
+    "archive": "Assets/GameData.pak",
+    "entry": "Generated/archetype_database_migration.xml",
+    "sha256": "c8b484cb22c97fbdbb211bd9182db3d64c3ccc02bd3534cb6de28c5806b9c35a",
+    "note": "migration XML; not a decoding of the runtime CGB"
+  }
+}

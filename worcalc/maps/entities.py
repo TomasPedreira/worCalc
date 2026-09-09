@@ -9,6 +9,7 @@ from math import isfinite
 from pathlib import Path
 
 from .catalog import MapRecord
+from .gun_spawns import gun_spawns_for_map
 
 
 # CryEngine stores position fields under stable hashed names immediately before
@@ -201,4 +202,15 @@ def locations_for_map(
                 world_y=entity.world_y,
             )
         )
+    for gun in gun_spawns_for_map(record, paks_root):
+        delta = record.calibration.pixel_delta_for_world_units(
+            gun.world_x - record.top_left_x_metres,
+            gun.world_y - record.top_left_y_metres,
+        )
+        if 0 <= delta.x <= image_width and 0 <= delta.y <= image_height:
+            locations.append(MapLocation(
+                name=f"{gun.cannon} · {gun.name}",
+                pixel_x=delta.x, pixel_y=delta.y, kind="gun_spawn", faction=None,
+                elevation_metres=gun.elevation, world_x=gun.world_x, world_y=gun.world_y,
+            ))
     return locations

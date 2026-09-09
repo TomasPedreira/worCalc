@@ -94,8 +94,8 @@ optional note can be stored with the observation.
 
 ### Terrain-aware distance and coordinate diagnostics
 
-Sampled altitude is always active. The app estimates gun and target elevations from
-nearby positioned objects and uses their height difference to calculate 3D slant
+Sampled altitude is always active. The app reads gun and target elevations from
+compiled game terrain and uses their height difference to calculate 3D slant
 distance. The fire-mission panel always shows horizontal (`H`), slant (`S`), and
 height difference (`ΔH`) with enough precision to expose small corrections. A card
 beside the target marker shows slant range, fuze/flight time, and ballistic elevation.
@@ -103,13 +103,12 @@ The **Show elevation gradient** checkbox changes only the map colors and never d
 altitude calculations.
 
 **Show elevation gradient** overlays a high-contrast blue-to-red elevation gradient.
-The colors use the map's 10th–90th elevation percentiles so sparse object-height
-outliers do not hide small terrain changes. The current
-overlay is explicitly diagnostic: CryEngine's `terrain.dat` contains compiled sector
-data rather than a directly readable heightmap, so the field is interpolated from
-the thousands of positioned game-object elevation anchors in each level. It is useful
-for checking alignment against contours and known high/low ground, but it is not yet
-the native terrain mesh.
+The colors use the overview grid's 10th–90th elevation percentiles. Heights come
+from decoded native terrain sectors, including their quantization and variable
+resolution. Object anchors are only a fallback for asset packages without terrain.
+Holes and coordinates outside the terrain return unknown heights. Bridges and
+other object collision meshes are not included. See
+[terrain decoding](docs/terrain-decoding.md) for format details and validation.
 
 Spawn, battery, and objective tooltips show decoded elevation, world X/Y, and
 projected pixel coordinates. These make systematic crop or projection offsets
@@ -117,8 +116,11 @@ reproducible. Hovering anywhere inside the map continuously shows pixel X/Y, wor
 X/Y, and interpolated elevation. The compass uses the game transform without the
 former extra 90-degree display rotation.
 
-Game-file location markers are reference landmarks only. They are not treated as
-confirmed artillery positions; the yellow `G` marker is the gun position placed by
+Static green squares show playable guns' starting placements from the selected
+scenario's game-file layer. Amber battery markers are artillery crew spawn
+references. Starting placements do not track movement; see
+[gun starting positions](docs/gun-starting-positions.md) for coverage and limitations.
+The yellow `G` marker is the gun position placed by
 the user for the current fire mission.
 
 The green endpoint is the origin and the red endpoint is the target. Range rings
@@ -154,24 +156,35 @@ names and expands matching branches automatically.
 The explorer plots the official 3-inch rifled-cannon reference data and switches
 among linear interpolation, PCHIP, quadratic fit, and cubic fit. It is a standalone
 developer tool and is no longer embedded in the main application. The application
-uses the same domain models directly through its elevation-method selector, which
-also offers a theoretical gravity/linear-drag curve and defaults to the cubic
-least-squares fit. The theoretical option follows the selected cannon and ammunition
-physics profile. Ranges outside the official 380–4,180 yard table are calculated by
+defaults to **Unified physics (provisional)**: one physical trajectory determines
+elevation, flight time, and terrain obstruction for the selected cannon and ammunition.
+It solves directly for the target's horizontal range and terrain height. Per-cannon
+launch height, forward displacement, angle offset, and limits are configurable.
+See [the solver documentation](docs/unified-physics.md) for assumptions and calibration.
+
+The elevation-method selector retains the previous models for comparison, including
+the theoretical gravity/linear-drag curve. For these legacy methods, ranges outside
+the official 380–4,180 yard table are calculated by
 extrapolating the selected curve. The curve is inverted using horizontal range, then
 corrected by the signed gun-to-target sight angle, so uphill targets increase the
 indicated elevation and downhill targets decrease it.
 
-The fire-mission panel also performs an estimated route-clearance analysis. It
-samples the current elevation field along the firing bearing, plots the terrain and
-shell arc, identifies the first obstruction, and searches for the minimum higher
+The fire-mission panel samples the current elevation field, plots the terrain and
+shell arc, and identifies the first obstruction. Unified physics displays the
+normal target elevation on a clear route. On an obstructed route it searches for
+the lowest terrain-clearing elevation, rounds upward to the game's 0.01° setting,
+and recalculates fuze and target clearance for that raised path. Web diagnostics
+retain the original direct trajectory for comparison with in-game shots. Native
+terrain profiles sample at intervals of at most one metre.
+
+The legacy comparison methods retain their estimated clearance analysis, which
+searches for the minimum higher
 elevation that clears the route by one metre. When a raised trajectory is required,
 the panel reports its height above the target, predicted impact range, and the number
 of yards over or short of the selected target. Red and amber map markers show the
 obstruction and predicted impact. Results remain explicitly marked **estimated**
-until the compiled CryEngine
-terrain heightmap is decoded; the current field is interpolated from positioned game
-objects.
+because the projectile model and finite route sampling still need in-game
+validation.
 
 For an analysis plot that overlays the reference points, both interpolations,
 least-squares polynomial fits, and the theoretical gravity/linear-drag trajectory:
@@ -181,13 +194,31 @@ least-squares polynomial fits, and the theoretical gravity/linear-drag trajector
   --output ballistic_model_comparison.png --no-show
 ```
 
-The theoretical curve reads velocity and drag from the installed profiles in
+The standalone plot's legacy theoretical curve reads velocity and drag from the installed profiles in
 `worcalc/domain/projectile.py`, uses the ammo definition's 9.1 m/s² gravity,
 and launches 1.4 m (about 4.59 ft) above the impact plane. By default, its bore angle is
 calibrated so the physics curve hits the table's first (0°, 380 yd) boresight
 point. Use `--cannon`, `--projectile`, `--gravity`, `--muzzle-height-feet`, or
 `--angle-offset` to test other assumptions; omit `--no-show` for an interactive
 window. Run the script with `--help` for all options.
+
+Browser desktop controls: wheel zooms around the cursor; left drag pans; G/T select
+gun/target placement, F fits the map, and Escape returns to panning. Large desktop
+screens keep the map library and fire controls open beside the map. Elevation and
+fuze appear beside the target. Gun, target, and static spawn markers render in a
+screen-space overlay so they remain sharp, fixed-size, and anchored while zooming.
+
+The browser always uses unified physics and starts in **Operational clearance**
+mode. **Calibration test** mode exposes the direct physics elevation and impact
+controls without changing operational recommendations. Its actual elevation field
+defaults to the recommendation rounded to the game's 0.01° adjustment step. Correct
+it before marking if a different setting was fired. Impact marks are saved in
+`logs/calculations.jsonl` with that actual setting,
+their calculation ID, original shot inputs, terrain prediction recomputed at the
+actual angle, and distance from the predicted impact.
+Mark impacts before changing the gun, target, or ammunition. Moving them clears
+the visible marks but keeps saved logs. The server retains the latest 200
+calculations for impact association; after a restart, recalculate first.
 
 ## Tests
 

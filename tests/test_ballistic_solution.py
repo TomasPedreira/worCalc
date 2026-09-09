@@ -10,6 +10,13 @@ CSV_PATH = Path(__file__).resolve().parent.parent / "war_of_rights_ballistic_ran
 
 
 class BallisticSolutionEngineTests(unittest.TestCase):
+    def test_weapon_uses_its_configured_launch_calibration(self) -> None:
+        engine = BallisticSolutionEngine(CSV_PATH)
+        engine.set_weapon("3-inch Ordnance", "Shell")
+        self.assertEqual(engine.physics.launch.angle_offset_deg, 0.48)
+        engine.set_weapon("10-pounder Parrott", "Shell")
+        self.assertEqual(engine.physics.launch.angle_offset_deg, 0.48)
+
     def setUp(self) -> None:
         self.solver = BallisticSolutionEngine(CSV_PATH)
 

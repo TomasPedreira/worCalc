@@ -16,6 +16,27 @@ from worcalc.domain.trajectory import TrajectoryClearanceResult
 
 
 class FireMissionUiTests(unittest.TestCase):
+    def test_unified_desktop_time_and_blocked_state(self):
+        from unittest.mock import Mock
+        from worcalc.domain.trajectory import TerrainProfilePoint as P
+        record = discover_maps(self.maps_dir)[0]
+        self.window._select_map(record)
+        delta = record.calibration.pixel_delta_for_world_units(300/METRES_TO_YARDS,0)
+        self.window.points = [QPointF(100,100),QPointF(100+delta.x,100+delta.y)]
+        field = Mock(samples=(1,))
+        field.elevation_at.return_value = 0
+        field.profile_along_line.return_value = (P(0,0),P(150,0),P(300.000001,0))
+        self.window.elevation_field = field
+        self.window._refresh_measurement()
+        aim = self.window.ballistic_solver.physics.solve(300,0)
+        self.assertEqual(self.window.solution_tof.text(),f'{aim.flight_time_seconds:.3f} s')
+        field.profile_along_line.return_value = (P(0,0),P(150,20),P(300.000001,0))
+        self.window._refresh_measurement()
+        self.assertEqual(self.window.solution_elevation.text(),f'{aim.elevation_degrees:.3f}°')
+        self.assertEqual(self.window.solution_tof.text(),f'{aim.flight_time_seconds:.3f} s')
+        self.assertTrue(self.window.current_clearance_result.obstructed)
+        self.assertEqual(self.window.clearance_status.text(), '')
+
     @classmethod
     def setUpClass(cls) -> None:
         cls.app = QApplication.instance() or QApplication([])
@@ -88,6 +109,7 @@ class FireMissionUiTests(unittest.TestCase):
         )
 
     def test_fuze_uses_slant_range_without_ballistic_elevation(self) -> None:
+        self.window.ballistic_method.setCurrentIndex(3)  # Legacy comparison behavior.
         record = discover_maps(self.maps_dir)[0]
         self.window._select_map(record)
         delta = record.calibration.pixel_delta_for_world_units(
@@ -139,17 +161,17 @@ class FireMissionUiTests(unittest.TestCase):
         assert level is not None and uphill is not None
         self.assertGreater(uphill, level)
 
-    def test_inline_method_selector_defaults_to_cubic_and_updates_solver(self) -> None:
+    def test_inline_method_selector_defaults_to_unified_and_updates_solver(self) -> None:
         solver = self.window.ballistic_solver
         self.assertIsNotNone(solver)
         assert solver is not None
-        self.assertEqual(self.window.ballistic_method.currentText(), "Polynomial degree 3")
-        self.assertEqual(solver.method_name, "Polynomial degree 3")
+        self.assertEqual(self.window.ballistic_method.currentText(), "Unified physics (provisional)")
+        self.assertEqual(solver.method_name, "Unified physics (provisional)")
         self.assertEqual(
             self.window.ballistic_method.itemText(
                 self.window.ballistic_method.count() - 1
             ),
-            "Theoretical physics",
+            "Unified physics (provisional)",
         )
 
         self.window._select_map(discover_maps(self.maps_dir)[0])
@@ -201,6 +223,7 @@ class FireMissionUiTests(unittest.TestCase):
 
     def test_saved_targets_share_the_single_active_gun(self) -> None:
         self.window._select_map(discover_maps(self.maps_dir)[0])
+        self.window.elevation_field = None  # Test history updates without real-map obstruction.
         first_gun = QPointF(100, 120)
         moved_gun = QPointF(180, 200)
         first_target = QPointF(300, 320)
@@ -241,6 +264,7 @@ class FireMissionUiTests(unittest.TestCase):
 
     def test_saves_numbered_target_and_records_spotted_impact(self) -> None:
         self.window._select_map(discover_maps(self.maps_dir)[0])
+        self.window.elevation_field = None  # Test shot recording independently of terrain.
         self.window._add_measurement_point(QPointF(100, 120))
         self.window._add_measurement_point(QPointF(300, 320))
 

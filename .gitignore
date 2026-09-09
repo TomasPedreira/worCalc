@@ -4,6 +4,7 @@ __pycache__/
 
 # Local Codex/workspace metadata
 .agents/
+.codex-remote-attachments/
 
 # Installed game assets and copied PAK payloads
 Assets/
@@ -22,3 +23,4 @@ paks/gameplay_area_calibrations.json
 
 # Generated analysis output
 ballistic_model_comparison.png
+logs/

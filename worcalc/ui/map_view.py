@@ -39,6 +39,7 @@ from ..maps.entities import MapLocation
 PARCHMENT_PAPER = (222, 205, 151)
 PARCHMENT_INK = (45, 36, 22)
 LOCATION_COLORS = {
+    "gun_spawn": QColor("#40d6a0"),
     "battery": QColor("#f2ad3d"),
     "usa_spawn": QColor("#3f8cff"),
     "csa_spawn": QColor("#e34f4f"),
@@ -516,7 +517,7 @@ class MapView(QGraphicsView):
         self._elevation_overlay_visible = False
         self._markers: list[CircleEntity] = []
         self._retained_target: CircleEntity | None = None
-        self._location_items: list[QGraphicsEllipseItem] = []
+        self._location_items: list[QGraphicsEllipseItem | QGraphicsRectItem] = []
         self._line = None
         self._rings = []
         self._ring_halos = []
@@ -641,24 +642,28 @@ class MapView(QGraphicsView):
             if location.kind == "spawn" and location.faction:
                 color_key = f"{location.faction.casefold()}_spawn"
             color = LOCATION_COLORS.get(color_key, LOCATION_COLORS["spawn"])
-            radius = 7 if location.kind == "objective" else 6 if location.kind == "battery" else 5
-            item = QGraphicsEllipseItem(-radius, -radius, radius * 2, radius * 2)
-            outline = QPen(QColor("#17191c"), 2)
+            radius = 3.5 if location.kind == "objective" else 3 if location.kind == "battery" else 2.5
+            shape = QGraphicsRectItem if location.kind == "gun_spawn" else QGraphicsEllipseItem
+            item = shape(-radius, -radius, radius * 2, radius * 2)
+            outline = QPen(QColor("#17191c"), 1)
             outline.setCosmetic(True)
             item.setPen(outline)
             item.setBrush(QBrush(color))
             item.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIgnoresTransformations)
             item.setAcceptedMouseButtons(Qt.MouseButton.NoButton)
             label = (
-                "Game-file reference (not a confirmed gun)"
+                "Artillery crew spawn reference"
                 if location.kind == "battery"
+                else "Gun starting position (before movement)"
+                if location.kind == "gun_spawn"
                 else location.kind.title()
             )
             if location.faction:
                 label = f"{location.faction} {label}"
             details = [label, location.name]
             if location.elevation_metres is not None:
-                details.append(f"Elevation: {location.elevation_metres:.2f} m")
+                elevation_label = "Entity origin elevation" if location.kind == "gun_spawn" else "Elevation"
+                details.append(f"{elevation_label}: {location.elevation_metres:.2f} m")
             if location.world_x is not None and location.world_y is not None:
                 details.append(
                     f"World: {location.world_x:.2f}, {location.world_y:.2f} m"

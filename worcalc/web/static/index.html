@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
   <meta name="theme-color" content="#101810">
   <title>worCalc Mobile</title>
-  <link rel="stylesheet" href="/static/styles.css?v=20260807-memory-maps">
+  <link rel="stylesheet" href="/static/styles.css?v=20260909-fixed-spawn-markers">
 </head>
 <body>
   <div class="app">
@@ -18,25 +18,28 @@
     <nav class="placement-bar" aria-label="Fire mission tools">
       <button id="gun-mode">PLACE GUN</button>
       <button id="target-mode">PLACE TARGET</button>
+      <button id="impact-mode" hidden>MARK IMPACT</button>
+      <button id="fit-map">FIT MAP</button>
     </nav>
 
     <main class="map-wrap" id="map-wrap">
       <div class="scene" id="scene">
         <img class="map-image" id="map-image" alt="Selected battlefield map" draggable="false">
-        <div class="location-layer" id="location-layer" aria-hidden="true"></div>
+        <div id="impact-layer" aria-hidden="true"></div>
         <div class="shot-line" id="shot-line" hidden></div>
-        <div class="marker-anchor" id="gun-anchor" data-marker="gun" hidden>
-          <div class="marker gun"><span>GUN</span></div>
-        </div>
-        <div class="marker-anchor" id="target-anchor" data-marker="target" hidden>
-          <div class="marker target"><span>TARGET</span></div>
-        </div>
+      </div>
+      <div class="location-layer" id="location-layer" aria-hidden="true"></div>
+      <div class="marker-anchor" id="gun-anchor" data-marker="gun" hidden>
+        <div class="marker gun"><span>GUN</span></div>
+      </div>
+      <div class="marker-anchor" id="target-anchor" data-marker="target" hidden>
+        <div class="marker target"><span>TARGET</span></div>
       </div>
 
       <div class="map-name"><b id="map-name">Loading maps…</b><small id="map-subtitle">WORCALC</small></div>
       <div class="mode-pill" id="mode-pill" role="status" aria-live="polite">DRAG OR PINCH MAP</div>
       <div class="range-chip" id="range-chip" hidden>
-        <div><small>CLEARANCE</small><b id="elevation">—</b></div>
+        <div><small id="elevation-label">ELEVATION</small><b id="elevation">—</b></div>
         <span aria-hidden="true"></span>
         <div><small>FUZE</small><b id="fuze">—</b></div>
       </div>
@@ -64,10 +67,15 @@
       <div class="field"><label for="projectile-select">Ammunition</label><select id="projectile-select"></select></div>
       <div class="field"><label for="muzzle-velocity">Muzzle velocity</label><input id="muzzle-velocity" readonly></div>
       <div class="field"><label for="drag-factor">Drag factor</label><input id="drag-factor" readonly></div>
-      <div class="field full"><label for="method-select">Elevation method</label><select id="method-select"></select></div>
+      <div class="field full"><label for="calculation-mode">Calculation mode</label><select id="calculation-mode"><option value="operational">Operational clearance</option><option value="test">Calibration test</option></select></div>
+      <input id="method-select" type="hidden">
+      <div class="field full" id="calibration-angle-field" hidden><label for="actual-elevation">Actual elevation fired (degrees)</label><input id="actual-elevation" type="number" step="0.01" min="-8" max="14" placeholder="Required before marking impact"></div>
+      <p class="field full">Green squares (G): gun starting positions before movement. Amber circles (B): artillery crew spawn references.</p>
+      <p class="field full" id="calibration-help" hidden>Calibration test: middle click to save an impact.<br>I: mark impact · Mark impacts before moving the gun or target.</p>
+      <p class="field full">Mouse wheel: zoom · Left drag: pan.<br>G: place gun · T: place target · F: fit map · Esc: pan.</p>
     </div>
   </section>
 
-  <script src="/static/app.js?v=20260807-memory-maps" defer></script>
+  <script src="/static/app.js?v=20260909-operational-test-modes" defer></script>
 </body>
 </html>

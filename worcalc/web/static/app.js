@@ -15,7 +15,9 @@ const MAX_ZOOM = 12;
 let maps = [];
 let options = null;
 let currentMap = null;
+let mapReady = false;
 let locations = [];
+let locationAnchors = [];
 let mode = "pan";
 let zoom = 1;
 let translateX = 0;
@@ -26,11 +28,13 @@ let sceneHeight = 1;
 let gun = null;
 let target = null;
 let latestSolution = null;
+let impacts = [];
 let expandedBattlefield = null;
 const expandedModes = new Map();
 let solutionRequestSequence = 0;
 let thumbnailPrefetchController = null;
 let mapImageRequestSequence = 0;
+let displayedImageRequestSequence = 0;
 let mapImageFetchController = null;
 let currentMapObjectUrl = null;
 const thumbnailObjectUrls = new Map();
@@ -63,18 +67,19 @@ function clampTranslation() {
   const rect = mapWrap.getBoundingClientRect();
   const scaledWidth = sceneWidth * zoom;
   const scaledHeight = sceneHeight * zoom;
-  translateX = scaledWidth <= rect.width
-    ? (rect.width - scaledWidth) / 2
-    : Math.min(0, Math.max(rect.width - scaledWidth, translateX));
-  translateY = scaledHeight <= rect.height
-    ? (rect.height - scaledHeight) / 2
-    : Math.min(0, Math.max(rect.height - scaledHeight, translateY));
+  // Allow dragging at fit zoom too; retain a visible strip for recovery.
+  const visibleX = Math.min(64, rect.width / 4, scaledWidth / 4);
+  const visibleY = Math.min(64, rect.height / 4, scaledHeight / 4);
+  translateX = Math.max(visibleX-scaledWidth, Math.min(rect.width-visibleX, translateX));
+  translateY = Math.max(visibleY-scaledHeight, Math.min(rect.height-visibleY, translateY));
 }
 
 function applyView() {
   clampTranslation();
   scene.style.setProperty("--inverse-zoom", String(1 / zoom));
   scene.style.transform = `translate(${translateX}px,${translateY}px) scale(${zoom})`;
+  updateMarkerPositions();
+  updateLocationPositions();
   updateRangeChipPosition();
 }
 
@@ -90,6 +95,7 @@ function resetView() {
   translateX = (rect.width - sceneWidth) / 2;
   translateY = (rect.height - sceneHeight) / 2;
   renderLocations();
+  renderImpacts();
   updateMissionGeometry();
   applyView();
 }
@@ -110,17 +116,61 @@ function screenPoint(point) {
 }
 
 function setAnchor(anchor, point) {
-  anchor.style.left = `${point.x * baseScale}px`;
-  anchor.style.top = `${point.y * baseScale}px`;
+  const screen = screenPoint(point);
+  anchor.style.left = `${screen.x}px`;
+  anchor.style.top = `${screen.y}px`;
   anchor.hidden = false;
+}
+
+function updateMarkerPositions() {
+  if (gun) setAnchor(gunAnchor, gun);
+  if (target) setAnchor(targetAnchor, target);
+}
+
+function updateLocationPositions() {
+  locationAnchors.forEach((anchor, index) => {
+    const location = locations[index];
+    if (!location) return;
+    const screen = screenPoint({x:location.pixel_x, y:location.pixel_y});
+    anchor.style.left = `${screen.x}px`;
+    anchor.style.top = `${screen.y}px`;
+  });
 }
 
 function updateRangeChipPosition() {
   if (!gun || !target) return;
   const first = screenPoint(gun);
   const second = screenPoint(target);
-  rangeChip.style.left = `${(first.x + second.x) / 2}px`;
-  rangeChip.style.top = `${(first.y + second.y) / 2}px`;
+  const rect = mapWrap.getBoundingClientRect();
+  const width = rangeChip.offsetWidth || 190;
+  const height = rangeChip.offsetHeight || 54;
+  // Prefer the side beyond the target, away from the gun-to-target segment.
+  const xs = [second.x+24, second.x-width-24];
+  const ys = [second.y+24, second.y-height-24];
+  if (second.x < first.x) xs.reverse();
+  if (second.y < first.y) ys.reverse();
+  const candidates = xs.flatMap(x => ys.map(y => ({
+    x:Math.max(8, Math.min(rect.width-width-8, x)),
+    y:Math.max(8, Math.min(rect.height-height-64, y)),
+  })));
+  const crossesFlight = box => {
+    let low=0, high=1;
+    for (const [start, delta, min, max] of [
+      [first.x,second.x-first.x,box.x-8,box.x+width+8],
+      [first.y,second.y-first.y,box.y-8,box.y+height+8],
+    ]) {
+      if (delta === 0) { if (start<min || start>max) return false; }
+      else {
+        const a=(min-start)/delta, b=(max-start)/delta;
+        low=Math.max(low,Math.min(a,b)); high=Math.min(high,Math.max(a,b));
+        if (low>high) return false;
+      }
+    }
+    return true;
+  };
+  const position = candidates.find(box => !crossesFlight(box)) || candidates[0];
+  rangeChip.style.left = `${position.x}px`;
+  rangeChip.style.top = `${position.y}px`;
 }
 
 function updateMissionGeometry() {
@@ -155,6 +205,8 @@ function cancelPendingSolution() {
 function clearSolution() {
   cancelPendingSolution();
   latestSolution = null;
+  impacts = [];
+  renderImpacts();
   for (const id of ["elevation", "fuze"]) {
     $(`#${id}`).textContent = "—";
   }
@@ -182,12 +234,73 @@ function setMode(nextMode) {
   mode = nextMode;
   $("#gun-mode").classList.toggle("active", mode === "gun");
   $("#target-mode").classList.toggle("active", mode === "target");
+  $("#impact-mode").classList.toggle("active", mode === "impact");
   modePill.textContent = mode === "pan"
     ? "HOLD & DRAG TO PAN"
-    : mode === "gun" ? "TAP MAP TO PLACE GUN" : "TAP MAP TO PLACE TARGET";
+    : mode === "gun" ? "CLICK MAP TO PLACE GUN" : mode === "impact"
+      ? "CLICK WHERE THE SHOT LANDED" : "CLICK MAP TO PLACE TARGET";
+}
+
+function calibrationMode() {
+  return $("#calculation-mode").value === "test";
+}
+
+function updateCalculationMode() {
+  const enabled = calibrationMode();
+  $("#impact-mode").hidden = !enabled;
+  $("#calibration-angle-field").hidden = !enabled;
+  $("#calibration-help").hidden = !enabled;
+  if (!enabled && mode === "impact") setMode("pan");
+}
+
+function renderImpacts() {
+  $("#impact-layer").replaceChildren(...impacts.map((point, index) => {
+    const marker = document.createElement("span");
+    marker.className = "impact-mark";
+    marker.style.left = `${point.x * baseScale}px`;
+    marker.style.top = `${point.y * baseScale}px`;
+    marker.textContent = `×${index+1}`;
+    marker.title = "Observed impact saved to shot log";
+    return marker;
+  }));
+}
+
+async function markImpact(clientX, clientY, exactPoint = null) {
+  if (!calibrationMode()) {
+    modePill.textContent = "SWITCH TO CALIBRATION TEST TO RECORD IMPACTS";
+    return;
+  }
+  if (!mapReady || !latestSolution?.calculation_id) {
+    modePill.textContent = "CALCULATE A SHOT BEFORE MARKING IMPACT";
+    return;
+  }
+  const actualElevation = Number($("#actual-elevation").value);
+  if (!Number.isFinite(actualElevation) || $("#actual-elevation").value.trim() === "") {
+    modePill.textContent = "ENTER THE ACTUAL ELEVATION FIRED";
+    $("#actual-elevation").focus();
+    return;
+  }
+  const shotId = latestSolution.calculation_id;
+  const point = exactPoint || imagePoint(clientX, clientY);
+  modePill.textContent = "SAVING IMPACT...";
+  try {
+    const response = await fetch("/api/impacts", {method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({calculation_id:shotId, impact:point,
+                           actual_elevation_degrees:actualElevation})});
+    const data = await response.json();
+    if (!response.ok) throw Error(data.detail || "Impact could not be saved");
+    if (latestSolution?.calculation_id !== shotId) return;
+    impacts.push(point);
+    renderImpacts();
+    modePill.textContent = `IMPACT ${impacts.length} SAVED`;
+  } catch (error) {
+    if (latestSolution?.calculation_id === shotId) modePill.textContent = error.message;
+  }
 }
 
 function moveMarker(name, clientX, clientY) {
+  clearSolution();
   const point = imagePoint(clientX, clientY);
   if (name === "gun") gun = point;
   else target = point;
@@ -291,18 +404,20 @@ async function prefetchSkirmishThumbnails(battlefield) {
 
 function renderLocations() {
   const layer = $("#location-layer");
-  layer.replaceChildren(...locations.map((location) => {
+  locationAnchors = locations.map((location) => {
     const anchor = document.createElement("span");
     anchor.className = "location-anchor";
-    anchor.style.left = `${location.pixel_x * baseScale}px`;
-    anchor.style.top = `${location.pixel_y * baseScale}px`;
     const dot = document.createElement("i");
     dot.className = `location-dot ${locationClass(location)}`;
-    dot.textContent = location.kind === "battery" ? "B" : location.kind === "objective" ? "P" : "S";
-    dot.title = [location.faction, location.kind, location.name].filter(Boolean).join(" · ");
+    dot.textContent = location.kind === "gun_spawn" ? "G" : location.kind === "battery" ? "B" : location.kind === "objective" ? "P" : "S";
+    const label = location.kind === "gun_spawn" ? "Gun starting position (before movement)"
+      : location.kind === "battery" ? "Artillery crew spawn reference" : location.kind;
+    dot.title = [location.faction, label, location.name].filter(Boolean).join(" · ");
     anchor.append(dot);
     return anchor;
-  }));
+  });
+  updateLocationPositions();
+  layer.replaceChildren(...locationAnchors);
 }
 
 function renderMapList(filter = "") {
@@ -392,6 +507,12 @@ function renderMapList(filter = "") {
 
 async function selectMap(map) {
   cancelThumbnailPrefetch();
+  mapReady = false;
+  pointers.clear();
+  primaryPointerId = null;
+  pendingPlacement = null;
+  draggingMarker = null;
+  pinching = false;
   currentMap = map;
   $("#map-name").textContent = map.name;
   $("#map-subtitle").textContent = `${map.battlefield.toUpperCase()} / ${map.mode.toUpperCase()} / AREA ${String(map.gameplay_area + 1).padStart(2, "0")}`;
@@ -414,6 +535,7 @@ async function selectMap(map) {
 }
 
 async function loadMapImage(map) {
+  mapReady = false;
   const requestId = ++mapImageRequestSequence;
   mapImageFetchController?.abort();
   const controller = new AbortController();
@@ -439,11 +561,9 @@ async function loadMapImage(map) {
       }
       const previousObjectUrl = currentMapObjectUrl;
       currentMapObjectUrl = objectUrl;
+      displayedImageRequestSequence = requestId;
       mapImage.src = objectUrl;
       if (previousObjectUrl) URL.revokeObjectURL(previousObjectUrl);
-      mapWrap.classList.remove("map-loading");
-      mapImageFetchController = null;
-      setMode(mode);
     });
     preloader.addEventListener("error", () => {
       URL.revokeObjectURL(objectUrl);
@@ -469,6 +589,7 @@ function updatePhysics() {
   $("#muzzle-velocity").value = `${profile.speed} m/s`;
   $("#drag-factor").value = `${profile.drag} s⁻¹`;
   clearSolution();
+  if (gun && target && currentMap) requestSolution();
 }
 
 function refreshProjectiles(preferred = null) {
@@ -490,6 +611,8 @@ async function load() {
     $("#cannon-select").value = options.defaults.cannon;
     refreshProjectiles(options.defaults.projectile);
     $("#method-select").value = options.defaults.method;
+    $("#calculation-mode").value = "operational";
+    updateCalculationMode();
     renderMapList();
     if (maps.length) selectMap(maps[0]);
     else $("#map-name").textContent = "No maps found";
@@ -558,6 +681,14 @@ function updatePinch() {
 }
 
 mapWrap.addEventListener("pointerdown", (event) => {
+  if (event.button === 1) {
+    event.preventDefault();
+    const targetMarker = event.target?.closest?.('[data-marker="target"]');
+    markImpact(event.clientX, event.clientY, targetMarker ? target : null);
+    return;
+  }
+  if (event.button != null && event.button !== 0) return;
+  if (!mapReady) return;
   if (event.target.closest("button,.map-name,.mode-pill,.status-bar,.range-chip")) return;
   mapWrap.setPointerCapture(event.pointerId);
   pointers.set(event.pointerId, {x:event.clientX, y:event.clientY});
@@ -570,7 +701,7 @@ mapWrap.addEventListener("pointerdown", (event) => {
   const marker = event.target.closest("[data-marker]");
   draggingMarker = marker?.dataset.marker || null;
   markerMoveStarted = false;
-  pendingPlacement = marker ? null : (mode === "gun" ? "gun" : mode === "target" ? "target" : null);
+  pendingPlacement = marker ? null : (["gun", "target", "impact"].includes(mode) ? mode : null);
 });
 
 mapWrap.addEventListener("pointermove", (event) => {
@@ -596,6 +727,7 @@ mapWrap.addEventListener("pointermove", (event) => {
 });
 
 function endPointer(event) {
+  if (!mapReady) return;
   const wasPinching = pinching;
   pointers.delete(event.pointerId);
   if (wasPinching && pointers.size < 2) {
@@ -606,10 +738,14 @@ function endPointer(event) {
   if (event.pointerId === primaryPointerId) {
     let shouldRequestSolution = draggingMarker && markerMoveStarted;
     if (pendingPlacement && !dragged) {
-      cancelPendingSolution();
-      moveMarker(pendingPlacement, event.clientX, event.clientY);
+      if (pendingPlacement === "impact") {
+        markImpact(event.clientX, event.clientY);
+      } else {
+        cancelPendingSolution();
+        moveMarker(pendingPlacement, event.clientX, event.clientY);
+        shouldRequestSolution = true;
+      }
       setMode("pan");
-      shouldRequestSolution = true;
     }
     primaryPointerId = null;
     pointerStart = null;
@@ -623,10 +759,41 @@ function endPointer(event) {
 }
 
 mapWrap.addEventListener("pointerup", endPointer);
+mapWrap.addEventListener("auxclick", event => { if (event.button === 1) event.preventDefault(); });
+mapWrap.addEventListener("wheel", event => {
+  if (!mapReady) return;
+  event.preventDefault();
+  const rect = mapWrap.getBoundingClientRect();
+  const x = event.clientX-rect.left, y = event.clientY-rect.top;
+  const next = Math.max(1, Math.min(MAX_ZOOM, zoom*Math.exp(-event.deltaY*0.0015)));
+  translateX = x-(x-translateX)*next/zoom;
+  translateY = y-(y-translateY)*next/zoom;
+  zoom = next;
+  applyView();
+}, {passive:false});
+window.addEventListener("keydown", event => {
+  if (event.target?.closest("input,select,textarea") || event.ctrlKey || event.metaKey || event.altKey) return;
+  const key = event.key.toLowerCase();
+  if (key === "g") setMode("gun");
+  if (key === "t") setMode("target");
+  if (key === "i" && calibrationMode()) setMode("impact");
+  if (key === "escape") { setMode("pan"); closePanels(); }
+  if (key === "f") resetView();
+});
 mapWrap.addEventListener("pointercancel", endPointer);
-mapImage.addEventListener("load", resetView);
+mapImage.addEventListener("load", () => {
+  if (displayedImageRequestSequence !== mapImageRequestSequence || mapImage.src !== currentMapObjectUrl) return;
+  // The displayed image must be ready before coordinates can be selected.
+  resetView();
+  mapReady = true;
+  mapWrap.classList.remove("map-loading");
+  mapImageFetchController = null;
+  setMode(mode);
+});
 $("#gun-mode").addEventListener("click", () => setMode(mode === "gun" ? "pan" : "gun"));
 $("#target-mode").addEventListener("click", () => setMode(mode === "target" ? "pan" : "target"));
+$("#impact-mode").addEventListener("click", () => setMode(mode === "impact" ? "pan" : "impact"));
+$("#fit-map").addEventListener("click", resetView);
 $("#open-drawer").addEventListener("click", () => openPanel(drawer));
 $("#open-sheet").addEventListener("click", () => openPanel(sheet));
 backdrop.addEventListener("click", closePanels);
@@ -637,10 +804,19 @@ $("#map-search").addEventListener("input", (event) => {
 });
 $("#cannon-select").addEventListener("change", () => refreshProjectiles());
 $("#projectile-select").addEventListener("change", updatePhysics);
-$("#method-select").addEventListener("change", clearSolution);
+$("#method-select").addEventListener("change", () => {
+  clearSolution();
+  if (gun && target && currentMap) requestSolution();
+});
+$("#calculation-mode").addEventListener("change", () => {
+  updateCalculationMode();
+  clearSolution();
+  if (gun && target && currentMap) requestSolution();
+});
 
 async function requestSolution() {
-  if (!gun || !target || !currentMap) return;
+  if (!gun || !target || !currentMap || !mapReady) return;
+  clearSolution();
   const requestId = ++solutionRequestSequence;
   const requestedGun = {...gun};
   const requestedTarget = {...target};
@@ -659,21 +835,28 @@ async function requestSolution() {
         cannon:$("#cannon-select").value,
         projectile:$("#projectile-select").value,
         method:$("#method-select").value,
+        calibration_mode:calibrationMode(),
       }),
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data.detail || "Calculation failed");
     if (requestId !== solutionRequestSequence) return;
     latestSolution = data;
+    $("#actual-elevation").value = data.elevation_degrees == null
+      ? "" : (Math.round(data.elevation_degrees * 100) / 100).toFixed(2);
     $("#distance").textContent = `${data.slant_range_yards.toFixed(0)} yd`;
     $("#height").textContent = data.height_difference_metres == null ? "N/A" : `${data.height_difference_metres.toFixed(1)} m`;
-    $("#elevation").textContent = data.elevation_degrees == null ? "N/A" : `${data.elevation_degrees.toFixed(3)}°`;
-    $("#fuze").textContent = data.fuze_seconds == null ? "N/A" : `${data.fuze_seconds.toFixed(3)} s`;
+    $("#elevation").textContent = data.elevation_degrees == null
+      ? "No solution" : `${data.elevation_degrees.toFixed(2)}°`;
+    $("#elevation-label").textContent = data.elevation_source === "calibration_test"
+      ? "TEST ELEVATION" : data.elevation_source === "terrain_clearance"
+        ? "CLEARANCE" : "ELEVATION";
+    $("#fuze").textContent = data.fuze_seconds == null ? "—" : `${data.fuze_seconds.toFixed(3)} s`;
     $("#explosion-height").textContent = data.height_above_target_metres == null
       ? "N/A"
       : `${data.height_above_target_metres >= 0 ? "+" : ""}${data.height_above_target_metres.toFixed(1)} m`;
     shotLine.classList.toggle("clear", data.clearance_status === "clear");
-    shotLine.classList.toggle("obstructed", data.clearance_status === "obstructed");
+    shotLine.classList.remove("obstructed");
     succeeded = true;
     updateMissionGeometry();
   } catch (error) {
@@ -682,6 +865,9 @@ async function requestSolution() {
     if (requestId === solutionRequestSequence) {
       mapWrap.classList.remove("solution-loading");
       if (succeeded) setMode(mode);
+      if (succeeded && latestSolution?.elevation_degrees == null) {
+        modePill.textContent = "NO SOLUTION FOR THIS RANGE AND HEIGHT";
+      }
       updateMissionGeometry();
     }
   }

@@ -1,9 +1,4 @@
-"""Diagnostic elevation sampling from positioned level objects.
-
-The compiled CryEngine terrain is not a flat heightmap file. Until its sector
-serialization is decoded, positioned level objects provide a dense, useful set
-of elevation anchors for debugging map transforms and estimating local height.
-"""
+"""Compiled terrain elevation sampling, with legacy object-anchor fallback."""
 
 from __future__ import annotations
 
@@ -12,10 +7,11 @@ from heapq import nsmallest
 from math import ceil, isfinite
 from pathlib import Path
 
-from ..domain.calibration import Point
+from ..domain.calibration import METRES_TO_YARDS, Point
 from ..domain.trajectory import TerrainProfilePoint
 from .catalog import MapRecord
 from .entities import load_battlefield_position_samples
+from .terrain import TerrainHeightmap, terrain_for_battlefield
 
 
 MAX_TERRAIN_HEIGHT_METRES = {
@@ -50,6 +46,10 @@ class ElevationSample:
 @dataclass(frozen=True)
 class ElevationField:
     samples: tuple[ElevationSample, ...]
+
+    @property
+    def source(self) -> str:
+        return "object anchors"
 
     @property
     def minimum_metres(self) -> float | None:
@@ -153,13 +153,56 @@ class ElevationField:
         return tuple(profile)
 
 
+@dataclass(frozen=True)
+class TerrainElevationField(ElevationField):
+    """Map projection of native terrain; samples are only an overview for legends.
+
+    Point and route queries always use native sectors, never the overview grid.
+    The inherited samples API keeps existing desktop and web callers compatible.
+    """
+
+    terrain: TerrainHeightmap
+    record: MapRecord
+
+    @property
+    def source(self) -> str:
+        return "compiled terrain"
+
+    def elevation_at(self, point: Point, neighbours: int = 8) -> float | None:
+        world = self.record.calibration.world_delta(point.x, point.y)
+        return self.terrain.elevation_at(
+            world.x + self.record.top_left_x_metres,
+            world.y + self.record.top_left_y_metres,
+        )
+
+    def profile_along_line(
+        self, start: Point, end: Point, total_distance_yards: float,
+        spacing_yards: float = 5.0,
+    ) -> tuple[TerrainProfilePoint, ...]:
+        return super().profile_along_line(
+            start, end, total_distance_yards,
+            min(spacing_yards, self.terrain.unit_metres * METRES_TO_YARDS),
+        )
+
+
 def elevation_field_for_map(
     record: MapRecord,
     image_width: int,
     image_height: int,
     paks_root: Path,
 ) -> ElevationField:
-    """Project plausible object elevation anchors into the selected minimap."""
+    """Use native terrain when present; retain anchors for older asset extracts."""
+    terrain = terrain_for_battlefield(paks_root, record.battlefield)
+    if terrain is not None:
+        field = TerrainElevationField((), terrain, record)
+        overview: list[ElevationSample] = []
+        for ix in range(65):
+            for iy in range(65):
+                point = Point(image_width * ix / 64, image_height * iy / 64)
+                height = field.elevation_at(point)
+                if height is not None:
+                    overview.append(ElevationSample(point.x, point.y, height, "terrain"))
+        return TerrainElevationField(tuple(overview), terrain, record)
     maximum = MAX_TERRAIN_HEIGHT_METRES.get(record.battlefield, 1_000.0)
     level_pak = paks_root / record.battlefield / "level.pak"
     samples: list[ElevationSample] = []

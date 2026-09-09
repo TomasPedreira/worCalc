@@ -780,10 +780,11 @@ class MainWindow(QMainWindow):
             lambda _text: self._weapon_changed()
         )
         self.ballistic_method = QComboBox()
-        self.ballistic_method.setFixedWidth(168)
+        self.ballistic_method.setFixedWidth(240)
         self.ballistic_method.setEnabled(False)
         self.ballistic_method.setToolTip(
-            "Choose the curve used to calculate the required gun elevation"
+            "Unified physics uses one arc for angle, flight time and terrain. "
+            "Launch calibration is provisional; other methods are comparisons."
         )
 
         def add_header_option(title: str, control: QWidget) -> None:
@@ -820,7 +821,8 @@ class MainWindow(QMainWindow):
         )
         self.view.setStyleSheet("border:0; background:#121811;")
         self.marker_legend = QLabel(
-            '<span style="color:#f2ad3d;">●</span> Game-file reference&nbsp;&nbsp; '
+            '<span style="color:#40d6a0;">■</span> Gun start&nbsp;&nbsp; '
+            '<span style="color:#f2ad3d;">●</span> Artillery crew spawn&nbsp;&nbsp; '
             '<span style="color:#3f8cff;">●</span> USA spawn&nbsp;&nbsp; '
             '<span style="color:#e34f4f;">●</span> CSA spawn&nbsp;&nbsp; '
             '<span style="color:#b75cff;">●</span> Objective / contention point&nbsp;&nbsp; '
@@ -1305,6 +1307,9 @@ class MainWindow(QMainWindow):
             fuze_text = f"{fuze_seconds:.2f} s"
         except ValueError:
             fuze_text = "—"
+        if self.ballistic_solver is not None and self.ballistic_solver.is_unified:
+            time = self.ballistic_solver.flight_time(horizontal_range, elevation_change or 0.0)
+            fuze_text = f"{time:.2f} s" if time is not None else "—"
         summary = f"T{target.identifier} · {elevation_text} · {fuze_text}"
         self._target_summary_cache[cache_key] = summary
         return summary
@@ -1520,7 +1525,7 @@ class MainWindow(QMainWindow):
             self.muzzle_velocity.setText(f"{velocity:g} m/s")
             self.drag_factor.setText(f"{drag:g} s⁻¹")
             if self.ballistic_solver is not None:
-                self.ballistic_solver.set_physics_profile(velocity, drag)
+                self.ballistic_solver.set_weapon(cannon, projectile)
         except KeyError:
             self.muzzle_velocity.setText("—")
             self.drag_factor.setText("—")
@@ -1548,6 +1553,10 @@ class MainWindow(QMainWindow):
             horizontal_range_yards,
             target_height_change_metres,
         )
+        if self.ballistic_solver.is_unified:
+            time = self.ballistic_solver.flight_time(horizontal_range_yards, target_height_change_metres)
+            self.current_flight_time_text = f"{time:.3f} s" if time is not None else "unavailable"
+            self.solution_tof.setText(self.current_flight_time_text)
         if angle is None:
             self.solution_elevation.setText("Unavailable")
             self._set_clearance_result(None)
@@ -1573,7 +1582,13 @@ class MainWindow(QMainWindow):
         ):
             self._set_clearance_result(None)
             return
-        profile = self._terrain_profile_to_map_edge(horizontal_range_yards)
+        if self.ballistic_solver.is_unified:
+            profile = self.elevation_field.profile_along_line(
+                Point(self.points[0].x(), self.points[0].y()),
+                Point(self.points[1].x(), self.points[1].y()), horizontal_range_yards,
+            )
+        else:
+            profile = self._terrain_profile_to_map_edge(horizontal_range_yards)
         if not profile:
             self._set_clearance_result(None)
             return
@@ -1642,6 +1657,12 @@ class MainWindow(QMainWindow):
     ) -> None:
         self.current_clearance_result = result
         self.trajectory_profile.set_result(result)
+        if result is not None and result.confidence == "provisional physics" and result.obstructed:
+            self.clearance_status.clear()
+            self.clearance_details.clear()
+            self.clearance_details.hide()
+            self.view.clear_trajectory_overlay()
+            return
         if result is None:
             self.clearance_status.setText(
                 'ESTIMATED ROUTE: <span style="color:#9ba392;">UNAVAILABLE</span>'

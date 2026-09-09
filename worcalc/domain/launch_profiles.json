@@ -1,0 +1,5 @@
+{
+  "3-inch Ordnance": {"height_metres": 1.2, "forward_metres": 0.0, "angle_offset_deg": 0.48, "minimum_display_deg": -8, "maximum_display_deg": 13.7},
+  "10-pounder Parrott": {"height_metres": 1.2, "forward_metres": 0.0, "angle_offset_deg": 0.48, "minimum_display_deg": -8, "maximum_display_deg": 10.5},
+  "12-pounder Napoleon": {"height_metres": 1.2, "forward_metres": 0.0, "angle_offset_deg": 0.48, "minimum_display_deg": -8, "maximum_display_deg": 13.6}
+}
