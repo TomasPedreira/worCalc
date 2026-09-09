@@ -10,6 +10,7 @@ from pathlib import Path
 from PIL import Image
 
 from worcalc.domain.calibration import METRES_TO_YARDS, Point
+from worcalc.domain.ranging import RangeMeasurement
 from worcalc.web.service import FireMissionCalculator, MapNotFoundError
 
 
@@ -183,6 +184,37 @@ class FireMissionCalculatorTests(unittest.TestCase):
             state = engine.physics.at_distance(result.horizontal_range_yards,result.elevation_degrees)
             self.assertAlmostEqual(state[0],10,places=6)
             self.assertAlmostEqual(result.fuze_seconds,state[1],places=8)
+
+    def test_airburst_aims_one_metre_above_target_terrain(self):
+        with tempfile.TemporaryDirectory() as directory:
+            calculator = make_test_calculator(Path(directory))
+            field = Mock(samples=(1,))
+            field.elevation_at.side_effect = lambda point: 100 if point.x == 10 else 110
+            distance = 100 * METRES_TO_YARDS
+            from worcalc.domain.trajectory import TerrainProfilePoint as P
+            field.profile_along_line.return_value = (P(0, 100), P(distance, 110))
+
+            with patch.object(calculator, '_elevation_field', return_value=field):
+                ground = calculator.calculate(
+                    'map-1', Point(10, 20), Point(110, 20),
+                    '12-pounder Napoleon', 'Case', calculator.default_method,
+                )
+                airburst = calculator.calculate(
+                    'map-1', Point(10, 20), Point(110, 20),
+                    '12-pounder Napoleon', 'Case', calculator.default_method,
+                    airburst_mode=True,
+                )
+
+            self.assertGreater(airburst.elevation_degrees, ground.elevation_degrees)
+            expected_slant = RangeMeasurement(distance, 11.0).slant_yards
+            self.assertAlmostEqual(airburst.slant_range_yards, expected_slant)
+            self.assertGreater(airburst.slant_range_yards, ground.slant_range_yards)
+            self.assertEqual(airburst.height_difference_metres, 10)
+            self.assertAlmostEqual(airburst.height_above_target_metres, 1.0, places=6)
+            self.assertTrue(airburst.airburst_mode)
+            self.assertFalse(ground.airburst_mode)
+            trace = self.trace.call_args.args[0]
+            self.assertEqual(trace['aim_height_difference_metres'], 11.0)
 
     def test_lists_catalog_maps_with_image_dimensions(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

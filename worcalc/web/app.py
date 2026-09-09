@@ -37,6 +37,7 @@ class SolutionRequest(BaseModel):
     projectile: str
     method: str
     calibration_mode: bool = False
+    airburst_mode: bool = False
 
 
 class ImpactRequest(BaseModel):
@@ -162,7 +163,8 @@ def create_app(
                 request.cannon,
                 request.projectile,
                 request.method,
-                request.calibration_mode,
+                calibration_mode=request.calibration_mode,
+                airburst_mode=request.airburst_mode,
             )
         except MapNotFoundError as error:
             raise HTTPException(status_code=404, detail=str(error)) from error

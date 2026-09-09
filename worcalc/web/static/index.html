@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
   <meta name="theme-color" content="#101810">
   <title>worCalc Mobile</title>
-  <link rel="stylesheet" href="/static/styles.css?v=20260909-fixed-spawn-markers">
+  <link rel="stylesheet" href="/static/styles.css?v=20260909-airburst-aim">
 </head>
 <body>
   <div class="app">
@@ -68,6 +68,7 @@
       <div class="field"><label for="muzzle-velocity">Muzzle velocity</label><input id="muzzle-velocity" readonly></div>
       <div class="field"><label for="drag-factor">Drag factor</label><input id="drag-factor" readonly></div>
       <div class="field full"><label for="calculation-mode">Calculation mode</label><select id="calculation-mode"><option value="operational">Operational clearance</option><option value="test">Calibration test</option></select></div>
+      <div class="field full"><label for="burst-mode">Aim point</label><select id="burst-mode"><option value="ground">Ground level</option><option value="airburst">Airburst (+1 m)</option></select></div>
       <input id="method-select" type="hidden">
       <div class="field full" id="calibration-angle-field" hidden><label for="actual-elevation">Actual elevation fired (degrees)</label><input id="actual-elevation" type="number" step="0.01" min="-8" max="14" placeholder="Required before marking impact"></div>
       <p class="field full">Green squares (G): gun starting positions before movement. Amber circles (B): artillery crew spawn references.</p>
@@ -76,6 +77,6 @@
     </div>
   </section>
 
-  <script src="/static/app.js?v=20260909-operational-test-modes" defer></script>
+  <script src="/static/app.js?v=20260909-airburst-aim" defer></script>
 </body>
 </html>

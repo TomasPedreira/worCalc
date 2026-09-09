@@ -245,6 +245,10 @@ function calibrationMode() {
   return $("#calculation-mode").value === "test";
 }
 
+function airburstMode() {
+  return $("#burst-mode").value === "airburst";
+}
+
 function updateCalculationMode() {
   const enabled = calibrationMode();
   $("#impact-mode").hidden = !enabled;
@@ -612,6 +616,7 @@ async function load() {
     refreshProjectiles(options.defaults.projectile);
     $("#method-select").value = options.defaults.method;
     $("#calculation-mode").value = "operational";
+    $("#burst-mode").value = "ground";
     updateCalculationMode();
     renderMapList();
     if (maps.length) selectMap(maps[0]);
@@ -813,6 +818,10 @@ $("#calculation-mode").addEventListener("change", () => {
   clearSolution();
   if (gun && target && currentMap) requestSolution();
 });
+$("#burst-mode").addEventListener("change", () => {
+  clearSolution();
+  if (gun && target && currentMap) requestSolution();
+});
 
 async function requestSolution() {
   if (!gun || !target || !currentMap || !mapReady) return;
@@ -836,6 +845,7 @@ async function requestSolution() {
         projectile:$("#projectile-select").value,
         method:$("#method-select").value,
         calibration_mode:calibrationMode(),
+        airburst_mode:airburstMode(),
       }),
     });
     const data = await response.json();

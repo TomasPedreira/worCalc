@@ -183,6 +183,21 @@ class WebInteractionTests(unittest.TestCase):
           assert.equal($('#impact-mode').hidden,true);
         """)
 
+    def test_airburst_mode_recalculates_and_is_sent_to_solver(self):
+        self.run_scenario(r"""
+          let requests=[];
+          fetch=async(url,init)=>{requests.push(JSON.parse(init.body));throw Error('offline')};
+          $('#method-select').value='Unified physics (provisional)';
+          $('#burst-mode').value='airburst';
+          $('#burst-mode').handlers.change();
+          assert.equal(requests.length,1);
+          assert.equal(requests[0].airburst_mode,true);
+          gun=null;
+          $('#burst-mode').value='ground';
+          $('#burst-mode').handlers.change();
+          assert.equal(requests.length,1);
+        """)
+
     def test_marker_move_invalidates_values_even_when_request_fails(self):
         self.run_scenario(r"""
           latestSolution={elevation_degrees:1};

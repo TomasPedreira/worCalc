@@ -34,8 +34,9 @@ class WebApiTests(unittest.TestCase):
             "no-store, no-cache, must-revalidate, max-age=0",
         )
         self.assertIn("MOBILE FIRE DIRECTION", page.text)
-        self.assertIn("styles.css?v=20260909-fixed-spawn-markers", page.text)
-        self.assertIn("app.js?v=20260909-operational-test-modes", page.text)
+        self.assertIn("styles.css?v=20260909-airburst-aim", page.text)
+        self.assertIn("app.js?v=20260909-airburst-aim", page.text)
+        self.assertIn('id="burst-mode"', page.text)
         self.assertIn('id="actual-elevation"', page.text)
         self.assertIn('id="gun-mode"', page.text)
         self.assertIn('id="target-mode"', page.text)
@@ -184,6 +185,23 @@ class WebApiTests(unittest.TestCase):
         self.assertIsNotNone(response.json()["height_above_target_metres"])
         self.assertEqual(response.json()["method"], options["defaults"]["method"])
         self.assertFalse(response.json()["calibration_mode"])
+        self.assertFalse(response.json()["airburst_mode"])
+
+        airburst_response = self.client.post("/api/solutions", json={
+            "map_id": "map-1",
+            "gun": {"x": 10, "y": 20},
+            "target": {"x": 110, "y": 20},
+            "cannon": options["defaults"]["cannon"],
+            "projectile": options["defaults"]["projectile"],
+            "method": options["defaults"]["method"],
+            "airburst_mode": True,
+        })
+        self.assertEqual(airburst_response.status_code, 200)
+        self.assertTrue(airburst_response.json()["airburst_mode"])
+        self.assertGreater(
+            airburst_response.json()["elevation_degrees"],
+            response.json()["elevation_degrees"],
+        )
         impact = self.client.post("/api/impacts", json={
             "calculation_id": response.json()["calculation_id"],
             "impact": {"x": 90, "y": 20},

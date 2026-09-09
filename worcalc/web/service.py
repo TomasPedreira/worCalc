@@ -25,6 +25,9 @@ from ..diagnostics import read_observed_impacts, record_calculation
 from ..domain.empirical_calibration import ImpactSample, estimate_elevation
 
 
+AIRBURST_AIM_HEIGHT_METRES = 1.0
+
+
 class MapNotFoundError(LookupError):
     """Raised when an API map identifier is unknown."""
 
@@ -62,6 +65,7 @@ class FireSolution:
     physics_elevation_degrees: float | None = None
     calibration_sample_count: int = 0
     calibration_mode: bool = False
+    airburst_mode: bool = False
 
 
 class FireMissionCalculator:
@@ -204,6 +208,7 @@ class FireMissionCalculator:
         projectile: str,
         method: str,
         calibration_mode: bool = False,
+        airburst_mode: bool = False,
     ) -> FireSolution:
         record = self.map_record(map_id)
         # Older clients still send a method name, but the web firing workflow
@@ -238,8 +243,11 @@ class FireMissionCalculator:
             if gun_elevation is not None and target_elevation is not None
             else None
         )
-        measurement = RangeMeasurement(horizontal_range, height_difference)
-        elevation = solver.solve(horizontal_range, height_difference or 0.0)
+        aim_height_difference = (height_difference or 0.0) + (
+            AIRBURST_AIM_HEIGHT_METRES if airburst_mode else 0.0
+        )
+        measurement = RangeMeasurement(horizontal_range, aim_height_difference)
+        elevation = solver.solve(horizontal_range, aim_height_difference)
         clearance = None
         terrain_profile = ()
         clearance_error = None
@@ -253,7 +261,7 @@ class FireMissionCalculator:
                 )
                 clearance = solver.analyze_clearance(
                     horizontal_range,
-                    height_difference or 0.0,
+                    aim_height_difference,
                     terrain_profile,
                     speed,
                     drag,
@@ -278,7 +286,7 @@ class FireMissionCalculator:
             fuze = None
 
         if solver.is_unified:
-            fuze = solver.flight_time(horizontal_range, height_difference or 0.0)
+            fuze = solver.flight_time(horizontal_range, aim_height_difference)
 
         bearing = self._bearing_degrees(target.x - gun.x, target.y - gun.y)
         empirical = self._empirical_aim(
@@ -326,6 +334,7 @@ class FireMissionCalculator:
             physics_elevation_degrees=elevation,
             calibration_sample_count=empirical.sample_count if empirical is not None else 0,
             calibration_mode=calibration_mode,
+            airburst_mode=airburst_mode,
         )
         trace = {
             "source": "web",
@@ -340,6 +349,8 @@ class FireMissionCalculator:
             "aim_elevation_before_terrain_deg": elevation,
             "empirical_aim": asdict(empirical) if empirical is not None else None,
             "calibration_mode": calibration_mode,
+            "airburst_mode": airburst_mode,
+            "aim_height_difference_metres": aim_height_difference,
             "reason": ("no_ballistic_solution" if elevation is None
                        else "terrain_obstruction" if clearance is not None and clearance.obstructed
                        else "clear" if clearance is not None
