@@ -493,3 +493,241 @@ No state-changing or administrator-oriented command in that list was invoked dur
 - The effective accepted values of the four diagnostics CVars when set to `3`; no console query was possible remotely.
 - Whether the local player's entity identifier is available through the Tab/player-list UI path but deliberately omitted from logs.
 - Whether death-screen and formation-transition payloads become visible only when their exact local gameplay events occur at elevated verbosity.
+
+## 7. Controlled kill/death capture and common death-event handler — 17 September 2026
+
+This section supersedes the four `UNKNOWN` items immediately above where the controlled session answers them. The narrow objective was an event equivalent to `timestamp + killer + victim + weapon/cause`.
+
+### FACT — preserved controlled capture
+
+Source:
+
+```text
+C:\Users\pedre\AppData\Local\Temp\wor-controlled-kill-20260917-184933\game.controlled-kill.log
+Size: 1,813,779 bytes
+SHA-256: 69164C2166C1761492FF1618BC9F45CF8693712368246363D281481A4C130BC4
+```
+
+Action: joined `War of Rights Official Test Server`, spawned, died to melee at approximately `18:21:18`, later obtained a confirmed kill at approximately `18:27:53`, stayed through victory, and executed `Game.BattleReport.Dump` mid-round and `Game.BattleReport.Dump`/`Save` after the round.
+
+The console queried and returned these effective values at `18:16:39`:
+
+```text
+log_Verbosity = 4 [DUMPTODISK]
+log_WriteToFileVerbosity = 4 [DUMPTODISK]
+log_WriteToFile = 1 [DUMPTODISK]
+log_IncludeTime = 3 []
+Online.Diagnostics.Common.Verbosity = 3 []
+Online.Diagnostics.Client.Verbosity = 3 []
+Diagnostics.Game.Deployment.Verbosity = 3 []
+Diagnostics.Game.Modes.Verbosity = 3 []
+```
+
+The death-screen transition is timestamped by three Flash references at `18:21:18`:
+
+```text
+deathScreenContainer.background.textContainerInFormation
+deathScreenContainer.background.textContainerSkirmishing
+deathScreenContainer.background.textContainerOutOfLine
+```
+
+No direct killer/victim event, `KilledBy`, `CauseOfDeath`, `BodyPart`, attacker, victim, or teamkill payload appears anywhere in this verbosity-4 connected log. The current log-output branch is therefore negative for direct `X -> Y`, even at the highest tested generic and known subsystem verbosity.
+
+### FACT — one shared runtime death-event structure carries attacker, victim and cause
+
+Binary:
+
+```text
+C:\Program Files (x86)\Steam\steamapps\common\War of Rights\bin\win_x64\WarOfRights.exe
+Version: 0.0.201.2
+SHA-256: 2E8439241EBA3E82EB7A60A548EB661617767B986FE415BB00F48D8EE07A5270
+```
+
+Action: xref-driven disassembly from the current-build teamkill strings, death-screen class, cause localization strings, and kill-confirmation audio names.
+
+The relevant player death handler begins at preferred VA `0x1409802C0` (RVA `0x009802C0`). Its effective inputs are:
+
+```text
+RCX = victim player object (`this`)
+RDX = pointer to a death-event structure
+```
+
+The handler preserves them as:
+
+```text
+RDI = victim player object
+R14 = death-event pointer
+```
+
+The following fields are directly consumed by the handler and its death-screen formatter:
+
+```text
+event + 0x00 : uint32 attacker EntityId
+event + 0x04 : uint8  damage/cause type
+event + 0x26 : uint8  body-part type
+event + 0x36 : uint8  death-behavior type
+```
+
+The cause mapping at `0x140A37A50` proves these damage-type values:
+
+```text
+ 1  @ui_KilledByDamageTypeMeleeBlunt
+ 2  @ui_KilledByDamageTypeMeleeSharp
+ 3  @ui_KilledByDamageTypeMeleeSword
+ 4  @ui_KilledByDamageTypeMinieBall
+ 5  @ui_KilledByDamageTypeRoundBall
+ 6  @ui_KilledByDamageTypeRoundBallPellet
+ 7  @ui_KilledByDamageTypePistolBall
+ 8  @ui_KilledByDamageTypeCompressionBall
+ 9  @ui_KilledByDamageTypeHexagonalBullet
+10  @ui_KilledByDamageTypeExplosion
+11  @ui_KilledByDamageTypeCanister
+12  horse-collision/physics branch
+13  @ui_KilledByDamageTypeDesertion
+```
+
+The body-part selector at `0x140A37B4B` proves:
+
+```text
+event[0x26] == 1  -> " @ui_InTheHead"
+event[0x26] == 2  -> " @ui_InTheTorso"
+event[0x26] == 3  -> " @ui_InTheKnee"
+```
+
+The same formatter switches on `event[0x36]` and can select the separately embedded death-behavior strings for explosion, suicide, demotion and drowning. Not every numeric death-behavior value has yet been named.
+
+This establishes a usable runtime record shape:
+
+```text
+collector timestamp at handler entry
+attacker EntityId = *(uint32 *)(event + 0x00)
+victim player/entity = handler `this`
+weapon/cause class = *(uint8 *)(event + 0x04)
+body part = *(uint8 *)(event + 0x26)
+death behavior = *(uint8 *)(event + 0x36)
+```
+
+### FACT — teamkill formatting proves direction and player-name resolution
+
+Inside the same handler, `0x140980394` reads `event + 0x00` and searches the current player registry:
+
+```text
+registry count:       0x1416B9140
+sorted EntityId keys: 0x1416B9148
+player-object values: 0x1416B9150
+```
+
+The resolved object is the attacker; the handler object is the victim. The code compares both players' team values at player offset `+0x41C`. It obtains display names through:
+
+```text
+player + 0x08 -> player data
+player data + 0x140 -> display-name string
+```
+
+Direction is proven by the three format branches:
+
+```text
+0x140980445  "You were teamkilled by: %s"    argument = attacker name
+0x140980528  "You teamkilled: %s"            argument = victim name
+0x140980623  "%s was teamkilled by: %s"      arguments = victim, attacker
+```
+
+Local-player selection uses bit `0x04` at player offset `+0x4A`. This is a concrete `EntityId -> current player object -> display name` bridge in the current binary. SteamID64 resolution from that player object remains unlocated.
+
+### FACT — bullet kill confirmation is part of this same full death path
+
+At `0x1409806D8`, the handler compares `event.attackerEntityId` with the current local-player EntityId value, checks that `event.damageType` is in the bullet range `4..9`, and selects an audio trigger using the body-part value:
+
+```text
+event[0x26] == 1 -> CRC32(lowercase("Play_UX_KillConfirmation_Bullet_Head")) = 0x7109EA7A
+otherwise        -> CRC32(lowercase("Play_UX_KillConfirmation_Bullet"))      = 0xBF084BEF
+```
+
+Both exact trigger names are defined in:
+
+```text
+C:\Program Files (x86)\Steam\steamapps\common\War of Rights\Assets\Audio.pak
+audio/ace/wor_ux.xml
+```
+
+This rules out a boolean-only kill-confirmation message. The sound is selected inside a handler that already has the victim player object, attacker EntityId, damage type, body part and death behavior.
+
+### FACT — the local death screen receives the same event pointer
+
+At `0x1409808AA`, the handler tests whether the victim is local and calls `0x140A36D00` with the unchanged death-event pointer. `0x140A36D00` is the current `UIDeathScreen_t` population path and calls the cause formatter at `0x140A37A50`.
+
+The installed build does not embed the earlier exact strings `@ui_DeathScreen.KilledBy`, `TeamKilledBy`, `CauseOfDeath`, `BodyPart`, or `Distance`; the current local death observed during the test also did not visibly show the killer. Nevertheless, the event feeding that UI contains the attacker EntityId and cause fields before presentation filtering.
+
+### FACT — an in-memory event buffer receives a compact death record
+
+Later in the same handler (`0x1409810B3` through `0x1409813E5`), the client constructs and appends a `0x28`-byte record when the match-replay recorder is active (`0x1415EFD50`). The construction reads:
+
+```text
+victim entity identity from the victim object
+event attacker EntityId, resolved back to the attacker object
+event damage type
+two quantized event values from +0x08 and +0x0C
+two quantized attacker-state values
+same-team and victim-team flags
+```
+
+The destination vector begins at `0x1415EFE10`. Other gameplay paths append differently sized records to the same recorder state, so this is an internal event stream rather than the icon-only BattleReport frame list.
+
+The exact 40-byte field schema and its serialization destination remain unresolved. This record is valuable for later read-only runtime inspection, but should not yet be treated as a stable on-disk format.
+
+### FACT — replay/file limits from this controlled run
+
+The post-round BattleReport save is:
+
+```text
+C:\Program Files (x86)\Steam\steamapps\common\War of Rights\UserConfig\local\Replays\2026-9-17-18;28.replay
+Size: 143 bytes
+SHA-256: CCC3C601F90D1CB75A57F0FDA22716E256E6E7767531B9AA32A9E6DB77E66435
+```
+
+It contains only the BattleReport header because the report transition had already cleared/moved the 338-frame mid-round capture before `Save` was executed. It cannot recover this run's attributed death.
+
+The separate native MatchReplay sample is:
+
+```text
+C:\Program Files (x86)\Steam\steamapps\common\War of Rights\UserConfig\local\Replays\2026-09-16 23.16.03 antietam.worreplay
+Size: 384 bytes
+SHA-256: C3D8DC5308DB7CE2F50D147C42B98813390F6C3F49DEFAD2F3CEB7170E31AF78
+```
+
+Static analysis of its save routine at `0x140963780` shows a fixed `0xA0`-byte header followed by `count * 0x20`-byte periodic records. The sample is exactly `0xA0 + 7 * 0x20` bytes and contains no names, SteamID64, EntityId labels, or discrete attacker/victim list. The native `.worreplay` file is therefore not the attributed-kill source despite the richer in-memory recorder state.
+
+The mid-round `Game.BattleReport.Dump` exposed an entity transition near the controlled local death:
+
+```text
+frame 290: add EntityId 131052; remove EntityId 65194
+frame 301: remove EntityId 131052; first add EntityId 327143
+```
+
+This is temporally consistent with alive/corpse/deployment transitions, but it contains no attacker relationship and is not proof that `65194` was the local victim. It is only a correlation anchor for a future controlled runtime capture.
+
+### INFERENCE — practical independent collector boundary
+
+For this exact build, the narrowest evidence-backed collection point is the entry to `0x1409802C0`, not the log or either saved replay format. A read-only debugger/instrumentation pass can record the local time, `event[0]`, the victim object's EntityId/name, `event[4]`, `event[0x26]`, and `event[0x36]`, then use the same registry lookup demonstrated by the teamkill branch to resolve the attacker name.
+
+This would produce:
+
+```text
+local timestamp
+attacker EntityId + attacker name
+victim EntityId + victim name
+damage/cause class
+body part
+death behavior
+```
+
+The handler address and object offsets are build-specific and must be rediscovered or signature-located after updates.
+
+### UNKNOWN
+
+- The network message/RMI name that dispatches the death event to `0x1409802C0`; no trustworthy current symbol name was recovered.
+- Whether the death-event structure contains an intrinsic server or round timestamp. None is established by the accesses above; timestamping handler arrival locally is currently the safe method.
+- The exact numeric mapping of every value at `event + 0x36`.
+- The exact victim EntityId accessor within the victim player object, although the registry and recorder paths make it recoverable in a live debugger.
+- The exact 40-byte in-memory recorder schema and whether another routine serializes it outside `.worreplay`.
+- The field or registry edge that maps these player objects/EntityIds to SteamID64.
