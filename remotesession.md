@@ -349,3 +349,147 @@ Together with the same format strings still embedded in `WarOfRights.exe`, this 
 - Temporary test-user configuration was removed.
 - War of Rights was exited; Steam was left open.
 - Temporary package extraction data was left in place where cleanup was blocked, without modifying the original archives.
+
+## 6. Remote-only follow-up — 17 September 2026
+
+This pass was performed while no person was available at the Windows desktop. The available remote-control surface could address browser tabs but did not expose native Windows applications, so a controlled live-server gameplay sequence could not be performed. No result below is presented as a substitute for the requested high-verbosity live capture.
+
+### FACT — verbosity-4 menu startup
+
+The client was launched to the main menu with these temporary `system.cfg` values:
+
+```text
+log_Verbosity=4
+log_WriteToFileVerbosity=4
+log_WriteToFile=1
+log_IncludeTime=3
+Online.Diagnostics.Common.Verbosity=3
+Online.Diagnostics.Client.Verbosity=3
+Diagnostics.Game.Deployment.Verbosity=3
+Diagnostics.Game.Modes.Verbosity=3
+```
+
+Source log:
+
+```text
+C:\Users\pedre\AppData\Local\Temp\wor-live-capture-20260917-151826\game.menu-verbosity4-diag3.log
+SHA-256: F06BCE388C46DB48D21B0DA5C1D641F35CA684BF400160B19941C37BD914E238
+```
+
+Action: launched the installed client through Steam, allowed it to reach the main menu/backend connection, and then terminated it without joining a game server.
+
+The log's timestamp shape changed to include both elapsed and wall-clock time, directly demonstrating that `log_IncludeTime=3` took effect:
+
+```text
+<  0.218>: <15:19:30> [ConnectionManager::OnClientConnectionStatePacket] Connection with token "000000006AABF6F2" accepted.
+```
+
+No unknown-variable, invalid-value, or clamping warning named any of the eight temporary settings. The log did not print their effective values, however, so acceptance of each diagnostics value at `3` was not independently queried.
+
+This menu-only verbosity-4 log still contained no `SteamID`, `EntityId`, player record, session/channel ID, or other player/gameplay identity link.
+
+The original `system.cfg` was restored after the launch. Its restored SHA-256 is:
+
+```text
+4ED0D92A832E4D2EF657A8D07A16060BD7DF6BD49BF4CA7BF505ED676D8EDD7A
+```
+
+### FACT — exhaustive audit of the existing connected capture
+
+Source:
+
+```text
+C:\Program Files (x86)\Steam\steamapps\common\War of Rights\logbackups\Game Build(1) 16 Sep 26 (23 04 24).log
+FileVersion/ProductVersion: 0.0.201.1
+Size: 272840 bytes
+SHA-256: DE05EC1A7E8AFD4191F1F6A743609C4A0C0DBDC5B289036BB3CDBCB9923B89CE
+```
+
+Action: searched the complete connected-session log case-insensitively and inspected surrounding context, separating actual subsystem output from chat text, server names, asset warnings, and console-completion output.
+
+Exact zero-match results:
+
+```text
+EntityId       0
+Player list    0
+OnlineSession  0
+Session        0
+Channel        0
+BodyPart       0
+TeamKill       0
+```
+
+The only generic `Entity` occurrence was startup text:
+
+```text
+<23:04:29> Entity system initialization
+```
+
+The only `ConnectionManager` occurrence was the menu/backend token, before server selection:
+
+```text
+<23:04:32> [ConnectionManager::OnClientConnectionStatePacket] Connection with token "000000006AAB1270" accepted.
+```
+
+The local player lifecycle entry was followed by streaming/outfit initialization rather than any player-specific numeric identifier:
+
+```text
+<23:10:12> Player {30thNC-BB}2ndLt. Thomas Quarry has joined the server. SteamID: 76561198168674032. DLC: 0
+<23:10:12> [streaming_manager_t::dispatch_streaming_update] Performing synchronous streaming update.
+<23:10:12> [OutfitComponent_t::InitializeApparelCollectionForUniform] Uniform identifier is zero.
+```
+
+The full session contains 724 name/SteamID join-or-leave records but no observable line joining any one of them to an entity, actor, session, channel, or other stable gameplay identifier.
+
+Round-level structured events do appear:
+
+```text
+<23:10:13> [ActiveRegimentManager_t::ClSetActiveRegiments]
+<23:10:13> CGameRulesEventHelper::OnRoundStarted
+<23:12:35> CGameRulesEventHelper::OnVictory TeamID: 2
+<23:14:33> [ActiveRegimentManager_t::ClSetActiveRegiments]
+<23:14:33> CGameRulesEventHelper::OnRoundStarted
+```
+
+These lines establish current client callbacks for active-regiment, round-start, and winning-team state, but contain no player identity or unit payload.
+
+No subsystem log line described a player hit, death, killer, weapon/cause, body part, teamkill, or formation-state transition. Matches for words such as `hit`, `kill`, `death`, and `formation` resolved to chat, server names, asset text, or command/CVar completion—not structured combat records.
+
+### FACT — additional current command/CVar anchors
+
+The connected log contains console-completion output at `23:15:30`. The initiating keystrokes were not recorded, so this is not evidence that `DumpCommandsVars` or `DumpVars` worked. It does provide exact current names:
+
+```text
+Game.BattleReport.Debug = 0 []
+Game.BattleReport.Dump (Command)
+Game.BattleReport.Save (Command)
+Game.MatchReplay.Save (Command)
+Game.MatchReplay.Start (Command)
+Game.MatchReplay.Stop (Command)
+Game.Modes.Deployment.OutputActiveDeploymentPoints (Command)
+Game.NameTags.CompanyHighlight = 1 []
+Game.OfficerOrders.Debug.EnableOrders = 1 []
+Game.Outfitter.Progression.RestrictClass = 1 []
+Game.Outfitter.Progression.RestrictRank = 1 []
+Game.Outfitter.Progression.RestrictRegiment = 1 []
+Game.Player.CorpseManager.Debug = 0 []
+Game.Player.CorpseManager.DumpAttachmentNames (Command)
+Game.Player.Interpolation.Debug = 0 []
+Game.Player.Melee.DebugGFX = 0 []
+Game.ShoutingManager.Debug = 0 []
+```
+
+No state-changing or administrator-oriented command in that list was invoked during this follow-up.
+
+### INFERENCE
+
+- The normal/default connected log path appears exhausted for `SteamID64/name ↔ EntityId`: the identity-rich lifecycle lines and round/gameplay callbacks coexist in the same complete log, but no shared identifier is emitted.
+- `ActiveRegimentManager_t::ClSetActiveRegiments` confirms that regiment state reaches a dedicated client-side manager, but the empty log message gives no evidence about whether its payload contains per-player membership.
+- The menu launch suggests verbosity `4` is usable and materially changes log formatting/detail, but only `log_IncludeTime=3` has visible output behavior proving the configured value took effect.
+
+### UNKNOWN
+
+- Whether a genuinely connected session at `log_WriteToFileVerbosity=4` exposes additional player/entity or combat information.
+- The effective accepted values of the four diagnostics CVars when set to `3`; no console query was possible remotely.
+- Whether the local player's entity identifier is available through the Tab/player-list UI path but deliberately omitted from logs.
+- Whether death-screen and formation-transition payloads become visible only when their exact local gameplay events occur at elevated verbosity.
