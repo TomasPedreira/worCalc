@@ -1,141 +1,133 @@
-# Remote/local task — only goal: recover X killed Y at T with W
+Objective
 
-Read `remotesession.md` first. Do not repeat prior work.
+We have already proven that the current WoR client receives full remote death events in memory, and the memory observer successfully captured Kepi-like records for all observed deaths.
 
-The only success criterion is obtaining a structured record equivalent to:
+Do not spend time on raw network packet sniffing unless it becomes necessary.
 
-```text
-timestamp
-killer
-victim
-weapon/cause
-```
+The current concern is whether WoR exposes the same death-event data through a cleaner outward-facing mechanism than direct process-memory observation.
 
-Indirect identifiers are acceptable only if they can be resolved:
+Investigate whether the complete death event handled by:
 
-```text
-timestamp
-killer_entity
-victim_entity
-weapon/cause
-```
+WarOfRights.exe + 0x9802C0
+preferred VA 0x1409802C0
 
-Do not spend time on formation, reconnect, roster metadata, generic logging, SteamID mapping, BattleReport, or other subsystems unless they directly help recover attacker → victim kill data.
+is subsequently or previously exposed through any of:
 
-## Tasks, in order
+file logging other than game.log
+replay/report serialization
+telemetry
+local IPC
+named pipe
+shared memory / file mapping
+localhost TCP/UDP
+local HTTP/WebSocket
+Windows messaging
+event bus / callback dispatcher
+plugin/mod interface
+any other process-readable interface
+Known death-event structure
 
-1. Inspect a native MatchReplay file for discrete kill/death events containing both attacker and victim references.
+At handler entry:
 
-2. Search replay data for:
+RCX = victim player object
+RDX = death-event pointer
 
-   * known player names as UTF-8/ASCII;
-   * known player names as UTF-16LE;
-   * known SteamID64 as decimal text;
-   * known SteamID64 as little-endian uint64;
-   * entity/player identifiers;
-   * weapon/cause identifiers;
-   * kill/death/event records.
+Known fields:
 
-3. Determine whether the replay is compressed, containerized, chunked, or otherwise encoded before concluding that strings/IDs are absent.
+event + 0x00 = uint32 attacker EntityId
+event + 0x04 = uint8 damage/cause type
+event + 0x26 = uint8 body-part type
+event + 0x36 = uint8 death-behavior type
 
-4. Use a replay containing at least one known death/kill and correlate bytes/records around the known event time.
+The same handler resolves attacker EntityId to a player object/name.
 
-5. Determine whether replay data can produce:
+Highest-priority target
 
-   ```text
-   attacker_ref + victim_ref [+ weapon/cause]
-   ```
+The handler also appends a compact 0x28-byte death record to an in-memory recorder/event stream when the recorder is active.
 
-   If not, clearly report that and move on.
+Known globals:
 
-6. In `WarOfRights.exe`, locate and xref:
+0x1415EFD50
+0x1415EFE10
 
-   ```text
-   @ui_DeathScreen.KilledBy
-   @ui_DeathScreen.TeamKilledBy
-   @ui_DeathScreen.CauseOfDeath
-   @ui_DeathScreen.BodyPart
-   @ui_DeathScreen.Distance
-   ```
+Find all readers/xrefs/consumers of these globals and the 0x28 death-record vector.
 
-7. Follow those xrefs backward and identify where killer identity and cause/weapon values originate.
+For every consumer, classify it as:
 
-8. In `WarOfRights.exe`, locate and xref:
+internal replay only
+file serialization
+BattleReport/UI
+telemetry/network
+IPC
+other
 
-   ```text
-   Play_UX_KillConfirmation_Bullet
-   Play_UX_KillConfirmation_Bullet_Head
-   ```
+Main question:
 
-9. Follow those xrefs backward and determine whether the kill-confirmation path receives:
+Does any consumer cross the process boundary or expose the event in a cleaner form?
 
-   * only a boolean/result;
-   * target EntityId/player reference;
-   * hit information;
-   * weapon/cause;
-   * a larger combat/death event structure.
+Secondary target
 
-10. Locate and xref:
+Trace all callees and nearby upstream/downstream paths around 0x1409802C0 looking for:
 
-    ```text
-    @ui_DeathScreen.TeamKilledBy
-    @ui_TeamKill
-    @ui_TeamKilled
-    Punishing player with SteamId: %llu
-    ```
+Serialize
+Write
+Save
+Dump
+Queue
+Dispatch
+Publish
+Send
+Report
+Telemetry
+Event
+Callback
+Observer
+Listener
+IPC
+Pipe
+SharedMemory
+FileMapping
+localhost
+127.0.0.1
+WebSocket
+HTTP
 
-11. Determine whether the death-screen, teamkill, and kill-confirmation paths converge on a shared kill/death/damage handler.
+Do not rely only on strings; use xrefs and call graph where possible.
 
-12. For any likely common handler, identify whether its arguments or referenced structure contain:
+Runtime check if static analysis is inconclusive
 
-    ```text
-    killer / shooter / attacker
-    victim / target
-    weapon / cause
-    hit type
-    entity IDs
-    timestamp / event time
-    ```
+Use a controlled death while monitoring only WarOfRights.exe with ProcMon or equivalent.
 
-13. Prefer xref-driven analysis from the known strings above. Do not perform broad blind reverse engineering unless necessary.
+Look for process activity occurring exactly at death-event time:
 
-14. If static analysis cannot resolve the event path, perform one controlled live test with a known death/kill and exact timestamp, then correlate:
+file writes
+new/opened files
+registry writes
+named-pipe activity
+mapped-file activity
+other local IPC
 
-    * replay;
-    * high-verbosity log;
-    * death-screen fields;
-    * any runtime-visible identifiers.
+Compare against an idle baseline to remove noise.
 
-15. Append results to `remotesession.md`.
+Deliverable
 
-For every useful finding include:
+Append results to remotesession.md.
 
-* exact string/address/function or replay offset;
-* source file;
-* relevant pseudocode/disassembly/bytes;
-* what it proves;
-* what remains unknown.
+Separate clearly:
 
-Separate conclusions into:
-
-```text
 FACT
 INFERENCE
 UNKNOWN
-```
 
-## Priority
+For every useful mechanism found, include:
 
-1. Native replay attacker → victim event.
-2. Death-screen killer/cause data source.
-3. Shooter kill-confirmation target data source.
-4. Teamkill attacker/victim path.
-5. Shared combat/death handler.
+exact function/address or RVA
+relevant global/object
+what data crosses the boundary
+destination/path/endpoint if any
+whether it contains attacker + victim + cause
+whether it works for remote->remote deaths
 
-Stop pursuing a branch if it cannot plausibly yield:
+If no clean outward-facing sink exists, state that explicitly.
 
-```text
-X killed Y at T with W
-```
-
-The objective is not to discover generally interesting client data. The objective is specifically to recover the attacker-victim kill relationship and its cause/weapon.
+The goal is to determine whether a Kepi-style collector can avoid arbitrary process-memory observation and instead consume a cleaner client-side event/output boundary.
