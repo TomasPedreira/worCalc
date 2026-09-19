@@ -136,9 +136,14 @@ as the view zooms.
 
 The fire-mission panel presents bearing as a north-up map compass beneath the
 elevation-method selector: map-up is 0°, right is 90°, down is 180°, and left is
-270°. Its needle, cardinal marks, numeric degrees, and compass direction update
-whenever the target is placed or moved. The control column scrolls vertically on
-short windows so the compass and solution readouts never compress into each other.
+270°. Its compact dial matches the game's 24 readable positions: the eight named
+directions plus two ticks between each pair. A highlighted mark and an instruction
+such as `NE +1 TICK` show where to aim, while the red needle and numeric readout keep
+the exact calculated bearing visible. The web map also draws a low-contrast aiming
+sector from the gun. Its two named boundaries and two intermediate 15-degree ticks
+all extend to the target range, making the four in-game aiming marks directly
+comparable. The control column scrolls vertically on short windows so the compass
+and solution readouts never compress into each other.
 
 PAK minimaps are displayed as dark ink on warm parchment by default. The **Map style**
 selector switches between this UI-style composition and the raw grayscale mask without

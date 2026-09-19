@@ -39,6 +39,10 @@ button:disabled { opacity:.45; }
 .map-image { position:absolute; inset:0; width:100%; height:100%; display:block; user-select:none; transition:opacity .15s ease; }
 .map-wrap.map-loading .map-image { opacity:.58; }
 .location-layer { position:absolute; inset:0; z-index:8; pointer-events:none; }
+.aim-overlay { position:absolute; inset:0; width:100%; height:100%; z-index:6; pointer-events:none; overflow:hidden; }
+.aim-guide { stroke:rgba(35,55,38,.58); stroke-width:1.6; stroke-dasharray:6 8; vector-effect:non-scaling-stroke; }
+.aim-guide-label-bg { fill:rgba(10,17,11,.76); stroke:rgba(238,241,220,.34); stroke-width:1; }
+.aim-guide-label { fill:rgba(238,241,220,.9); font:700 10px monospace; text-anchor:middle; dominant-baseline:middle; }
 .map-name { position:absolute; top:10px; left:10px; z-index:14; max-width:62%; padding:8px 10px; background:rgba(10,17,11,.88); border:1px solid var(--line); border-radius:6px; }
 .map-name b { display:block; overflow:hidden; font-size:15px; text-overflow:ellipsis; white-space:nowrap; }
 .map-name small { display:block; overflow:hidden; color:var(--accent); font:9px monospace; letter-spacing:.08em; text-overflow:ellipsis; white-space:nowrap; }
@@ -68,10 +72,20 @@ button:disabled { opacity:.45; }
 .range-chip small { display:block; color:var(--muted); font:8px monospace; }
 .range-chip b { display:block; margin-top:2px; color:var(--accent); font:14px monospace; white-space:nowrap; }
 .range-chip > span { width:1px; height:26px; background:var(--line); }
-.status-bar { position:absolute; left:8px; right:8px; bottom:calc(7px + var(--safe-bottom)); z-index:20; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:5px; padding:6px; background:rgba(10,17,11,.9); border:1px solid var(--line); border-radius:6px; }
+.status-bar { position:absolute; left:8px; right:8px; bottom:calc(7px + var(--safe-bottom)); z-index:20; display:grid; grid-template-columns:1.35fr repeat(3,minmax(0,1fr)); gap:5px; padding:6px; background:rgba(10,17,11,.9); border:1px solid var(--line); border-radius:6px; }
 .metric { min-width:0; text-align:center; }
 .metric small { display:block; color:var(--muted); font:8px monospace; text-transform:uppercase; }
 .metric b { display:block; font:12px monospace; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.aim-content { display:flex; align-items:center; justify-content:center; gap:6px; margin-top:2px; }
+.aim-copy { min-width:0; text-align:left; }
+.aim-copy b { color:var(--accent); line-height:1.05; }
+.aim-copy em { display:block; color:var(--muted); font:8px monospace; font-style:normal; white-space:nowrap; }
+.mini-compass { position:relative; flex:0 0 34px; width:34px; height:34px; border:1px solid #718064; border-radius:50%; background:#0c130d; }
+.mini-compass::before { content:""; position:absolute; inset:2px; border-radius:50%; background:repeating-conic-gradient(from -1.5deg,var(--muted) 0 3deg,transparent 3deg 15deg); -webkit-mask:radial-gradient(circle,transparent 0 11px,#000 11.5px); mask:radial-gradient(circle,transparent 0 11px,#000 11.5px); }
+.mini-compass::after { content:"N"; position:absolute; left:50%; top:4px; transform:translateX(-50%); color:var(--text); font:700 6px monospace; }
+#aim-mark,#aim-needle { position:absolute; inset:3px; transform:rotate(var(--angle,0deg)); }
+#aim-mark::after { content:""; position:absolute; left:50%; top:-1px; width:5px; height:5px; transform:translateX(-50%); border-radius:50%; background:var(--accent); box-shadow:0 0 0 1px #0c130d; }
+#aim-needle::after { content:""; position:absolute; left:50%; top:5px; width:2px; height:10px; transform:translateX(-50%); background:var(--danger); border-radius:2px; }
 .drawer,.sheet { position:fixed; z-index:40; background:var(--panel); transition:transform .2s ease; box-shadow:0 0 30px rgba(0,0,0,.45); }
 .drawer { top:0; bottom:0; left:0; width:min(88vw,360px); transform:translateX(-102%); padding:calc(10px + var(--safe-top)) 10px calc(10px + var(--safe-bottom)); display:flex; flex-direction:column; }
 .drawer.open { transform:none; }

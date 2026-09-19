@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
   <meta name="theme-color" content="#101810">
   <title>worCalc Mobile</title>
-  <link rel="stylesheet" href="/static/styles.css?v=20260909-airburst-aim">
+  <link rel="stylesheet" href="/static/styles.css?v=20260919-map-compass">
 </head>
 <body>
   <div class="app">
@@ -28,6 +28,7 @@
         <div id="impact-layer" aria-hidden="true"></div>
         <div class="shot-line" id="shot-line" hidden></div>
       </div>
+      <svg class="aim-overlay" id="aim-overlay" aria-hidden="true"></svg>
       <div class="location-layer" id="location-layer" aria-hidden="true"></div>
       <div class="marker-anchor" id="gun-anchor" data-marker="gun" hidden>
         <div class="marker gun"><span>GUN</span></div>
@@ -44,6 +45,15 @@
         <div><small>FUZE</small><b id="fuze">—</b></div>
       </div>
       <div class="status-bar">
+        <div class="metric aim-metric">
+          <small>Cannon aim</small>
+          <div class="aim-content">
+            <span class="mini-compass" id="aim-compass" aria-hidden="true">
+              <i id="aim-mark"></i><i id="aim-needle"></i>
+            </span>
+            <span class="aim-copy"><b id="aim">—</b><em id="aim-degrees">—</em></span>
+          </div>
+        </div>
         <div class="metric"><small>Distance</small><b id="distance">—</b></div>
         <div class="metric"><small>Explosion height</small><b id="explosion-height">—</b></div>
         <div class="metric"><small>Δ Height</small><b id="height">—</b></div>
@@ -77,6 +87,6 @@
     </div>
   </section>
 
-  <script src="/static/app.js?v=20260909-obstruction-line" defer></script>
+  <script src="/static/app.js?v=20260919-map-compass" defer></script>
 </body>
 </html>

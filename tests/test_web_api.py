@@ -34,8 +34,8 @@ class WebApiTests(unittest.TestCase):
             "no-store, no-cache, must-revalidate, max-age=0",
         )
         self.assertIn("MOBILE FIRE DIRECTION", page.text)
-        self.assertIn("styles.css?v=20260909-airburst-aim", page.text)
-        self.assertIn("app.js?v=20260909-obstruction-line", page.text)
+        self.assertIn("styles.css?v=20260919-map-compass", page.text)
+        self.assertIn("app.js?v=20260919-map-compass", page.text)
         self.assertIn('id="burst-mode"', page.text)
         self.assertIn('id="actual-elevation"', page.text)
         self.assertIn('id="gun-mode"', page.text)
@@ -48,7 +48,9 @@ class WebApiTests(unittest.TestCase):
         self.assertNotIn('id="clear"', page.text)
         self.assertEqual(page.text.count('id="elevation"'), 1)
         self.assertEqual(page.text.count('id="fuze"'), 1)
-        self.assertNotIn('id="bearing"', page.text)
+        self.assertIn('id="aim-compass"', page.text)
+        self.assertIn('id="aim-overlay"', page.text)
+        self.assertIn('id="aim"', page.text)
         self.assertNotIn('id="clearance-status"', page.text)
         self.assertEqual(page.text.count('id="explosion-height"'), 1)
         script = self.client.get("/static/app.js")
@@ -75,7 +77,8 @@ class WebApiTests(unittest.TestCase):
         self.assertIn('mapWrap.classList.add("solution-loading")', script.text)
         self.assertIn('mapWrap.classList.remove("solution-loading")', script.text)
         self.assertIn('data.height_above_target_metres.toFixed(1)', script.text)
-        self.assertNotIn('$("#bearing")', script.text)
+        self.assertIn("function gameCompassAim(bearingDegrees)", script.text)
+        self.assertIn("updateAimCompass(data.bearing_degrees)", script.text)
         self.assertIn('shotLine.classList.toggle("clear", data.clearance_status === "clear")', script.text)
         self.assertIn('shotLine.classList.toggle("obstructed", data.clearance_status === "obstructed")', script.text)
         self.assertIn("if (loadThumbnail) loadThumbnailInto(image, map)", script.text)
@@ -152,7 +155,12 @@ class WebApiTests(unittest.TestCase):
 
         styles = self.client.get("/static/styles.css")
         self.assertEqual(styles.status_code, 200)
-        self.assertIn("grid-template-columns:repeat(3,minmax(0,1fr))", styles.text)
+        self.assertIn(
+            "grid-template-columns:1.35fr repeat(3,minmax(0,1fr))",
+            styles.text,
+        )
+        self.assertIn(".mini-compass", styles.text)
+        self.assertIn(".aim-guide", styles.text)
         self.assertIn(".shot-line.clear", styles.text)
         self.assertIn(".shot-line.obstructed", styles.text)
         marker_rule = styles.text.split(".marker {", 1)[1].split("}", 1)[0]

@@ -5,6 +5,7 @@ const mapImage = $("#map-image");
 const gunAnchor = $("#gun-anchor");
 const targetAnchor = $("#target-anchor");
 const shotLine = $("#shot-line");
+const aimOverlay = $("#aim-overlay");
 const rangeChip = $("#range-chip");
 const modePill = $("#mode-pill");
 const drawer = $("#drawer");
@@ -81,6 +82,96 @@ function applyView() {
   updateMarkerPositions();
   updateLocationPositions();
   updateRangeChipPosition();
+  updateAimOverlay();
+}
+
+function gameCompassAim(bearingDegrees) {
+  const normalized = ((bearingDegrees % 360) + 360) % 360;
+  const bearing = Math.round(normalized * 1e9) / 1e9;
+  const markIndex = Math.floor(bearing / 15 + 0.5) % 24;
+  const markDegrees = markIndex * 15;
+  const directions = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
+  const direction = directions[Math.floor(markIndex / 3)];
+  const ticks = markIndex % 3;
+  return {
+    bearing,
+    markDegrees,
+    instruction:ticks ? `${direction} +${ticks}` : direction,
+  };
+}
+
+function updateAimCompass(bearingDegrees) {
+  const aim = Number.isFinite(bearingDegrees) ? gameCompassAim(bearingDegrees) : null;
+  $("#aim").textContent = aim ? aim.instruction : "—";
+  $("#aim-degrees").textContent = aim ? `${aim.markDegrees}° tick` : "—";
+  $("#aim-mark").style.setProperty("--angle", `${aim?.markDegrees || 0}deg`);
+  $("#aim-needle").style.setProperty("--angle", `${aim?.bearing || 0}deg`);
+}
+
+function missionBearing() {
+  if (!gun || !target) return null;
+  const dx = target.x - gun.x;
+  const dy = target.y - gun.y;
+  if (dx === 0 && dy === 0) return null;
+  return (Math.atan2(dx, -dy) * 180 / Math.PI + 360) % 360;
+}
+
+function compassGuideDirections(bearingDegrees) {
+  const first = Math.floor(bearingDegrees / 45) * 45;
+  return [first, (first + 45) % 360];
+}
+
+function compassMinorTickDirections(bearingDegrees) {
+  const first = Math.floor(bearingDegrees / 45) * 45;
+  return [(first + 15) % 360, (first + 30) % 360];
+}
+
+function rayEndpoint(
+  origin, bearingDegrees, width, height, padding = 8, bottomPadding = 68,
+  maxDistance = Infinity,
+) {
+  if (origin.x < 0 || origin.x > width || origin.y < 0 || origin.y > height) return null;
+  const radians = bearingDegrees * Math.PI / 180;
+  const dx = Math.sin(radians);
+  const dy = -Math.cos(radians);
+  const distances = [];
+  if (dx > 1e-9) distances.push((width - padding - origin.x) / dx);
+  if (dx < -1e-9) distances.push((padding - origin.x) / dx);
+  if (dy > 1e-9) distances.push((height - Math.max(padding, bottomPadding) - origin.y) / dy);
+  if (dy < -1e-9) distances.push((padding - origin.y) / dy);
+  const distance = Math.min(maxDistance, ...distances.filter(value => value >= 0));
+  if (!Number.isFinite(distance)) return null;
+  return {x:origin.x + dx * distance, y:origin.y + dy * distance, dx, dy};
+}
+
+function updateAimOverlay() {
+  const bearing = missionBearing();
+  if (bearing == null) {
+    aimOverlay.replaceChildren();
+    return;
+  }
+  const rect = mapWrap.getBoundingClientRect();
+  const origin = screenPoint(gun);
+  const targetPoint = screenPoint(target);
+  const shotLength = Math.hypot(targetPoint.x - origin.x, targetPoint.y - origin.y);
+  const labels = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
+  const namedDirections = compassGuideDirections(bearing);
+  const directions = [
+    {direction:namedDirections[0], label:labels[Math.round(namedDirections[0] / 45) % 8]},
+    ...compassMinorTickDirections(bearing).map((direction, index) => ({
+      direction, label:`+${index + 1}`,
+    })),
+    {direction:namedDirections[1], label:labels[Math.round(namedDirections[1] / 45) % 8]},
+  ];
+  const guides = directions.map(({direction, label}) => {
+    const end = rayEndpoint(origin, direction, rect.width, rect.height, 8, 68, shotLength);
+    if (!end) return "";
+    const labelX = end.x - end.dx * 9;
+    const labelY = end.y - end.dy * 9;
+    const width = label.length === 1 ? 22 : 30;
+    return `<line class="aim-guide" data-bearing="${direction}" x1="${origin.x}" y1="${origin.y}" x2="${end.x}" y2="${end.y}"/><g transform="translate(${labelX} ${labelY})"><rect class="aim-guide-label-bg" x="${-width / 2}" y="-9" width="${width}" height="18" rx="5"/><text class="aim-guide-label">${label}</text></g>`;
+  }).join("");
+  aimOverlay.innerHTML = guides;
 }
 
 function resetView() {
@@ -179,6 +270,7 @@ function updateMissionGeometry() {
   if (!gun || !target) {
     shotLine.hidden = true;
     rangeChip.hidden = true;
+    updateAimOverlay();
     return;
   }
   const gx = gun.x * baseScale;
@@ -194,6 +286,7 @@ function updateMissionGeometry() {
   shotLine.hidden = false;
   rangeChip.hidden = !latestSolution;
   updateRangeChipPosition();
+  updateAimOverlay();
 }
 
 function cancelPendingSolution() {
@@ -214,6 +307,7 @@ function clearSolution() {
   $("#distance").textContent = "—";
   $("#height").textContent = "—";
   $("#explosion-height").textContent = "—";
+  updateAimCompass(null);
   shotLine.classList.remove("clear", "obstructed");
   updateMissionGeometry();
 }
@@ -855,6 +949,7 @@ async function requestSolution() {
     $("#actual-elevation").value = data.elevation_degrees == null
       ? "" : (Math.round(data.elevation_degrees * 100) / 100).toFixed(2);
     $("#distance").textContent = `${data.slant_range_yards.toFixed(0)} yd`;
+    updateAimCompass(data.bearing_degrees);
     $("#height").textContent = data.height_difference_metres == null ? "N/A" : `${data.height_difference_metres.toFixed(1)} m`;
     $("#elevation").textContent = data.elevation_degrees == null
       ? "No solution" : `${data.elevation_degrees.toFixed(2)}°`;

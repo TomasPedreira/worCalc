@@ -18,7 +18,7 @@ function element(key) {
     const classes = new Set();
     elements.set(key, {
       value:'', textContent:'', hidden:false, naturalWidth:200, naturalHeight:150,
-      src:'old-map', style:{setProperty(){}}, handlers:{},
+      src:'old-map', style:{setProperty(key,value){this[key]=value}}, handlers:{},
       classList:{add:x=>classes.add(x), remove:(...xs)=>xs.forEach(x=>classes.delete(x)),
         contains:x=>classes.has(x), toggle(x,on){if(on) classes.add(x); else classes.delete(x)}},
       addEventListener(n,f){this.handlers[n]=f}, replaceChildren(){}, setPointerCapture(){},
@@ -46,6 +46,64 @@ gun={x:10,y:20}; target={x:100,y:20};
 
 @unittest.skipUnless(NODE, "Node.js is required for browser interaction tests")
 class WebInteractionTests(unittest.TestCase):
+    def test_map_compass_uses_one_45_degree_sector(self):
+        self.run_scenario(r"""
+          assert.deepEqual(compassGuideDirections(152), [135,180]);
+          assert.deepEqual(compassMinorTickDirections(152), [150,165]);
+          assert.deepEqual(compassGuideDirections(359), [315,0]);
+          assert.deepEqual(compassMinorTickDirections(359), [330,345]);
+          const end = rayEndpoint({x:50,y:60}, 90, 200, 150);
+          assert.ok(Math.abs(end.x-192)<1e-9);
+          assert.ok(Math.abs(end.y-60)<1e-9);
+          const south = rayEndpoint({x:50,y:60}, 180, 200, 150);
+          assert.ok(Math.abs(south.y-82)<1e-9);
+          const short = rayEndpoint({x:50,y:60}, 90, 200, 150, 8, 68, 40);
+          assert.ok(Math.abs(short.x-90)<1e-9);
+        """)
+
+    def test_map_compass_renders_from_gun_without_blocking_the_map(self):
+        self.run_scenario(r"""
+          updateAimOverlay();
+          assert.match($('#aim-overlay').innerHTML,/aim-guide/);
+          assert.match($('#aim-overlay').innerHTML,/data-bearing="90"/);
+          assert.match($('#aim-overlay').innerHTML,/data-bearing="135"/);
+          assert.match($('#aim-overlay').innerHTML,/data-bearing="105"/);
+          assert.match($('#aim-overlay').innerHTML,/data-bearing="120"/);
+          assert.equal(($('#aim-overlay').innerHTML.match(/class="aim-guide"/g) || []).length,4);
+          assert.doesNotMatch($('#aim-overlay').innerHTML,/aim-minor-guide|aim-tick-guide/);
+          assert.match($('#aim-overlay').innerHTML,/>E<|>SE</);
+          assert.match($('#aim-overlay').innerHTML,/>\+1</);
+          assert.match($('#aim-overlay').innerHTML,/>\+2</);
+        """)
+
+    def test_game_compass_aim_has_two_ticks_between_named_directions(self):
+        self.run_scenario(r"""
+          assert.deepEqual(gameCompassAim(14), {
+            bearing:14,markDegrees:15,instruction:'N +1'
+          });
+          assert.deepEqual(gameCompassAim(31), {
+            bearing:31,markDegrees:30,instruction:'N +2'
+          });
+          assert.deepEqual(gameCompassAim(44), {
+            bearing:44,markDegrees:45,instruction:'NE'
+          });
+          assert.equal(gameCompassAim(359).instruction,'N');
+        """)
+
+    def test_solution_updates_visible_compass_aim(self):
+        self.run_scenario(r"""
+          fetch=async()=>({ok:true,json:async()=>({
+            slant_range_yards:300,height_difference_metres:0,bearing_degrees:74.2,
+            elevation_degrees:1.2,fuze_seconds:2.4,clearance_status:'clear',
+            height_above_target_metres:0
+          })});
+          await requestSolution();
+          assert.equal($('#aim').textContent,'NE +2');
+          assert.equal($('#aim-degrees').textContent,'75° tick');
+          assert.equal($('#aim-mark').style['--angle'],'75deg');
+          assert.equal($('#aim-needle').style['--angle'],'74.2deg');
+        """)
+
     def test_drag_at_fit_zoom_moves_map_and_keeps_a_visible_strip(self):
         self.run_scenario(r"""
           sceneWidth=200;sceneHeight=150;zoom=1;translateX=0;translateY=0;
