@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 256 256">
+  <title>worCalc — field cannon</title>
+  <rect width="256" height="256" fill="#0c120d"/>
+  <g fill="#decd97">
+    <!-- Tapered carriage and long trail, seen from the side. -->
+    <path d="M85 127h43l19 22-9 10h-24l-43 28H45v-9l48-34z"/>
+    <!-- Barrel, breech knob and reinforced muzzle. -->
+    <g transform="rotate(-13 91 118)">
+      <circle cx="79" cy="118" r="7"/>
+      <path d="M88 104h91v27H88c-8 0-12-6-12-13s4-14 12-14z"/>
+      <rect x="176" y="100" width="15" height="35" rx="3"/>
+      <rect x="187" y="105" width="4" height="25" rx="1" fill="#0c120d"/>
+    </g>
+  </g>
+  <!-- Large wooden spoked wheel: legible even at launcher size. -->
+  <circle cx="120" cy="166" r="36" fill="#0c120d"/>
+  <g stroke="#decd97" fill="none">
+    <circle cx="120" cy="166" r="30" stroke-width="8"/>
+    <path d="M120 140v52m-26-26h52m-44-18 36 36m-36 0 36-36" stroke-width="5"/>
+  </g>
+  <circle cx="120" cy="166" r="8" fill="#decd97"/>
+</svg>

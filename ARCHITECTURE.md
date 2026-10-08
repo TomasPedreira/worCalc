@@ -1,62 +1,80 @@
 # worCalc architecture
 
-The repository is organized by change boundary. A feature should normally be
-implemented inside one area and exposed through a small public function or data
-class before the main window is changed.
+worCalc is a local Tauri application. Its entry screen selects the fire calculator
+or Sketcher. Both use the same Rust calculation library and bundled map pack.
 
 ```text
-worcalc/
-  domain/      Pure calibration, ranging, projectile, trajectory, and ballistic math
-  maps/        PAK catalog, entity decoding, projection, and elevation sampling
-  ui/          Qt widgets and application composition
-  web/         FastAPI composition and browser assets
-  paths.py     Shared repository data locations
-scripts/       Thin developer-tool entry points
-tests/         Tests grouped by the production boundary they exercise
-src/           Temporary compatibility facades for old src.* imports
+native/core/           Pure Rust physics, projection, terrain and calibration
+native/core/tests/     Unit tests and independent calculation references
+native/frontend/src/   Local HTML/CSS/JS interface and pure plan model
+native/frontend/       Tauri IPC adapter, Vite configuration and Node tests
+native/assets/         Canonical offline catalog, images, terrain and hash manifest
+native/prepare-assets.js  Node-only validation and staging of the data pack
+src-tauri/src/         Native composition, resource reads and durable storage
+src-tauri/resources/   Generated copies of the validated data pack
 ```
 
 ## Dependency direction
 
-```text
-domain  <-  maps  <-  ui
-   ^                    |
-   +--------------------+
-```
+The interface invokes local Tauri commands. Tauri composes `worcalc-core` with a
+bundled `AssetStore` and app-private storage. The Rust core has no UI, Tauri, network
+or file-system dependency; callers supply its assets. Reusable calculations belong
+in the core, and reusable plan operations belong in `sketch-model.js`.
 
-- `domain` must not import Qt, map assets, or UI code.
-- `maps` may use domain primitives but must not import Qt.
-- `ui` composes both layers and owns rendering only.
-- `web` is an alternate presentation/integration boundary that composes `domain`
-  and `maps` without importing Qt or `ui`.
-- `scripts` are entry points; reusable code belongs under `worcalc`.
-- Production code must never import from `scripts` or the compatibility `src`
-  package.
+`transport.js` exposes structured `maps`, `options`, `locations`, `calculate` and
+`impact` operations. Map images arrive as binary IPC responses. There is no HTTP
+API, browser fallback, Python runtime, Python build step or launcher. Vite's local
+server is used only by `tauri dev`; release builds embed the compiled interface.
 
-## Parallel work
+## Maps and calculations
 
-Safe concurrent ownership areas:
+The canonical pack holds all 99 maps and four shared battlefield terrains.
+`manifest.json` records each file's length and SHA-256. Preparation validates the
+complete pack before staging resources. Keep this pack or its archive when cleaning
+generated build directories. Raw game PAK extraction is outside the current build.
 
-| Area | Primary files | Typical work |
-| --- | --- | --- |
-| Ballistics | `worcalc/domain/ballistics.py`, `projectile.py` | Models and physics |
-| Clearance | `worcalc/domain/trajectory.py` | Terrain-profile trajectory and obstruction math |
-| Ranging | `worcalc/domain/ranging.py`, `calibration.py` | Distance and transforms |
-| Map data | `worcalc/maps/` | PAK parsing, locations, terrain/elevation |
-| Map rendering | `worcalc/ui/map_view.py` | Markers, overlays, interaction |
-| Explorer | `worcalc/ui/ballistics_explorer.py` | Curve-analysis UI |
-| Profile plot | `worcalc/ui/trajectory_profile.py` | Terrain and shell side-profile rendering |
-| Integration | `worcalc/ui/main_window.py` | Wiring feature APIs into the app |
+Terrain preserves elevation bits, triangle interpolation and holes. The engine
+retains one battlefield at a time, up to 200 calculation traces and up to 2,000
+calibration observations. Heavy calculations and resource reads run away from the
+UI thread. The interface ignores stale calculations and cancelled image reads.
 
-Only the integration owner should normally edit `main_window.py` during a
-multi-agent pass. Other agents should deliver tested APIs from their owned
-boundary. This keeps merge conflicts localized to a short integration step.
+## Sketcher
 
-Every change should add or update a focused test. Run:
+`sketch-model.js` owns versioned documents, shared target geometry, independent
+gun-to-target settings, validation and transactional persistence. `sketcher.js`
+receives map navigation, native calculation and storage through explicit hooks.
+`map-marker.js` renders the gun and target markers for both modes, using the same
+marker styles. Sketcher adds selection and configuration opacity to their anchors.
+`fire-readout.js` supplies the shared elevation/fuze window and text formatting.
+Gun selection reveals its saved target windows; a target click focuses the
+calculator's mission geometry. Editing and operating have separate visible states.
+Selection displays saved values without writes and opens an editable side
+inspector. Explicit Save applies coordinates, cannon or independent firing settings.
+Map editing enables placement and dragging. Persistent point IDs are internal
+storage references. Sketcher markers have no labels or hover titles; the inspector
+and lists omit IDs. Legacy names are stripped while preserving references.
+Delete keys and inspector buttons remove the most recently selected point, with
+relationship cleanup in the model. Calculations use the same Rust engine as the
+calculator and allow exact defaults or manual elevation/fuze overrides.
+
+`sketch_store.rs` saves app-private `sketches.json` with a recoverable previous
+revision. Export creates unique JSON files in Downloads. Import validates the
+document before replacing included maps. See `docs/sketcher.md`.
+
+## Change boundaries and validation
+
+Claim core/domain, maps, a UI component, or integration before editing. Keep shared
+schema changes coordinated with consumers. Add focused tests for behavior changes.
+Run the full native suites before handoff:
 
 ```powershell
-.\.venv\Scripts\python.exe -m unittest discover -s tests
+npm.cmd test
+cargo test --workspace
+npm.cmd run tauri -- build --no-bundle
 ```
 
-The `src.*` facades are compatibility-only and can be removed after downstream
-callers have migrated to `worcalc.*`.
+The retired Python suite passed all 221 tests before removal. Its independent
+physics, clearance, empirical, map-mission and impact results are retained as JSON
+fixtures, checked by Rust without requiring Python. The legacy source, including
+uncommitted tools, is recoverable from the local `artifacts/migration` archive;
+it is outside the active application and build.

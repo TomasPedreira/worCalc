@@ -1,8 +1,9 @@
 # Native terrain elevation
 
-`worcalc/maps/terrain.py` reads `terrain/terrain.dat` directly from the copied
-`paks/<Battlefield>/level.pak`. No separate extraction, new dependency, or game
-modification is required. All four supplied battlefields decode successfully.
+`native/core/src/terrain.rs` reads the prepared WRT1 terrain pack bundled with
+Tauri. All four battlefields are present. The original `terrain.dat` findings
+below describe how the retired importer produced that pack; the native runtime
+does not read game PAK files. See `native/README.md` for the WRT1 format.
 
 ## Supported format
 
@@ -40,22 +41,19 @@ Bridges, buildings and other object collision meshes are not terrain heights.
 
 ## Integration and validation
 
-`TerrainElevationField` preserves the `ElevationField` interface. Gun/target and
-route heights query native sectors through the map's affine transform and world
-origin. Its 65 x 65 overview samples support existing gradient legends and data
-availability checks; those samples do **not** drive height interpolation. Legend
-extrema/percentiles describe the overview, not guaranteed whole-map extrema.
-Profiles cap their spacing at one terrain unit (one metre in these assets).
-Finite spacing still cannot certify collision-free trajectories.
+Gun/target and route heights query native sectors through the map's affine
+transform and world origin. Rust profiles sample the native terrain at intervals
+of at most one metre. These queries interpolate the native grid; they are not new
+stored height vertices. Finite spacing cannot certify collision-free trajectories.
 
-Missing archives or missing terrain entries retain the old object-anchor field.
-A terrain hole does not fall back to object anchors. A route crossing an unknown
-sample returns an empty profile, avoiding a fabricated continuous surface.
-Battlefield terrain is cached by archive path, modification time and length.
+Missing or corrupt bundled terrain produces an error. A terrain hole does not
+fall back to object anchors. A route crossing an unknown sample returns an empty
+profile, avoiding a fabricated continuous surface. The engine retains one decoded
+battlefield at a time.
 
-Tests cover asymmetric axes and sector order, quantization, triangle interpolation,
-coarse sectors, holes, boundaries, invalid data, archive loading and map projection.
-An optional local-asset test checks all four full battlefields.
+Native tests cover asymmetric axes, triangle interpolation, coarse sectors,
+holes, boundaries and malformed data. Map-mission references check projection
+and calculations across all 99 maps and all four terrains.
 
 An independent coordinate sanity check against positioned spawn entities found:
 

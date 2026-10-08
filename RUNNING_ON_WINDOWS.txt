@@ -1,116 +1,26 @@
-worCalc - Windows Setup
-=======================
+worCalc - Windows
+=================
 
-Requirements
-------------
+Open artifacts/desktop/worCalc/worcalc-app.exe directly.
+The portable ZIP is artifacts/desktop/worCalc-desktop.zip.
 
-- Windows 10/11
-- Python 3.12 with the Python Launcher
-- Internet access for the initial dependency install
+Extract the whole ZIP before opening the executable. Keep the resources folder
+beside worcalc-app.exe; it contains the offline maps and terrain. Windows needs
+the Microsoft Edge WebView2 Runtime for Tauri's embedded interface.
 
-Setup
------
+Choose Fire calculator or Sketcher on the entry screen. Both run locally.
+Sketcher saves plans in the application's private data folder; Export plans
+writes JSON to Downloads, and Import plans reads a previously exported file.
 
-Extract the archive, open PowerShell in the extracted directory, and run:
+There is no Python setup, browser URL, web server or separate launcher.
 
-    py -3.12 -m venv .venv
-    .\.venv\Scripts\python.exe -m pip install -r requirements.txt
+To rebuild from source, install Node.js, Rust (the pinned project toolchain),
+Microsoft C++ Build Tools and WebView2. Restore native/assets if necessary, then:
 
-Launch
-------
+    npm.cmd ci
+    npm.cmd test
+    cargo test --workspace
+    npm.cmd run desktop:build
 
-    .\.venv\Scripts\python.exe -m worcalc
-
-For subsequent launches, only the launch command is required.
-
-LAN web calculator
-------------------
-
-To serve the browser calculator to devices on the same network, run:
-
-    .\.venv\Scripts\python.exe -m worcalc.web
-
-Open http://localhost:8000 on this computer. To open it from a phone, run
-"ipconfig", find this computer's IPv4 Address, and browse to port 8000 at that
-address, for example:
-
-    http://192.168.1.20:8000
-
-If Windows Firewall asks, allow Python on private networks. This server has no
-login and should only be used on a trusted local network.
-
-Remote web calculator through Tailscale
----------------------------------------
-
-Use the "worCalc Remote" desktop shortcut to open the small server controller.
-Click Start and approve the Administrator prompt to enable private access. The
-window shows whether the service is running and provides buttons to open or stop
-it. Closing the controller does not stop the server; reopen it and click Stop
-when finished.
-
-Double-click START_REMOTE_WORCALC.bat and approve the Administrator prompt.
-The launcher starts worCalc on localhost, waits for it to become ready, and runs
-"tailscale serve --bg 8000". It then prints the private HTTPS address to open on
-your phone. Tailscale must already be installed, connected, and signed in on both
-devices. The PC must remain powered on; the Python server runs without a console
-window until it is stopped. The launcher remains visible so it can show the
-private address and any startup errors. Python output is saved in
-%TEMP%\worcalc-web.log.
-
-When finished, double-click END_REMOTE_WORCALC.bat and approve the Administrator
-prompt. It disables only the Tailscale Serve endpoint created by the launcher and
-then stops the worCalc web server. It will not stop an unrelated program that is
-using port 8000.
-
-Map data
---------
-
-Game assets and PAK-derived map data are intentionally excluded from this
-archive. Generate the required runtime files directly from an installed War of
-Rights Assets directory:
-
-    .\.venv\Scripts\python.exe extract_assets.py "D:\path\to\War of Rights\Assets"
-
-The path may point either to the Assets directory itself or to its parent
-War of Rights game directory. The extractor reads:
-
-    Assets\Minimaps_*.pak
-    Assets\LevelsLooseFiles.pak
-    Assets\Levels\<Battlefield>\level.pak
-
-It converts gameplay-area DDS textures to PNG, copies the required level
-archives, and generates the calibration catalog under:
-
-    paks\
-      gameplay_area_calibrations.json
-      converted_minimaps\
-
-Pillow handles DDS conversion; FFmpeg is not required.
-
-The application will launch without extracted data, but the map library will
-remain empty.
-
-The final layout should be:
-
-    <project>\
-      extract_assets.py
-      paks\
-      worcalc\
-      requirements.txt
-      war_of_rights_ballistic_ranges.csv
-
-Controls
---------
-
-- Single-click battlefield and mode groups to expand or collapse them.
-- Select a map, then click once for the gun and again for the target.
-- Drag markers to reposition them; right-click a marker to remove it.
-- Cannon, ammunition, and estimation-curve selectors are in the top bar.
-- Grayscale and elevation-gradient toggles are below the map.
-
-Troubleshooting
----------------
-
-- "py" not found: install Python 3.12 with the Python Launcher enabled.
-- Missing PySide6: rerun the pip install command above.
-- Missing worcalc module: run the command from the extracted project root.
+The resulting executable is target/release/worcalc-app.exe. Keep its bundled
+resources alongside it when copying the application.

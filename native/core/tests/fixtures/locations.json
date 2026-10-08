@@ -1,0 +1,832 @@
+[
+  {
+    "map_id": "map-1",
+    "expected": [
+      {
+        "name": "CQ1_Spawnpoint_USA_Infantry_1",
+        "pixel_x": 1150.95803660246,
+        "pixel_y": 824.8726645348191,
+        "kind": "spawn",
+        "faction": "USA",
+        "elevation_metres": 60.9242057800293,
+        "world_x": 1528.3228759765625,
+        "world_y": 2374.1455078125
+      },
+      {
+        "name": "CQ1_Spawnpoint_USA_Artillery_Forward",
+        "pixel_x": 1450.6985543444443,
+        "pixel_y": 1485.5765871942217,
+        "kind": "battery",
+        "faction": "USA",
+        "elevation_metres": 61.41531753540039,
+        "world_x": 1286.4127197265625,
+        "world_y": 1925.4268798828125
+      },
+      {
+        "name": "CQ1_Spawnpoint_CSA_Artillery_Forward",
+        "pixel_x": 804.7355468160304,
+        "pixel_y": 1474.5437008242388,
+        "kind": "battery",
+        "faction": "CSA",
+        "elevation_metres": 63.15972900390625,
+        "world_x": 1017.8574829101562,
+        "world_y": 2291.580810546875
+      },
+      {
+        "name": "CQ1_Spawnpoint_USA_Cavalry_0",
+        "pixel_x": 1514.5749799015227,
+        "pixel_y": 867.5993962566807,
+        "kind": "spawn",
+        "faction": "USA",
+        "elevation_metres": 51.36182403564453,
+        "world_x": 1659.078857421875,
+        "world_y": 2152.5048828125
+      },
+      {
+        "name": "CQ1_Spawnpoint_USA_Infantry_2",
+        "pixel_x": 1165.7361454004515,
+        "pixel_y": 827.4481953400034,
+        "kind": "spawn",
+        "faction": "USA",
+        "elevation_metres": 60.98234939575195,
+        "world_x": 1533.16796875,
+        "world_y": 2364.78076171875
+      },
+      {
+        "name": "CQ1_Spawnpoint_CSA_Infantry_1",
+        "pixel_x": 673.4875416197598,
+        "pixel_y": 910.8298249449618,
+        "kind": "spawn",
+        "faction": "CSA",
+        "elevation_metres": 64.19061279296875,
+        "world_x": 1277.200927734375,
+        "world_y": 2604.766845703125
+      },
+      {
+        "name": "CQ1_Spawnpoint_USA_Infantry_0",
+        "pixel_x": 1169.0861174830177,
+        "pixel_y": 792.7288291110548,
+        "kind": "spawn",
+        "faction": "USA",
+        "elevation_metres": 60.68226623535156,
+        "world_x": 1554.003662109375,
+        "world_y": 2377.672119140625
+      },
+      {
+        "name": "CQ1_Spawnpoint_USA_Artillery_Staging",
+        "pixel_x": 1175.0628512087703,
+        "pixel_y": 851.8093837909151,
+        "kind": "battery",
+        "faction": "USA",
+        "elevation_metres": 60.70691680908203,
+        "world_x": 1523.5146484375,
+        "world_y": 2349.201171875
+      },
+      {
+        "name": "Victory_Conquest_1",
+        "pixel_x": 1001.5942749770053,
+        "pixel_y": 1519.3673491665538,
+        "kind": "objective",
+        "faction": null,
+        "elevation_metres": 60.24380874633789,
+        "world_x": 1076.52001953125,
+        "world_y": 2162.361328125
+      },
+      {
+        "name": "CQ1_Spawnpoint_CSA_Infantry_2",
+        "pixel_x": 691.3413144641459,
+        "pixel_y": 974.1083281667958,
+        "kind": "spawn",
+        "faction": "CSA",
+        "elevation_metres": 61.365135192871094,
+        "world_x": 1249.4161376953125,
+        "world_y": 2567.864501953125
+      },
+      {
+        "name": "CQ1_Spawnpoint_CSA_Cavalry_0",
+        "pixel_x": 453.1047913333722,
+        "pixel_y": 1001.1135580750455,
+        "kind": "spawn",
+        "faction": "CSA",
+        "elevation_metres": 59.3381233215332,
+        "world_x": 1132.9976806640625,
+        "world_y": 2689.689453125
+      },
+      {
+        "name": "CQ1_Spawnpoint_CSA_Infantry_0",
+        "pixel_x": 667.7470306720988,
+        "pixel_y": 873.8850781700557,
+        "kind": "spawn",
+        "faction": "CSA",
+        "elevation_metres": 63.075408935546875,
+        "world_x": 1295.4146728515625,
+        "world_y": 2623.69140625
+      },
+      {
+        "name": "CQ1_Spawnpoint_CSA_Artillery_Staging",
+        "pixel_x": 677.0624993129692,
+        "pixel_y": 946.6416486750504,
+        "kind": "battery",
+        "faction": "CSA",
+        "elevation_metres": 62.91508102416992,
+        "world_x": 1258.6995849609375,
+        "world_y": 2587.535888671875
+      },
+      {
+        "name": "12-pounder Napoleon (CSA) · Entity-1617",
+        "pixel_x": 1398.9415686786513,
+        "pixel_y": 1442.9138495843974,
+        "kind": "gun_spawn",
+        "faction": null,
+        "elevation_metres": 63.267364501953125,
+        "world_x": 1288.2528076171875,
+        "world_y": 1972.53271484375
+      },
+      {
+        "name": "3-inch Ordnance · Entity-1626",
+        "pixel_x": 1382.108829684755,
+        "pixel_y": 1497.612263868855,
+        "kind": "gun_spawn",
+        "faction": null,
+        "elevation_metres": 62.40275955200195,
+        "world_x": 1250.5130615234375,
+        "world_y": 1958.68896484375
+      },
+      {
+        "name": "10-pounder Parrott · Entity-1606",
+        "pixel_x": 847.5587898327257,
+        "pixel_y": 1437.211971278696,
+        "kind": "gun_spawn",
+        "faction": null,
+        "elevation_metres": 63.35283660888672,
+        "world_x": 1056.94140625,
+        "world_y": 2283.4951171875
+      },
+      {
+        "name": "3-inch Ordnance · Entity-1622",
+        "pixel_x": 1389.1776737395826,
+        "pixel_y": 1477.3781705631907,
+        "kind": "gun_spawn",
+        "faction": null,
+        "elevation_metres": 62.91366195678711,
+        "world_x": 1264.8319091796875,
+        "world_y": 1963.3388671875
+      },
+      {
+        "name": "12-pounder Napoleon (USA) · Entity-1609",
+        "pixel_x": 868.0135091338599,
+        "pixel_y": 1470.3065656356437,
+        "kind": "gun_spawn",
+        "faction": null,
+        "elevation_metres": 62.706844329833984,
+        "world_x": 1047.1380615234375,
+        "world_y": 2257.974365234375
+      },
+      {
+        "name": "10-pounder Parrott · Entity-1604",
+        "pixel_x": 835.5459882113383,
+        "pixel_y": 1417.505508197064,
+        "kind": "gun_spawn",
+        "faction": null,
+        "elevation_metres": 63.37196731567383,
+        "world_x": 1062.8499755859375,
+        "world_y": 2298.59814453125
+      },
+      {
+        "name": "12-pounder Napoleon (USA) · Entity-1608",
+        "pixel_x": 861.0343842920288,
+        "pixel_y": 1458.4547597431751,
+        "kind": "gun_spawn",
+        "faction": null,
+        "elevation_metres": 63.04673767089844,
+        "world_x": 1050.7960205078125,
+        "world_y": 2266.920166015625
+      },
+      {
+        "name": "12-pounder Napoleon (USA) · Entity-1621",
+        "pixel_x": 1391.323949890003,
+        "pixel_y": 1467.9138967843867,
+        "kind": "gun_spawn",
+        "faction": null,
+        "elevation_metres": 63.1087646484375,
+        "world_x": 1271.0360107421875,
+        "world_y": 1966.1629638671875
+      },
+      {
+        "name": "10-pounder Parrott · Entity-1605",
+        "pixel_x": 842.0148139485018,
+        "pixel_y": 1428.2577765166156,
+        "kind": "gun_spawn",
+        "faction": null,
+        "elevation_metres": 63.37594223022461,
+        "world_x": 1059.5897216796875,
+        "world_y": 2290.405517578125
+      },
+      {
+        "name": "12-pounder Napoleon (CSA) · Entity-1618",
+        "pixel_x": 1394.811400224385,
+        "pixel_y": 1456.425529305915,
+        "kind": "gun_spawn",
+        "faction": null,
+        "elevation_metres": 63.320281982421875,
+        "world_x": 1278.942138671875,
+        "world_y": 1969.097412109375
+      },
+      {
+        "name": "3-inch Ordnance · Entity-1625",
+        "pixel_x": 1385.7783924854216,
+        "pixel_y": 1487.7838264856473,
+        "kind": "gun_spawn",
+        "faction": null,
+        "elevation_metres": 62.66165542602539,
+        "world_x": 1257.568603515625,
+        "world_y": 1960.8155517578125
+      },
+      {
+        "name": "12-pounder Napoleon (USA) · Entity-1607",
+        "pixel_x": 853.7880036501126,
+        "pixel_y": 1447.0251985652965,
+        "kind": "gun_spawn",
+        "faction": null,
+        "elevation_metres": 63.286869049072266,
+        "world_x": 1054.104248046875,
+        "world_y": 2275.8359375
+      }
+    ]
+  },
+  {
+    "map_id": "map-32",
+    "expected": [
+      {
+        "name": "CQ1_Spawnpoint_USA_Infantry_1",
+        "pixel_x": 1814.0206535496884,
+        "pixel_y": 1672.4237732992817,
+        "kind": "spawn",
+        "faction": "USA",
+        "elevation_metres": 52.53315734863281,
+        "world_x": 1262.23974609375,
+        "world_y": 2511.865966796875
+      },
+      {
+        "name": "CQ1_Spawnpoint_USA_Artillery_Forward",
+        "pixel_x": 1797.9373124623842,
+        "pixel_y": 466.1778696350264,
+        "kind": "battery",
+        "faction": "USA",
+        "elevation_metres": 60.696590423583984,
+        "world_x": 1256.8681640625,
+        "world_y": 2871.148193359375
+      },
+      {
+        "name": "CQ1_Spawnpoint_CSA_Artillery_Forward",
+        "pixel_x": 357.32221121488703,
+        "pixel_y": 426.0237712069645,
+        "kind": "battery",
+        "faction": "CSA",
+        "elevation_metres": 67.29790496826172,
+        "world_x": 828.4625244140625,
+        "world_y": 2883.108154296875
+      },
+      {
+        "name": "CQ1_Spawnpoint_CSA_Infantry_1",
+        "pixel_x": 487.77225481079074,
+        "pixel_y": 1726.0729537172108,
+        "kind": "spawn",
+        "faction": "CSA",
+        "elevation_metres": 56.35677719116211,
+        "world_x": 867.8883666992188,
+        "world_y": 2495.886474609375
+      },
+      {
+        "name": "CQ1_Spawnpoint_USA_Infantry_0",
+        "pixel_x": 1731.218121838064,
+        "pixel_y": 1737.6655766874908,
+        "kind": "spawn",
+        "faction": "USA",
+        "elevation_metres": 52.83546829223633,
+        "world_x": 1237.649169921875,
+        "world_y": 2492.43359375
+      },
+      {
+        "name": "CQ1_Spawnpoint_USA_Infantry_2",
+        "pixel_x": 1850.5655578525675,
+        "pixel_y": 1634.077051923434,
+        "kind": "spawn",
+        "faction": "USA",
+        "elevation_metres": 51.75674819946289,
+        "world_x": 1273.088134765625,
+        "world_y": 2523.28759765625
+      },
+      {
+        "name": "CQ1_Spawnpoint_USA_Artillery_Staging",
+        "pixel_x": 1603.6197880025886,
+        "pixel_y": 1748.3008226069837,
+        "kind": "battery",
+        "faction": "USA",
+        "elevation_metres": 55.046905517578125,
+        "world_x": 1199.7113037109375,
+        "world_y": 2489.265869140625
+      },
+      {
+        "name": "CQ1_Spawnpoint_CSA_Infantry_2",
+        "pixel_x": 394.6117316338366,
+        "pixel_y": 1803.456560404491,
+        "kind": "spawn",
+        "faction": "CSA",
+        "elevation_metres": 56.360633850097656,
+        "world_x": 840.2236328125,
+        "world_y": 2472.837646484375
+      },
+      {
+        "name": "CQ1_Spawnpoint_CSA_Infantry_0",
+        "pixel_x": 567.4863595379325,
+        "pixel_y": 1694.5581995659468,
+        "kind": "spawn",
+        "faction": "CSA",
+        "elevation_metres": 56.51894760131836,
+        "world_x": 891.5770263671875,
+        "world_y": 2505.273193359375
+      },
+      {
+        "name": "Victory_Conquest_1",
+        "pixel_x": 1123.5077407540052,
+        "pixel_y": 841.0368866577405,
+        "kind": "objective",
+        "faction": null,
+        "elevation_metres": 60.290775299072266,
+        "world_x": 1056.5006103515625,
+        "world_y": 2759.495849609375
+      },
+      {
+        "name": "CQ1_Spawnpoint_CSA_Artillery_Staging",
+        "pixel_x": 304.4450439403024,
+        "pixel_y": 1697.0942651439743,
+        "kind": "battery",
+        "faction": "CSA",
+        "elevation_metres": 58.13428497314453,
+        "world_x": 813.3594360351562,
+        "world_y": 2504.517822265625
+      },
+      {
+        "name": "12-pounder Napoleon (CSA) · Entity-1617",
+        "pixel_x": 1649.2489627301802,
+        "pixel_y": 480.3827876916589,
+        "kind": "gun_spawn",
+        "faction": null,
+        "elevation_metres": 64.73258209228516,
+        "world_x": 1212.66064453125,
+        "world_y": 2866.917236328125
+      },
+      {
+        "name": "3-inch Ordnance · Entity-1626",
+        "pixel_x": 1792.422080680767,
+        "pixel_y": 617.7040993975885,
+        "kind": "gun_spawn",
+        "faction": null,
+        "elevation_metres": 60.94294738769531,
+        "world_x": 1255.3021240234375,
+        "world_y": 2826.015869140625
+      },
+      {
+        "name": "10-pounder Parrott · Entity-1606",
+        "pixel_x": 448.49398719525544,
+        "pixel_y": 523.9122959614527,
+        "kind": "gun_spawn",
+        "faction": null,
+        "elevation_metres": 64.85640716552734,
+        "world_x": 855.6214599609375,
+        "world_y": 2853.951904296875
+      },
+      {
+        "name": "3-inch Ordnance · Entity-1622",
+        "pixel_x": 1746.0933584519282,
+        "pixel_y": 597.3959026421859,
+        "kind": "gun_spawn",
+        "faction": null,
+        "elevation_metres": 62.76602554321289,
+        "world_x": 1241.5157470703125,
+        "world_y": 2832.064697265625
+      },
+      {
+        "name": "12-pounder Napoleon (USA) · Entity-1609",
+        "pixel_x": 371.84139019903955,
+        "pixel_y": 574.7188534237903,
+        "kind": "gun_spawn",
+        "faction": null,
+        "elevation_metres": 63.08184814453125,
+        "world_x": 832.8526000976562,
+        "world_y": 2838.819091796875
+      },
+      {
+        "name": "10-pounder Parrott · Entity-1604",
+        "pixel_x": 494.1493372853369,
+        "pixel_y": 494.05409919001863,
+        "kind": "gun_spawn",
+        "faction": null,
+        "elevation_metres": 65.32476043701172,
+        "world_x": 869.18310546875,
+        "world_y": 2862.84521484375
+      },
+      {
+        "name": "12-pounder Napoleon (USA) · Entity-1608",
+        "pixel_x": 399.31738148594195,
+        "pixel_y": 557.3401648700268,
+        "kind": "gun_spawn",
+        "faction": null,
+        "elevation_metres": 63.89765548706055,
+        "world_x": 841.0144653320312,
+        "world_y": 2843.995361328125
+      },
+      {
+        "name": "12-pounder Napoleon (USA) · Entity-1621",
+        "pixel_x": 1681.8207157422517,
+        "pixel_y": 532.6852467958519,
+        "kind": "gun_spawn",
+        "faction": null,
+        "elevation_metres": 64.27972412109375,
+        "world_x": 1222.371826171875,
+        "world_y": 2851.3388671875
+      },
+      {
+        "name": "10-pounder Parrott · Entity-1605",
+        "pixel_x": 469.232729159214,
+        "pixel_y": 510.14344347932274,
+        "kind": "gun_spawn",
+        "faction": null,
+        "elevation_metres": 64.87346649169922,
+        "world_x": 861.7816772460938,
+        "world_y": 2858.052978515625
+      },
+      {
+        "name": "12-pounder Napoleon (CSA) · Entity-1618",
+        "pixel_x": 1666.8326379685418,
+        "pixel_y": 508.67459101784056,
+        "kind": "gun_spawn",
+        "faction": null,
+        "elevation_metres": 64.53551483154297,
+        "world_x": 1217.9031982421875,
+        "world_y": 2858.490478515625
+      },
+      {
+        "name": "3-inch Ordnance · Entity-1625",
+        "pixel_x": 1769.962178636948,
+        "pixel_y": 607.2844272489496,
+        "kind": "gun_spawn",
+        "faction": null,
+        "elevation_metres": 61.886043548583984,
+        "world_x": 1248.6182861328125,
+        "world_y": 2829.119384765625
+      },
+      {
+        "name": "12-pounder Napoleon (USA) · Entity-1607",
+        "pixel_x": 425.7769059756138,
+        "pixel_y": 539.3647550037861,
+        "kind": "gun_spawn",
+        "faction": null,
+        "elevation_metres": 64.40511322021484,
+        "world_x": 848.873779296875,
+        "world_y": 2849.349365234375
+      }
+    ]
+  },
+  {
+    "map_id": "map-67",
+    "expected": [
+      {
+        "name": "CQ1_Spawnpoint_USA_Infantry_1",
+        "pixel_x": 1407.4030876245042,
+        "pixel_y": 1373.9621930740482,
+        "kind": "spawn",
+        "faction": "USA",
+        "elevation_metres": 87.57367706298828,
+        "world_x": 2427.288818359375,
+        "world_y": 1808.043701171875
+      },
+      {
+        "name": "CQ1_Spawnpoint_CSA_Cavalry_0",
+        "pixel_x": 41.352768880540346,
+        "pixel_y": 941.8008514566538,
+        "kind": "spawn",
+        "faction": "CSA",
+        "elevation_metres": 130.18190002441406,
+        "world_x": 1800.9600830078125,
+        "world_y": 2006.18798828125
+      },
+      {
+        "name": "CQ1_Spawnpoint_CSA_Infantry_2",
+        "pixel_x": 1362.2832793423972,
+        "pixel_y": 937.393236975564,
+        "kind": "spawn",
+        "faction": "CSA",
+        "elevation_metres": 93.07270050048828,
+        "world_x": 2406.6015625,
+        "world_y": 2008.2088623046875
+      },
+      {
+        "name": "CQ1_Spawnpoint_USA_Infantry_2",
+        "pixel_x": 1336.0676244046147,
+        "pixel_y": 1386.590521075682,
+        "kind": "spawn",
+        "faction": "USA",
+        "elevation_metres": 87.9604263305664,
+        "world_x": 2394.581787109375,
+        "world_y": 1802.253662109375
+      },
+      {
+        "name": "Victory_Conquest_1",
+        "pixel_x": 389.83679424963105,
+        "pixel_y": 908.4190623374755,
+        "kind": "objective",
+        "faction": null,
+        "elevation_metres": 143.3253631591797,
+        "world_x": 1960.7386474609375,
+        "world_y": 2021.493408203125
+      },
+      {
+        "name": "CQ1_Spawnpoint_CSA_Infantry_1",
+        "pixel_x": 1410.0569747370082,
+        "pixel_y": 975.5995734829531,
+        "kind": "spawn",
+        "faction": "CSA",
+        "elevation_metres": 92.16999053955078,
+        "world_x": 2428.505615234375,
+        "world_y": 1990.69140625
+      },
+      {
+        "name": "CQ1_Spawnpoint_USA_Infantry_0",
+        "pixel_x": 1473.2561227323672,
+        "pixel_y": 1360.0122463297907,
+        "kind": "spawn",
+        "faction": "USA",
+        "elevation_metres": 87.58497619628906,
+        "world_x": 2457.482177734375,
+        "world_y": 1814.439697265625
+      },
+      {
+        "name": "CQ1_Spawnpoint_CSA_Infantry_0",
+        "pixel_x": 1459.2949938794898,
+        "pixel_y": 1013.2577204272759,
+        "kind": "spawn",
+        "faction": "CSA",
+        "elevation_metres": 91.41631317138672,
+        "world_x": 2451.0810546875,
+        "world_y": 1973.42529296875
+      }
+    ]
+  },
+  {
+    "map_id": "map-86",
+    "expected": [
+      {
+        "name": "CQ1_Spawnpoint_USA_Cavalry_0",
+        "pixel_x": 1404.4122492836677,
+        "pixel_y": 1085.7140304623376,
+        "kind": "spawn",
+        "faction": "USA",
+        "elevation_metres": 150.33126831054688,
+        "world_x": 2422.304443359375,
+        "world_y": 2050.403076171875
+      },
+      {
+        "name": "CQ1_Spawnpoint_USA_Infantry_1",
+        "pixel_x": 1201.086318051576,
+        "pixel_y": 1054.5873303793478,
+        "kind": "spawn",
+        "faction": "USA",
+        "elevation_metres": 165.9920654296875,
+        "world_x": 2283.709228515625,
+        "world_y": 2071.635498046875
+      },
+      {
+        "name": "CQ1_Spawnpoint_USA_Artillery_Forward",
+        "pixel_x": 1467.9985673352437,
+        "pixel_y": 1646.1707235811307,
+        "kind": "battery",
+        "faction": "USA",
+        "elevation_metres": 171.83900451660156,
+        "world_x": 2465.6474609375,
+        "world_y": 1668.099365234375
+      },
+      {
+        "name": "CQ1_Spawnpoint_CSA_Artillery_Forward",
+        "pixel_x": 925.4803008595989,
+        "pixel_y": 1649.514495951719,
+        "kind": "battery",
+        "faction": "CSA",
+        "elevation_metres": 201.2507781982422,
+        "world_x": 2095.844970703125,
+        "world_y": 1665.8184814453125
+      },
+      {
+        "name": "CQ1_Spawnpoint_CSA_Infantry_1",
+        "pixel_x": 678.4810171919771,
+        "pixel_y": 1063.9549037542913,
+        "kind": "spawn",
+        "faction": "CSA",
+        "elevation_metres": 192.89108276367188,
+        "world_x": 1927.480224609375,
+        "world_y": 2065.24560546875
+      },
+      {
+        "name": "CQ1_Spawnpoint_USA_Infantry_0",
+        "pixel_x": 1212.002865329513,
+        "pixel_y": 1018.1231213466565,
+        "kind": "spawn",
+        "faction": "USA",
+        "elevation_metres": 165.6676788330078,
+        "world_x": 2291.150390625,
+        "world_y": 2096.5087890625
+      },
+      {
+        "name": "CQ1_Spawnpoint_USA_Artillery_Staging",
+        "pixel_x": 1231.436246418338,
+        "pixel_y": 1076.0504656771209,
+        "kind": "battery",
+        "faction": "USA",
+        "elevation_metres": 163.38363647460938,
+        "world_x": 2304.39697265625,
+        "world_y": 2056.994873046875
+      },
+      {
+        "name": "Victory_Conquest_1",
+        "pixel_x": 893.5247134670489,
+        "pixel_y": 808.7340733100013,
+        "kind": "objective",
+        "faction": null,
+        "elevation_metres": 198.156982421875,
+        "world_x": 2074.062744140625,
+        "world_y": 2239.339111328125
+      },
+      {
+        "name": "CQ1_Spawnpoint_CSA_Cavalry_0",
+        "pixel_x": 692.1380730659026,
+        "pixel_y": 1308.8554049177767,
+        "kind": "spawn",
+        "faction": "CSA",
+        "elevation_metres": 192.65306091308594,
+        "world_x": 1936.7894287109375,
+        "world_y": 1898.19189453125
+      },
+      {
+        "name": "CQ1_Spawnpoint_CSA_Infantry_0",
+        "pixel_x": 688.9208452722063,
+        "pixel_y": 1039.8750898585656,
+        "kind": "spawn",
+        "faction": "CSA",
+        "elevation_metres": 195.07054138183594,
+        "world_x": 1934.596435546875,
+        "world_y": 2081.671142578125
+      },
+      {
+        "name": "CQ1_Spawnpoint_CSA_Artillery_Staging",
+        "pixel_x": 693.0743194842407,
+        "pixel_y": 1101.8979961089276,
+        "kind": "battery",
+        "faction": "CSA",
+        "elevation_metres": 193.1080322265625,
+        "world_x": 1937.4276123046875,
+        "world_y": 2039.363525390625
+      },
+      {
+        "name": "CQ1_Spawnpoint_CSA_Infantry_2",
+        "pixel_x": 674.0793338108882,
+        "pixel_y": 1086.251968902048,
+        "kind": "spawn",
+        "faction": "CSA",
+        "elevation_metres": 191.41148376464844,
+        "world_x": 1924.4798583984375,
+        "world_y": 2050.0361328125
+      },
+      {
+        "name": "CQ1_Spawnpoint_USA_Infantry_2",
+        "pixel_x": 1210.2098853868197,
+        "pixel_y": 1088.7992129974698,
+        "kind": "spawn",
+        "faction": "USA",
+        "elevation_metres": 167.06800842285156,
+        "world_x": 2289.92822265625,
+        "world_y": 2048.298583984375
+      },
+      {
+        "name": "12-pounder Napoleon (CSA) · Entity-1617",
+        "pixel_x": 1406.4652578796563,
+        "pixel_y": 1614.6460277929127,
+        "kind": "gun_spawn",
+        "faction": null,
+        "elevation_metres": 172.86790466308594,
+        "world_x": 2423.703857421875,
+        "world_y": 1689.603271484375
+      },
+      {
+        "name": "3-inch Ordnance · Entity-1626",
+        "pixel_x": 1401.5644699140403,
+        "pixel_y": 1673.3736584515157,
+        "kind": "gun_spawn",
+        "faction": null,
+        "elevation_metres": 170.05795288085938,
+        "world_x": 2420.36328125,
+        "world_y": 1649.54345703125
+      },
+      {
+        "name": "10-pounder Parrott · Entity-1606",
+        "pixel_x": 981.1164040114613,
+        "pixel_y": 1638.7646749026826,
+        "kind": "gun_spawn",
+        "faction": null,
+        "elevation_metres": 197.94960021972656,
+        "world_x": 2133.768798828125,
+        "world_y": 1673.1512451171875
+      },
+      {
+        "name": "3-inch Ordnance · Entity-1622",
+        "pixel_x": 1404.2256446991405,
+        "pixel_y": 1651.4638517147814,
+        "kind": "gun_spawn",
+        "faction": null,
+        "elevation_metres": 171.17724609375,
+        "world_x": 2422.17724609375,
+        "world_y": 1664.48876953125
+      },
+      {
+        "name": "12-pounder Napoleon (USA) · Entity-1609",
+        "pixel_x": 985.5906160458453,
+        "pixel_y": 1678.5932361198568,
+        "kind": "gun_spawn",
+        "faction": null,
+        "elevation_metres": 194.85055541992188,
+        "world_x": 2136.818603515625,
+        "world_y": 1645.9830322265625
+      },
+      {
+        "name": "10-pounder Parrott · Entity-1604",
+        "pixel_x": 978.6070916905444,
+        "pixel_y": 1615.122405745843,
+        "kind": "gun_spawn",
+        "faction": null,
+        "elevation_metres": 199.83226013183594,
+        "world_x": 2132.058349609375,
+        "world_y": 1689.2783203125
+      },
+      {
+        "name": "12-pounder Napoleon (USA) · Entity-1608",
+        "pixel_x": 984.3108882521491,
+        "pixel_y": 1664.482641984406,
+        "kind": "gun_spawn",
+        "faction": null,
+        "elevation_metres": 195.8636016845703,
+        "world_x": 2135.9462890625,
+        "world_y": 1655.6082763671875
+      },
+      {
+        "name": "12-pounder Napoleon (USA) · Entity-1621",
+        "pixel_x": 1404.301934097421,
+        "pixel_y": 1641.4710099072536,
+        "kind": "gun_spawn",
+        "faction": null,
+        "elevation_metres": 171.85369873046875,
+        "world_x": 2422.229248046875,
+        "world_y": 1671.30517578125
+      },
+      {
+        "name": "10-pounder Parrott · Entity-1605",
+        "pixel_x": 979.8961318051577,
+        "pixel_y": 1627.9842525651597,
+        "kind": "gun_spawn",
+        "faction": null,
+        "elevation_metres": 198.93679809570312,
+        "world_x": 2132.93701171875,
+        "world_y": 1680.5048828125
+      },
+      {
+        "name": "12-pounder Napoleon (CSA) · Entity-1618",
+        "pixel_x": 1405.2825931232092,
+        "pixel_y": 1629.1471015276475,
+        "kind": "gun_spawn",
+        "faction": null,
+        "elevation_metres": 172.4095001220703,
+        "world_x": 2422.897705078125,
+        "world_y": 1679.711669921875
+      },
+      {
+        "name": "3-inch Ordnance · Entity-1625",
+        "pixel_x": 1403.0945558739254,
+        "pixel_y": 1662.679492377446,
+        "kind": "gun_spawn",
+        "faction": null,
+        "elevation_metres": 170.8046417236328,
+        "world_x": 2421.40625,
+        "world_y": 1656.8382568359375
+      },
+      {
+        "name": "12-pounder Napoleon (USA) · Entity-1607",
+        "pixel_x": 982.5952722063038,
+        "pixel_y": 1650.6472804904306,
+        "kind": "gun_spawn",
+        "faction": null,
+        "elevation_metres": 197.09149169921875,
+        "world_x": 2134.77685546875,
+        "world_y": 1665.0457763671875
+      }
+    ]
+  }
+]

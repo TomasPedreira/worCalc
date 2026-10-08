@@ -1,0 +1,5 @@
+# Canonical pack metadata is verified byte for byte against its manifest.
+native/assets/*.json -text
+
+# Gradle's POSIX entry point requires LF line endings.
+src-tauri/gen/android/gradlew text eol=lf

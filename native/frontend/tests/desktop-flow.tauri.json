@@ -1,0 +1,6 @@
+{
+  "identifier": "pt.tomaspedreira.worcalc.flowtest",
+  "app": {
+    "windows": [{"title":"worCalc workflow test","width":1280,"height":850,"visible":false}]
+  }
+}

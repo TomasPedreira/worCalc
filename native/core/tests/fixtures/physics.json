@@ -1,0 +1,3709 @@
+[
+  {
+    "physics": {
+      "speed": 370,
+      "drag": 0.1,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 300,
+    "height": 0,
+    "limited": true,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": -0.18089695346794726,
+        "flight_time_seconds": 0.7703391864097384
+      },
+      "state": [
+        16.248183664077914,
+        0.7719919766166625
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 370,
+      "drag": 0.1,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 341.5,
+    "height": -84.3,
+    "limited": true,
+    "angle": 3.21,
+    "expected": {
+      "aim": null,
+      "state": [
+        17.8883906658957,
+        0.8836353913128794
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 370,
+      "drag": 0.1,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 10000,
+    "height": 0,
+    "limited": true,
+    "angle": 3.21,
+    "expected": {
+      "aim": null,
+      "state": null,
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 370,
+      "drag": 0.1,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 100,
+    "height": 1000,
+    "limited": true,
+    "angle": 3.21,
+    "expected": {
+      "aim": null,
+      "state": [
+        6.813388703898958,
+        0.2507666206025543
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 370,
+      "drag": 0.1,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 419.7640317718548,
+    "height": 5.733273325388257,
+    "limited": true,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": 0.9826730340979271,
+        "flight_time_seconds": 1.095607165958418
+      },
+      "state": [
+        20.667380813609306,
+        1.0976347355386842
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 370,
+      "drag": 0.1,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 549.3220642608409,
+    "height": 10.3754249026223,
+    "limited": true,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": 1.6201420231508497,
+        "flight_time_seconds": 1.4600663595328423
+      },
+      "state": [
+        24.322612322969995,
+        1.4622742930378343
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 370,
+      "drag": 0.1,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 278.3922700094897,
+    "height": 1.0884324174519406,
+    "limited": true,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": 0.0031198866119882818,
+        "flight_time_seconds": 0.7128437766684043
+      },
+      "state": [
+        15.349615733562837,
+        0.7143525194300823
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 370,
+      "drag": 0.1,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 644.170712932666,
+    "height": 11.270308670835053,
+    "limited": true,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": 1.7574765607570324,
+        "flight_time_seconds": 1.7354262277692423
+      },
+      "state": [
+        26.20770615961328,
+        1.7379156757982797
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 370,
+      "drag": 0.1,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 595.503101340984,
+    "height": -12.71439231386056,
+    "limited": true,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": -0.7926395574390595,
+        "flight_time_seconds": 1.591973114706497
+      },
+      "state": [
+        25.326791450366557,
+        1.5955330288785654
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 370,
+      "drag": 0.1,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 570.8153705393333,
+    "height": 6.13536998781651,
+    "limited": true,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": 1.1608421583722137,
+        "flight_time_seconds": 1.5213351745389503
+      },
+      "state": [
+        24.810068085593375,
+        1.5240739469372648
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 370,
+      "drag": 0.1,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 164.82138851303853,
+    "height": 14.336736033597013,
+    "limited": true,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": 4.79675684962964,
+        "flight_time_seconds": 0.4176672639289937
+      },
+      "state": [
+        10.140384902008957,
+        0.4167420842723902
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 370,
+      "drag": 0.1,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 384.68569933662326,
+    "height": -7.062613847622391,
+    "limited": true,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": -1.1101644432664028,
+        "flight_time_seconds": 0.9990332507830375
+      },
+      "state": [
+        19.47339421874982,
+        1.0011524421603561
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 370,
+      "drag": 0.1,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 300,
+    "height": 0,
+    "limited": false,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": -0.18089695346794726,
+        "flight_time_seconds": 0.7703391864097384
+      },
+      "state": [
+        16.248183664077914,
+        0.7719919766166625
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 370,
+      "drag": 0.1,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 341.5,
+    "height": -84.3,
+    "limited": false,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": -15.162683642170329,
+        "flight_time_seconds": 0.9128855786549237
+      },
+      "state": [
+        17.8883906658957,
+        0.8836353913128794
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 370,
+      "drag": 0.1,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 10000,
+    "height": 0,
+    "limited": false,
+    "angle": 3.21,
+    "expected": {
+      "aim": null,
+      "state": null,
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 370,
+      "drag": 0.1,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 100,
+    "height": 1000,
+    "limited": false,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": 84.51495747707293,
+        "flight_time_seconds": 3.330572141803069
+      },
+      "state": [
+        6.813388703898958,
+        0.2507666206025543
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 370,
+      "drag": 0.1,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 324.0259633567534,
+    "height": -7.813120994676774,
+    "limited": false,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": -1.626267146645405,
+        "flight_time_seconds": 0.8348403633989245
+      },
+      "state": [
+        17.211596010610457,
+        0.8364746814170992
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 370,
+      "drag": 0.1,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 683.8368833089062,
+    "height": -16.14100070683188,
+    "limited": false,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": -0.7243280976282183,
+        "flight_time_seconds": 1.8512747831715577
+      },
+      "state": [
+        26.787506663653797,
+        1.855482067950467
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 370,
+      "drag": 0.1,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 67.9392819447976,
+    "height": -2.0001634769212053,
+    "limited": false,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": -3.3092273860778008,
+        "flight_time_seconds": 0.1695357753236758
+      },
+      "state": [
+        5.076204400859729,
+        0.16968213565108942
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 370,
+      "drag": 0.1,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 647.0123516463561,
+    "height": 0.8902448286774423,
+    "limited": false,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": 0.7536857561004762,
+        "flight_time_seconds": 1.7427786447567677
+      },
+      "state": [
+        26.253410956694374,
+        1.7462921882635087
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 370,
+      "drag": 0.1,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 632.2444533143216,
+    "height": 1.474704705313556,
+    "limited": false,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": 0.7786116801879108,
+        "flight_time_seconds": 1.6994351163472032
+      },
+      "state": [
+        26.008939486410135,
+        1.7028360631164263
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 370,
+      "drag": 0.1,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 512.4837252200239,
+    "height": -7.257455809669828,
+    "limited": false,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": -0.5383697286790154,
+        "flight_time_seconds": 1.3542209362736057
+      },
+      "state": [
+        23.40703840455308,
+        1.357233340150008
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 370,
+      "drag": 0.1,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 544.8031456330644,
+    "height": -9.87243873845899,
+    "limited": false,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": -0.7100111548072825,
+        "flight_time_seconds": 1.446109262524834
+      },
+      "state": [
+        24.215717066180808,
+        1.449329505034644
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 370,
+      "drag": 0.1,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 624.3253797603504,
+    "height": 17.68321890464985,
+    "limited": false,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": 2.3888588973454095,
+        "flight_time_seconds": 1.6781097080476628
+      },
+      "state": [
+        25.870788085497338,
+        1.6796108899884838
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 375,
+      "drag": 0.1,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 300,
+    "height": 0,
+    "limited": true,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": -0.19583586281151438,
+        "flight_time_seconds": 0.7596666735716215
+      },
+      "state": [
+        16.320010154231614,
+        0.7612967327778608
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 375,
+      "drag": 0.1,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 341.5,
+    "height": -84.3,
+    "limited": true,
+    "angle": 3.21,
+    "expected": {
+      "aim": null,
+      "state": [
+        17.982500966690868,
+        0.8713249484920887
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 375,
+      "drag": 0.1,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 10000,
+    "height": 0,
+    "limited": true,
+    "angle": 3.21,
+    "expected": {
+      "aim": null,
+      "state": null,
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 375,
+      "drag": 0.1,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 100,
+    "height": 1000,
+    "limited": true,
+    "angle": 3.21,
+    "expected": {
+      "aim": null,
+      "state": [
+        6.820966867969538,
+        0.24738136349123926
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 375,
+      "drag": 0.1,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 699.8059696941067,
+    "height": 15.100860286229327,
+    "limited": true,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": 2.1070679509090864,
+        "flight_time_seconds": 1.8731172898103126
+      },
+      "state": [
+        27.422435036437292,
+        1.8752931392942533
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 375,
+      "drag": 0.1,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 129.21735066779294,
+    "height": -18.184551176859863,
+    "limited": true,
+    "angle": 3.21,
+    "expected": {
+      "aim": null,
+      "state": [
+        8.356748063783956,
+        0.3208301538934257
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 375,
+      "drag": 0.1,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 656.4584467641652,
+    "height": -9.583079925908171,
+    "limited": true,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": -0.26132495043533244,
+        "flight_time_seconds": 1.744390973612551
+      },
+      "state": [
+        26.780628377999083,
+        1.74833699280478
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 375,
+      "drag": 0.1,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 164.45563926935088,
+    "height": -0.5969701620313685,
+    "limited": true,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": -0.8781840830894565,
+        "flight_time_seconds": 0.4092807460478399
+      },
+      "state": [
+        10.143154040490387,
+        0.41013856930503245
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 375,
+      "drag": 0.1,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 577.2362292028181,
+    "height": -5.97559949501818,
+    "limited": true,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": -0.17763876173325716,
+        "flight_time_seconds": 1.5170146400833364
+      },
+      "state": [
+        25.235981453808016,
+        1.5203954668904143
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 375,
+      "drag": 0.1,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 498.8044831724449,
+    "height": 5.279366468263685,
+    "limited": true,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": 0.9537916407393243,
+        "flight_time_seconds": 1.2972900595534704
+      },
+      "state": [
+        23.25128202366455,
+        1.299733427357152
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 375,
+      "drag": 0.1,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 523.4681213020908,
+    "height": 7.041977836386923,
+    "limited": true,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": 1.1906003922295776,
+        "flight_time_seconds": 1.3661814498999671
+      },
+      "state": [
+        23.92301951435531,
+        1.368599390736865
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 375,
+      "drag": 0.1,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 587.9910316452876,
+    "height": 8.36730833914627,
+    "limited": true,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": 1.3879451619925747,
+        "flight_time_seconds": 1.5484487673663612
+      },
+      "state": [
+        25.473258078319176,
+        1.5510365279616873
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 375,
+      "drag": 0.1,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 300,
+    "height": 0,
+    "limited": false,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": -0.19583586281151438,
+        "flight_time_seconds": 0.7596666735716215
+      },
+      "state": [
+        16.320010154231614,
+        0.7612967327778608
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 375,
+      "drag": 0.1,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 341.5,
+    "height": -84.3,
+    "limited": false,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": -15.17982901688822,
+        "flight_time_seconds": 0.9002229147084818
+      },
+      "state": [
+        17.982500966690868,
+        0.8713249484920887
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 375,
+      "drag": 0.1,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 10000,
+    "height": 0,
+    "limited": false,
+    "angle": 3.21,
+    "expected": {
+      "aim": null,
+      "state": null,
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 375,
+      "drag": 0.1,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 100,
+    "height": 1000,
+    "limited": false,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": 84.5078654700099,
+        "flight_time_seconds": 3.272540185251833
+      },
+      "state": [
+        6.820966867969538,
+        0.24738136349123926
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 375,
+      "drag": 0.1,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 665.6802107654177,
+    "height": -17.152838517133763,
+    "limited": false,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": -0.9397904042996701,
+        "flight_time_seconds": 1.7712471096015574
+      },
+      "state": [
+        26.92941913635225,
+        1.7752110341619847
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 375,
+      "drag": 0.1,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 222.6200262845206,
+    "height": 0.7181458510523271,
+    "limited": false,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": -0.22400602751694892,
+        "flight_time_seconds": 0.5581318744932524
+      },
+      "state": [
+        12.930961625770616,
+        0.5593186574507999
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 375,
+      "drag": 0.1,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 203.98371124045008,
+    "height": 6.088786016788692,
+    "limited": false,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": 1.3791551226056242,
+        "flight_time_seconds": 0.5104657206166817
+      },
+      "state": [
+        12.059814756534418,
+        0.5112774891155144
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 375,
+      "drag": 0.1,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 28.022794440388683,
+    "height": -3.923556637511716,
+    "limited": false,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": -11.73952393854346,
+        "flight_time_seconds": 0.0699156067107785
+      },
+      "state": [
+        2.831111025503932,
+        0.0687082365295909
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 375,
+      "drag": 0.1,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 322.69523201231846,
+    "height": 0.694524237058701,
+    "limited": false,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": -0.0006016755789018646,
+        "flight_time_seconds": 0.8195736255061783
+      },
+      "state": [
+        17.24283600836542,
+        0.8213181513300436
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 375,
+      "drag": 0.1,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 643.9370845198649,
+    "height": 3.3640120118530703,
+    "limited": false,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": 0.9523187235078436,
+        "flight_time_seconds": 1.7086743951127747
+      },
+      "state": [
+        26.568114176602315,
+        1.7119624935002977
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 375,
+      "drag": 0.1,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 131.7349657559193,
+    "height": 18.575389915544683,
+    "limited": false,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": 7.956349526509872,
+        "flight_time_seconds": 0.33012605313066745
+      },
+      "state": [
+        8.486780059633457,
+        0.3271844437019057
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 375,
+      "drag": 0.1,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 597.7032473568504,
+    "height": 16.99097254393901,
+    "limited": false,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": 2.2998690581195707,
+        "flight_time_seconds": 1.5772534028615004
+      },
+      "state": [
+        25.680170105776547,
+        1.578788106645319
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 439,
+      "drag": 0.31,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 300,
+    "height": 0,
+    "limited": true,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": -0.303387197941407,
+        "flight_time_seconds": 0.6945625223510443
+      },
+      "state": [
+        16.83666789811625,
+        0.6961692611518576
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 439,
+      "drag": 0.31,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 341.5,
+    "height": -84.3,
+    "limited": true,
+    "angle": 3.21,
+    "expected": {
+      "aim": null,
+      "state": [
+        18.617747354051865,
+        0.8054856218043307
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 439,
+      "drag": 0.31,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 10000,
+    "height": 0,
+    "limited": true,
+    "angle": 3.21,
+    "expected": {
+      "aim": null,
+      "state": null,
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 439,
+      "drag": 0.31,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 100,
+    "height": 1000,
+    "limited": true,
+    "angle": 3.21,
+    "expected": {
+      "aim": null,
+      "state": [
+        6.889920846498694,
+        0.21578318452945613
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 439,
+      "drag": 0.31,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 530.3429727898542,
+    "height": 6.455651300048618,
+    "limited": true,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": 1.0003092003468632,
+        "flight_time_seconds": 1.352903237078434
+      },
+      "state": [
+        25.16921237398227,
+        1.355834222399393
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 439,
+      "drag": 0.31,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 273.2735773553517,
+    "height": 9.866704475415261,
+    "limited": true,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": 1.8904694422071042,
+        "flight_time_seconds": 0.6268359960968933
+      },
+      "state": [
+        15.63351537600088,
+        0.6276801650216859
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 439,
+      "drag": 0.31,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 631.4519066114352,
+    "height": -13.953005103586968,
+    "limited": true,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": -0.8929839401414361,
+        "flight_time_seconds": 1.6897165811699264
+      },
+      "state": [
+        27.391862224024585,
+        1.6942755985966511
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 439,
+      "drag": 0.31,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 389.42279513471635,
+    "height": -18.279376166603445,
+    "limited": true,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": -3.0297936350700017,
+        "flight_time_seconds": 0.9353311529839682
+      },
+      "state": [
+        20.533910921638068,
+        0.9365089902431704
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 439,
+      "drag": 0.31,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 540.3614447246131,
+    "height": 12.70510346493026,
+    "limited": true,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": 1.7351686744431332,
+        "flight_time_seconds": 1.3855276837893935
+      },
+      "state": [
+        25.434684571812408,
+        1.3878278932406094
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 439,
+      "drag": 0.31,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 88.57755860451694,
+    "height": -17.980339604469403,
+    "limited": true,
+    "angle": 3.21,
+    "expected": {
+      "aim": null,
+      "state": [
+        6.261800145181301,
+        0.19039259502370928
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 439,
+      "drag": 0.31,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 527.7065907407205,
+    "height": -15.760450931454173,
+    "limited": true,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": -1.6399207118455452,
+        "flight_time_seconds": 1.3443436874081112
+      },
+      "state": [
+        25.097812467513442,
+        1.3474674933612734
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 439,
+      "drag": 0.31,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 49.1858469930728,
+    "height": -2.9073947767115698,
+    "limited": true,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": -5.635909324206105,
+        "flight_time_seconds": 0.10454203429785013
+      },
+      "state": [
+        4.051557351089808,
+        0.10433196360073033
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 439,
+      "drag": 0.31,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 300,
+    "height": 0,
+    "limited": false,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": -0.303387197941407,
+        "flight_time_seconds": 0.6945625223510443
+      },
+      "state": [
+        16.83666789811625,
+        0.6961692611518576
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 439,
+      "drag": 0.31,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 341.5,
+    "height": -84.3,
+    "limited": false,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": -15.293562398209854,
+        "flight_time_seconds": 0.8351157216602847
+      },
+      "state": [
+        18.617747354051865,
+        0.8054856218043307
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 439,
+      "drag": 0.31,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 10000,
+    "height": 0,
+    "limited": false,
+    "angle": 3.21,
+    "expected": {
+      "aim": null,
+      "state": null,
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 439,
+      "drag": 0.31,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 100,
+    "height": 1000,
+    "limited": false,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": 84.58628935847469,
+        "flight_time_seconds": 4.482142783957712
+      },
+      "state": [
+        6.889920846498694,
+        0.21578318452945613
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 439,
+      "drag": 0.31,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 130.71180100955564,
+    "height": 6.321481998214349,
+    "limited": false,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": 2.145017031261113,
+        "flight_time_seconds": 0.28475401613257356
+      },
+      "state": [
+        8.549176067129439,
+        0.28505944981572184
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 439,
+      "drag": 0.31,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 156.97295687902042,
+    "height": -16.336557894368266,
+    "limited": false,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": -7.237220546348487,
+        "flight_time_seconds": 0.3472899007154446
+      },
+      "state": [
+        9.932653623775726,
+        0.34549979967010686
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 439,
+      "drag": 0.31,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 135.3753424799511,
+    "height": -6.418156486192018,
+    "limited": false,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": -3.823794979725686,
+        "flight_time_seconds": 0.2955952990674863
+      },
+      "state": [
+        8.797276244115702,
+        0.29571028138822714
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 439,
+      "drag": 0.31,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 383.98580714614764,
+    "height": -17.527205450731742,
+    "limited": false,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": -2.961473855351393,
+        "flight_time_seconds": 0.9201617885327178
+      },
+      "state": [
+        20.32445541182745,
+        0.9213735339812053
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 439,
+      "drag": 0.31,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 352.8269296711064,
+    "height": -16.043912358764647,
+    "limited": false,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": -3.023024416116974,
+        "flight_time_seconds": 0.8349377497449342
+      },
+      "state": [
+        19.084645259012476,
+        0.8359771854872665
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 439,
+      "drag": 0.31,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 301.56111176651507,
+    "height": 8.712255494942976,
+    "limited": false,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": 1.5104964786721284,
+        "flight_time_seconds": 0.6990652156328249
+      },
+      "state": [
+        16.90561502711423,
+        0.7002150709567028
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 439,
+      "drag": 0.31,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 657.5929845486351,
+    "height": 13.635250259775944,
+    "limited": false,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": 1.8617791114701534,
+        "flight_time_seconds": 1.7849186676851407
+      },
+      "state": [
+        27.787449702898925,
+        1.7878774886985385
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 439,
+      "drag": 0.31,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 579.1427073610847,
+    "height": -17.874054203397563,
+    "limited": false,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": -1.5762180179068896,
+        "flight_time_seconds": 1.5111028361766363
+      },
+      "state": [
+        26.371881475398673,
+        1.514755527477831
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 100,
+      "drag": 0,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 300,
+    "height": 0,
+    "limited": true,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": 6.493116189207246,
+        "flight_time_seconds": 2.7636420388436727
+      },
+      "state": [
+        -15.490422775226097,
+        2.7488988354031294
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 100,
+      "drag": 0,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 341.5,
+    "height": -84.3,
+    "limited": true,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": -7.849994117369231,
+        "flight_time_seconds": 3.1486889668521494
+      },
+      "state": [
+        -23.213351296753768,
+        3.1291631743005626
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 100,
+      "drag": 0,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 10000,
+    "height": 0,
+    "limited": true,
+    "angle": 3.21,
+    "expected": {
+      "aim": null,
+      "state": [
+        -37611.11315576674,
+        91.62996118010432
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 100,
+      "drag": 0,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 100,
+    "height": 1000,
+    "limited": true,
+    "angle": 3.21,
+    "expected": {
+      "aim": null,
+      "state": [
+        3.2769310467306583,
+        0.9162996118010431
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 100,
+      "drag": 0,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 313.85227229667316,
+    "height": -1.5328361021702932,
+    "limited": true,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": 6.534018541894495,
+        "flight_time_seconds": 2.8915043166024987
+      },
+      "state": [
+        -17.921949129472555,
+        2.8758271526831694
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 100,
+      "drag": 0,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 196.57813879031062,
+    "height": 8.287154345553084,
+    "limited": true,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": 6.5005763293702366,
+        "flight_time_seconds": 1.810934215463085
+      },
+      "state": [
+        -1.9699199379481627,
+        1.801244722621332
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 100,
+      "drag": 0,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 285.05005987542677,
+    "height": -18.95397347401783,
+    "limited": true,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": 1.895131959530695,
+        "flight_time_seconds": 2.608738885739526
+      },
+      "state": [
+        -13.030714477573902,
+        2.6119125920771764
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 100,
+      "drag": 0,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 369.61493050516265,
+    "height": 14.075292398502917,
+    "limited": true,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": 10.714016022982417,
+        "flight_time_seconds": 3.4453043379167543
+      },
+      "state": [
+        -29.193087115196885,
+        3.3867801733775007
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 100,
+      "drag": 0,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 513.0676751432671,
+    "height": -9.639151920295635,
+    "limited": true,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": 10.763525870848184,
+        "flight_time_seconds": 4.783295081254604
+      },
+      "state": [
+        -69.10613162730772,
+        4.701237115614394
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 100,
+      "drag": 0,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 415.30715198031635,
+    "height": -11.848191130517796,
+    "limited": true,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": 7.5968986874714695,
+        "flight_time_seconds": 3.8356164253115153
+      },
+      "state": [
+        -40.19964898275653,
+        3.8054578213776074
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 100,
+      "drag": 0,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 465.70114840482375,
+    "height": -17.54427482554133,
+    "limited": true,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": 8.294625520273033,
+        "flight_time_seconds": 4.308801352195414
+      },
+      "state": [
+        -54.188603495835196,
+        4.2672178149864
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 100,
+      "drag": 0,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 145.9684652253822,
+    "height": -8.095779694638034,
+    "limited": true,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": -0.9904808062467729,
+        "flight_time_seconds": 1.3347886237329185
+      },
+      "state": [
+        1.668328900548559,
+        1.3375084802121178
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 100,
+      "drag": 0,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 300,
+    "height": 0,
+    "limited": false,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": 6.493116189207246,
+        "flight_time_seconds": 2.7636420388436727
+      },
+      "state": [
+        -15.490422775226097,
+        2.7488988354031294
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 100,
+      "drag": 0,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 341.5,
+    "height": -84.3,
+    "limited": false,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": -7.849994117369231,
+        "flight_time_seconds": 3.1486889668521494
+      },
+      "state": [
+        -23.213351296753768,
+        3.1291631743005626
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 100,
+      "drag": 0,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 10000,
+    "height": 0,
+    "limited": false,
+    "angle": 3.21,
+    "expected": {
+      "aim": null,
+      "state": [
+        -37611.11315576674,
+        91.62996118010432
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 100,
+      "drag": 0,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 100,
+    "height": 1000,
+    "limited": false,
+    "angle": 3.21,
+    "expected": {
+      "aim": null,
+      "state": [
+        3.2769310467306583,
+        0.9162996118010431
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 100,
+      "drag": 0,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 356.18076054567507,
+    "height": -6.216320142480377,
+    "limited": false,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": 6.805212218768881,
+        "flight_time_seconds": 3.283423279588133
+      },
+      "state": [
+        -26.26044374374122,
+        3.263682926190024
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 100,
+      "drag": 0,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 689.0737463535087,
+    "height": -3.798940620259831,
+    "limited": false,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": 16.508782510751004,
+        "flight_time_seconds": 6.588394850918414
+      },
+      "state": [
+        -139.5562661563427,
+        6.3139800628601055
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 100,
+      "drag": 0,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 78.48436795700937,
+    "height": 2.5742873715673973,
+    "limited": false,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": 2.4904731065032815,
+        "flight_time_seconds": 0.7186266267104292
+      },
+      "state": [
+        3.4751612044270965,
+        0.7191519589145792
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 100,
+      "drag": 0,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 292.9924527746952,
+    "height": 18.59789232520476,
+    "limited": false,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": 10.349831893715038,
+        "flight_time_seconds": 2.7277046220292496
+      },
+      "state": [
+        -14.316211553716812,
+        2.684688707380887
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 100,
+      "drag": 0,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 359.758577478038,
+    "height": 7.314041248175908,
+    "limited": false,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": 9.31998944423719,
+        "flight_time_seconds": 3.3383458087127535
+      },
+      "state": [
+        -27.027999961677086,
+        3.296466448852217
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 100,
+      "drag": 0,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 234.26590163644755,
+    "height": -14.176691566688596,
+    "limited": false,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": 0.9949876771093795,
+        "flight_time_seconds": 2.1428374183149903
+      },
+      "state": [
+        -5.950494576082454,
+        2.1465775472769826
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 100,
+      "drag": 0,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 275.1570680043469,
+    "height": 19.533154625931132,
+    "limited": false,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": 10.363384732390259,
+        "flight_time_seconds": 2.561776537788636
+      },
+      "state": [
+        -11.496913539720005,
+        2.521263145966963
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 100,
+      "drag": 0,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 292.9935656899751,
+    "height": 7.1324375394752195,
+    "limited": false,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": 7.863846902388653,
+        "flight_time_seconds": 2.707795101490751
+      },
+      "state": [
+        -14.316395059198062,
+        2.684698905019277
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 370,
+      "drag": 1e-10,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 300,
+    "height": 0,
+    "limited": true,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": -0.20824617309012056,
+        "flight_time_seconds": 0.7414137448538276
+      },
+      "state": [
+        16.37994573816178,
+        0.7429456312176334
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 370,
+      "drag": 1e-10,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 341.5,
+    "height": -84.3,
+    "limited": true,
+    "angle": 3.21,
+    "expected": {
+      "aim": null,
+      "state": [
+        18.084360751673373,
+        0.845719776873752
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 370,
+      "drag": 1e-10,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 10000,
+    "height": 0,
+    "limited": true,
+    "angle": 3.21,
+    "expected": {
+      "aim": null,
+      "state": [
+        -2199.59258980466,
+        24.764854403666067
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 370,
+      "drag": 1e-10,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 100,
+    "height": 1000,
+    "limited": true,
+    "angle": 3.21,
+    "expected": {
+      "aim": null,
+      "state": [
+        6.81808310378297,
+        0.24764854373307815
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 370,
+      "drag": 1e-10,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 577.7378654519196,
+    "height": -8.368009177773907,
+    "limited": true,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": -0.5117132798540018,
+        "flight_time_seconds": 1.42779347332529
+      },
+      "state": [
+        25.955794525165757,
+        1.430759410470887
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 370,
+      "drag": 1e-10,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 331.24252635738605,
+    "height": -18.282142502965737,
+    "limited": true,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": -3.5838163778899412,
+        "flight_time_seconds": 0.8198192859480524
+      },
+      "state": [
+        17.672026551582782,
+        0.8203172927722127
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 370,
+      "drag": 1e-10,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 71.52139948363151,
+    "height": 1.7045274031063684,
+    "limited": true,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": 0.0865451052369079,
+        "flight_time_seconds": 0.176763148622295
+      },
+      "state": [
+        5.27496950468626,
+        0.17712170427810614
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 370,
+      "drag": 1e-10,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 470.862390757083,
+    "height": 1.6680885948811124,
+    "limited": true,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": 0.4023148574062655,
+        "flight_time_seconds": 1.1638043944058944
+      },
+      "state": [
+        22.780515152312457,
+        1.1660838537502207
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 370,
+      "drag": 1e-10,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 223.5522294983078,
+    "height": -10.30633144672783,
+    "limited": true,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": -3.3125798819049113,
+        "flight_time_seconds": 0.5531519463011522
+      },
+      "state": [
+        12.988601786271966,
+        0.5536238408438579
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 370,
+      "drag": 1e-10,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 348.53316381035074,
+    "height": -14.122366055852522,
+    "limited": true,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": -2.6259135115984114,
+        "flight_time_seconds": 0.8619523850485151
+      },
+      "state": [
+        18.363689326167634,
+        0.8631373046297199
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 370,
+      "drag": 1e-10,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 542.9776369488906,
+    "height": -18.119977400268926,
+    "limited": true,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": -1.7633572026304107,
+        "flight_time_seconds": 1.3422252044821374
+      },
+      "state": [
+        24.993015999758917,
+        1.344676210773965
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 370,
+      "drag": 1e-10,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 590.9778467524438,
+    "height": -1.9141007825413254,
+    "limited": true,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": 0.21899429523144626,
+        "flight_time_seconds": 1.4606225940614392
+      },
+      "state": [
+        26.304777334315176,
+        1.463548031356506
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 370,
+      "drag": 1e-10,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 300,
+    "height": 0,
+    "limited": false,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": -0.20824617309012056,
+        "flight_time_seconds": 0.7414137448538276
+      },
+      "state": [
+        16.37994573816178,
+        0.7429456312176334
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 370,
+      "drag": 1e-10,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 341.5,
+    "height": -84.3,
+    "limited": false,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": -15.199497253435698,
+        "flight_time_seconds": 0.8726041819828512
+      },
+      "state": [
+        18.084360751673373,
+        0.845719776873752
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 370,
+      "drag": 1e-10,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 10000,
+    "height": 0,
+    "limited": false,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": 18.22748499928141,
+        "flight_time_seconds": 26.091995810981768
+      },
+      "state": [
+        -2199.59258980466,
+        24.764854403666067
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 370,
+      "drag": 1e-10,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 100,
+    "height": 1000,
+    "limited": false,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": 84.46948855083602,
+        "flight_time_seconds": 2.8072709313370035
+      },
+      "state": [
+        6.81808310378297,
+        0.24764854373307815
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 370,
+      "drag": 1e-10,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 487.12177866533386,
+    "height": 9.340123573022922,
+    "limited": false,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": 1.4155290635898345,
+        "flight_time_seconds": 1.2045081728227047
+      },
+      "state": [
+        23.304697196577667,
+        1.206349991129194
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 370,
+      "drag": 1e-10,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 66.92259871440493,
+    "height": 15.182886655555443,
+    "limited": false,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": 12.507743537248043,
+        "flight_time_seconds": 0.1697312930360292
+      },
+      "state": [
+        5.02153856665242,
+        0.16573284114387668
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 370,
+      "drag": 1e-10,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 481.0311428053494,
+    "height": 17.04035762638297,
+    "limited": false,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": 2.420651389763484,
+        "flight_time_seconds": 1.19032202697043
+      },
+      "state": [
+        23.110071097835792,
+        1.1912666201162363
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 370,
+      "drag": 1e-10,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 155.19433941427187,
+    "height": -2.7249933063551026,
+    "limited": false,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": -1.7941004193175387,
+        "flight_time_seconds": 0.38364063956956024
+      },
+      "state": [
+        9.679916432948204,
+        0.3843365215182415
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 370,
+      "drag": 1e-10,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 25.52260817413542,
+    "height": 6.631093649205614,
+    "limited": false,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": 12.664916813908299,
+        "flight_time_seconds": 0.06477250224064163
+      },
+      "state": [
+        2.686924873336203,
+        0.06320636746536304
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 370,
+      "drag": 1e-10,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 667.165137215694,
+    "height": 12.119737170729792,
+    "limited": false,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": 1.7079179042201496,
+        "flight_time_seconds": 1.6500023332198976
+      },
+      "state": [
+        28.122818045114947,
+        1.6522247467254927
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 370,
+      "drag": 1e-10,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 692.4587039296244,
+    "height": -4.5047038097674985,
+    "limited": false,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": 0.2096917961356582,
+        "flight_time_seconds": 1.71143274465523
+      },
+      "state": [
+        28.654765851102365,
+        1.7148638963604659
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 370,
+      "drag": 1e-10,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 599.8158343901181,
+    "height": 3.2221694199187283,
+    "limited": false,
+    "angle": 3.21,
+    "expected": {
+      "aim": {
+        "elevation_degrees": 0.7759885869930698,
+        "flight_time_seconds": 1.482711907108454
+      },
+      "state": [
+        26.532286300423735,
+        1.485435179039472
+      ],
+      "clearance": null
+    }
+  },
+  {
+    "physics": {
+      "speed": 370,
+      "drag": 0.1,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 300,
+    "height": 0,
+    "limited": true,
+    "profile": [
+      {
+        "distance_yards": 0,
+        "elevation_metres": 100
+      },
+      {
+        "distance_yards": 1,
+        "elevation_metres": 120
+      },
+      {
+        "distance_yards": 300,
+        "elevation_metres": 100
+      }
+    ],
+    "expected": {
+      "aim": {
+        "elevation_degrees": -0.18089695346794726,
+        "flight_time_seconds": 0.7703391864097384
+      },
+      "state": null,
+      "clearance": {
+        "obstructed": true,
+        "first_obstruction_yards": 0.06001431896039833,
+        "clearing_elevation_deg": null,
+        "height_above_target_metres": null
+      }
+    }
+  },
+  {
+    "physics": {
+      "speed": 370,
+      "drag": 0.1,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 300,
+    "height": 0,
+    "limited": true,
+    "profile": [
+      {
+        "distance_yards": 0,
+        "elevation_metres": 100
+      },
+      {
+        "distance_yards": 150,
+        "elevation_metres": 120
+      },
+      {
+        "distance_yards": 300,
+        "elevation_metres": 100
+      }
+    ],
+    "expected": {
+      "aim": {
+        "elevation_degrees": -0.18089695346794726,
+        "flight_time_seconds": 0.7703391864097384
+      },
+      "state": null,
+      "clearance": {
+        "obstructed": true,
+        "first_obstruction_yards": 9.315389340681435,
+        "clearing_elevation_deg": 7.596856779624773,
+        "height_above_target_metres": 37.44207193689584
+      }
+    }
+  },
+  {
+    "physics": {
+      "speed": 370,
+      "drag": 0.1,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 300,
+    "height": 0,
+    "limited": true,
+    "profile": [
+      {
+        "distance_yards": 0,
+        "elevation_metres": 100
+      },
+      {
+        "distance_yards": 295,
+        "elevation_metres": 120
+      },
+      {
+        "distance_yards": 300,
+        "elevation_metres": 100
+      }
+    ],
+    "expected": {
+      "aim": {
+        "elevation_degrees": -0.18089695346794726,
+        "flight_time_seconds": 0.7703391864097384
+      },
+      "state": null,
+      "clearance": {
+        "obstructed": true,
+        "first_obstruction_yards": 18.882919982871513,
+        "clearing_elevation_deg": 4.049444940840651,
+        "height_above_target_metres": 20.282371486855638
+      }
+    }
+  },
+  {
+    "physics": {
+      "speed": 370,
+      "drag": 0.1,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 300,
+    "height": 0,
+    "limited": false,
+    "profile": [
+      {
+        "distance_yards": 0,
+        "elevation_metres": 100
+      },
+      {
+        "distance_yards": 1,
+        "elevation_metres": 120
+      },
+      {
+        "distance_yards": 300,
+        "elevation_metres": 100
+      }
+    ],
+    "expected": {
+      "aim": {
+        "elevation_degrees": -0.18089695346794726,
+        "flight_time_seconds": 0.7703391864097384
+      },
+      "state": null,
+      "clearance": {
+        "obstructed": true,
+        "first_obstruction_yards": 0.06001431896039833,
+        "clearing_elevation_deg": null,
+        "height_above_target_metres": null
+      }
+    }
+  },
+  {
+    "physics": {
+      "speed": 370,
+      "drag": 0.1,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 300,
+    "height": 0,
+    "limited": false,
+    "profile": [
+      {
+        "distance_yards": 0,
+        "elevation_metres": 100
+      },
+      {
+        "distance_yards": 150,
+        "elevation_metres": 120
+      },
+      {
+        "distance_yards": 300,
+        "elevation_metres": 100
+      }
+    ],
+    "expected": {
+      "aim": {
+        "elevation_degrees": -0.18089695346794726,
+        "flight_time_seconds": 0.7703391864097384
+      },
+      "state": null,
+      "clearance": {
+        "obstructed": true,
+        "first_obstruction_yards": 9.315389340681435,
+        "clearing_elevation_deg": 7.596856779624773,
+        "height_above_target_metres": 37.44207193689584
+      }
+    }
+  },
+  {
+    "physics": {
+      "speed": 370,
+      "drag": 0.1,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 0.0,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 300,
+    "height": 0,
+    "limited": false,
+    "profile": [
+      {
+        "distance_yards": 0,
+        "elevation_metres": 100
+      },
+      {
+        "distance_yards": 295,
+        "elevation_metres": 120
+      },
+      {
+        "distance_yards": 300,
+        "elevation_metres": 100
+      }
+    ],
+    "expected": {
+      "aim": {
+        "elevation_degrees": -0.18089695346794726,
+        "flight_time_seconds": 0.7703391864097384
+      },
+      "state": null,
+      "clearance": {
+        "obstructed": true,
+        "first_obstruction_yards": 18.882919982871513,
+        "clearing_elevation_deg": 4.049444940840651,
+        "height_above_target_metres": 20.282371486855638
+      }
+    }
+  },
+  {
+    "physics": {
+      "speed": 370,
+      "drag": 0.1,
+      "gravity": 9.1,
+      "launch": {
+        "height_metres": 1.2,
+        "forward_metres": 1.2,
+        "angle_offset_deg": 0.48,
+        "minimum_display_deg": -8.0,
+        "maximum_display_deg": 13.7
+      }
+    },
+    "yards": 300,
+    "height": 5,
+    "limited": false,
+    "profile": [
+      {
+        "distance_yards": 0,
+        "elevation_metres": 0
+      },
+      {
+        "distance_yards": 150,
+        "elevation_metres": 3
+      },
+      {
+        "distance_yards": 400,
+        "elevation_metres": 5
+      }
+    ],
+    "expected": {
+      "aim": {
+        "elevation_degrees": 0.8585526003620669,
+        "flight_time_seconds": 0.7670444373561471
+      },
+      "state": null,
+      "clearance": {
+        "obstructed": false,
+        "first_obstruction_yards": null,
+        "clearing_elevation_deg": 0.8585526003620669,
+        "height_above_target_metres": 0.7999999999999989
+      }
+    }
+  }
+]

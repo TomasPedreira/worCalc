@@ -1,0 +1,26 @@
+[package]
+name = "worcalc-app"
+version = "1.0.0"
+edition = "2021"
+
+[lib]
+name = "worcalc_app"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-fs = "2"
+worcalc-core = { path = "../native/core" }
+serde_json = "1"
+
+[features]
+custom-protocol = ["tauri/custom-protocol"]
+
+[target.'cfg(target_os = "android")'.dependencies]
+jni = "0.21"
+ndk = "0.9"
+ndk-context = "0.1"
+ndk-sys = "0.6"

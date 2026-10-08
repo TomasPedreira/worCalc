@@ -1,11 +1,11 @@
 # Unified physics solver
 
-The desktop and web app now default to **Unified physics (provisional)**.
-The previous interpolation, polynomial, and boresighted theoretical methods
-remain selectable for comparison. Their behavior is unchanged.
+The Tauri calculator and Sketcher use **Unified physics (provisional)** in
+`native/core/src/physics.rs`. The former Python comparison explorers are retired.
 
 The new method solves for a lower-angle shot that reaches the target's actual
-height at its horizontal range, within the selected cannon's angle limits. The
+height at its horizontal range. The library supports the selected cannon's angle
+limits; the application uses unrestricted solutions for its operating workflow. The
 same linear-drag equations produce flight time and the trajectory used for
 terrain checks. It does not extrapolate the reference CSV, add a sight angle to
 a level-ground curve, or warp the trajectory to force an intersection.
@@ -18,9 +18,9 @@ lower-angle root; targets outside range/angle limits return no solution.
 
 ## Launch configuration
 
-Edit `worcalc/domain/launch_profiles.json` and restart the app/server to change
-each gun's launch height, forward distance, displayed-angle offset, and limits.
-These are separate records so calibration can diverge between guns.
+Launch profiles are separate records in `native/assets/catalog.json` under
+`launches`. A changed pack must have its manifest updated and the application
+rebuilt; installed applications consume bundled data.
 
 Defaults are deliberately **provisional**: 1.2 m above the gun's ground reference
 and zero forward displacement (pivot hypothesis). All guns currently retain the
@@ -42,11 +42,10 @@ refined against the physical arc and linearly interpolated terrain. Tests includ
 obstacles one yard from the gun and five yards before the target.
 
 A predicted terrain collision triggers a search for the lowest display angle
-that clears every intermediate sample by 0.01 m. Operational web results round
+that clears every intermediate sample by 0.01 m. Operational results round
 that angle upward to the next 0.01-degree gun setting and recalculate flight time
-and height over the target for the raised path. Web calculation diagnostics in
-`logs/calculations.jsonl` retain the predicted collision, direct elevation, and
-full sampled arcs. Calibration test mode exposes that original direct elevation
+and height over the target for the raised path. The native engine retains recent
+shot traces for observed-impact calibration. Calibration test mode exposes the original direct elevation
 for controlled in-game validation. If no supported gun angle clears the route,
 the clearance elevation is unavailable.
 
@@ -68,7 +67,7 @@ profile but do not establish accuracy on every map, ammunition type, or range.
 
 ## Operational and calibration modes
 
-The web app always uses unified physics. **Operational clearance** is the
+The Tauri app always uses unified physics. **Operational clearance** is the
 startup mode and displays the lowest terrain-clearing elevation, rounded upward
 to the gun's 0.01-degree setting. **Calibration test** displays the direct
 physics elevation and enables impact recording so launch profiles can be
@@ -77,12 +76,10 @@ checked without changing operational recommendations.
 ## Verification
 
 - Vacuum solution compared with the closed-form range equation.
-- Independent RK4 integration for all three cannon profiles, Shell/Case, and
-  uphill/level/downhill targets at 300 yards verifies both endpoint and time.
-- Launch-height/forward/angle changes, small drag, invalid inputs, and unreachable
-  targets checked separately.
+- Frozen references from the independently tested retiring implementation check
+  weapon profiles, flight times, launch geometry, small/zero drag and unreachable targets.
 - Terrain tests cover early and late obstructions, first collision, and an
   unmodified arc reaching an elevated target.
-- Desktop and web integration tests verify consistent flight time, raised
+- Rust integration tests verify consistent flight time, raised
   clearance solutions, and direct elevations in calibration mode. In-game
   validation remains necessary.

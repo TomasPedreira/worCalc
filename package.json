@@ -1,0 +1,21 @@
+{
+  "name": "worcalc-native",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "assets": "node native/prepare-assets.js",
+    "build": "npm run assets && vite build --config native/frontend/vite.config.js",
+    "dev": "npm run assets && vite --config native/frontend/vite.config.js",
+    "test": "node --test native/frontend/tests/*.test.js",
+    "test:desktop": "tauri build --debug --no-bundle --config native/frontend/tests/desktop-flow.tauri.json && node native/frontend/tests/desktop-flow.mjs",
+    "tauri": "tauri",
+    "desktop:build": "tauri build --no-bundle && powershell -NoProfile -ExecutionPolicy Bypass -File native/package-desktop.ps1",
+    "desktop:package": "powershell -NoProfile -ExecutionPolicy Bypass -File native/package-desktop.ps1",
+    "icons": "tauri icon native/icon.json",
+    "android:init": "tauri android init --ci",
+    "android:build": "powershell -NoProfile -ExecutionPolicy Bypass -File native/build-android.ps1"
+  },
+  "dependencies": { "@tauri-apps/api": "^2", "@tauri-apps/plugin-fs": "^2" },
+  "devDependencies": { "@tauri-apps/cli": "^2", "vite": "^7" }
+}

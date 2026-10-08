@@ -1,0 +1,23 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "worCalc",
+  "version": "1.0.0",
+  "identifier": "pt.tomaspedreira.worcalc",
+  "build": {
+    "beforeBuildCommand": "npm run build",
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:1420",
+    "frontendDist": "../native/frontend/dist"
+  },
+  "app": {
+    "windows": [{ "title": "worCalc", "width": 1280, "height": 850 }],
+    "security": {
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; connect-src 'self' ipc: http://ipc.localhost; object-src 'none'; base-uri 'self'"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "resources": ["resources/catalog.json", "resources/maps/*", "resources/terrain/*"],
+    "android": { "minSdkVersion": 24 }
+  }
+}

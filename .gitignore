@@ -7,7 +7,7 @@ __pycache__/
 .codex-remote-attachments/
 
 # Installed game assets and copied PAK payloads
-Assets/
+/Assets/
 *.pak
 paks/Antietam/
 paks/DrillCamp/
@@ -24,3 +24,24 @@ paks/gameplay_area_calibrations.json
 # Generated analysis output
 ballistic_model_comparison.png
 logs/
+
+# Native build products and generated game-data resources
+target/
+node_modules/
+native/frontend/generated/
+native/frontend/dist/
+src-tauri/resources/
+src-tauri/gen/android/app/build/
+src-tauri/gen/android/.gradle/
+src-tauri/gen/android/.kotlin/
+src-tauri/gen/android/local.properties
+src-tauri/gen/schemas/
+artifacts/android/
+artifacts/desktop/
+artifacts/data/
+artifacts/migration/
+artifacts/validation/
+native/assets/maps/
+native/assets/terrain/
+src-tauri/gen/android/app/src/main/assets/resources/
+src-tauri/gen/android/app/src/main/jniLibs/

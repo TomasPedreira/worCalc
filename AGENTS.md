@@ -2,11 +2,10 @@
 
 Read `ARCHITECTURE.md` before changing code.
 
-- Claim one boundary (`domain`, `maps`, a specific UI widget, or integration).
-- Avoid editing `worcalc/ui/main_window.py` unless assigned integration work.
-- Do not import Qt into `domain` or `maps`.
-- Do not put reusable implementation in `scripts`.
+- Claim one boundary (`native/core` domain/maps, a specific UI component, or integration).
+- Keep Tauri, UI, network and filesystem composition outside `native/core`.
+- Put reusable calculations in Rust libraries and plan operations in the pure frontend model.
 - Add focused tests alongside every behavior change.
-- Preserve the `src.*` compatibility facades while downstream imports migrate.
+- Use native commands directly; do not reintroduce Python, browser-server fallbacks or launchers.
 - Coordinate changes to shared data classes before editing their consumers.
-- Run the full unittest suite before handoff.
+- Run the full native suites (`cargo test --workspace` and `npm test`) before handoff.
