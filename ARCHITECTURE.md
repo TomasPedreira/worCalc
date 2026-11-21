@@ -48,9 +48,11 @@ Advanced controls are accessible from the map library. worSketch keeps its canno
 Explosion height stays visible above the quick controls, and the floating
 elevation/fuze window reserves space for that readout.
 
-On Windows, T or Shift+T adds a target on the next map click. Every target
-has its own readout and solution. Dragging or removing a target affects that
-target, and changing the gun or firing settings recalculates all targets.
+On Windows, T replaces the target set with one target on the next map click.
+Shift+T adds a target. Every target has its own readout and solution, and the
+map compass shows the sectors used by all targets. Dragging or removing a
+target affects that target, and changing the gun or firing settings recalculates
+all targets.
 Calibration can select which solution receives an impact record. Temporary
 targets are cleared when changing maps.
 

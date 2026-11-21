@@ -19,6 +19,7 @@ try {
   if(child.exitCode!=null)throw Error('Native test app exited');await new Promise(done=>setTimeout(done,200));
  }
  browser=await chromium.connectOverCDP(`http://127.0.0.1:${port}`);page=browser.contexts()[0].pages()[0];const errors=[];
+ await page.locator('#workspace').waitFor({state:'attached'});
  const platform=await page.context().newCDPSession(page);
  await platform.send('Network.setUserAgentOverride',{userAgent:'Mozilla/5.0 (Linux; Android 15) AppleWebKit/537.36 Chrome/130.0.0.0 Mobile Safari/537.36'});
  await page.reload();
@@ -144,9 +145,9 @@ try {
  if(page){
   await page.screenshot({path:resolve(output,'failure.png')});
   console.log(await page.evaluate(()=>({
-   status:document.querySelector('#mode-pill').textContent,viewport:[innerWidth,innerHeight],
-   map:document.querySelector('#map-wrap').getBoundingClientRect().toJSON(),image:document.querySelector('#map-image').getBoundingClientRect().toJSON(),
-   requests:globalThis.mobileRequests,pointers:globalThis.mobilePointers,gunHidden:document.querySelector('#gun-anchor').hidden,targetHidden:document.querySelector('#target-anchor').hidden,
+   status:document.querySelector('#mode-pill')?.textContent,viewport:[innerWidth,innerHeight],
+   map:document.querySelector('#map-wrap')?.getBoundingClientRect().toJSON(),image:document.querySelector('#map-image')?.getBoundingClientRect().toJSON(),
+   requests:globalThis.mobileRequests,pointers:globalThis.mobilePointers,gunHidden:document.querySelector('#gun-anchor')?.hidden,targetHidden:document.querySelector('#target-anchor')?.hidden,
   })));
  }
  throw error;

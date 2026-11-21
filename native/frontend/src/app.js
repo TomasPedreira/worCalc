@@ -155,28 +155,28 @@ function rayPoint(origin, bearingDegrees, distance) {
 }
 
 function updateAimOverlay() {
-  const point = supportsMultipleTargets
-    ? (desktopTargets.size === 1 ? desktopTargets.values().next().value.point : null)
-    : target;
-  const bearing = missionBearing(point);
-  if (bearing == null) {
+  if (!gun) {
     aimOverlay.replaceChildren();
     return;
   }
   const origin = screenPoint(gun);
-  const targetPoint = screenPoint(point);
-  const shotLength = Math.hypot(targetPoint.x - origin.x, targetPoint.y - origin.y);
+  const points = supportsMultipleTargets ? [...desktopTargets.values()].map(({point}) => point) : [target];
+  const guideLengths = new Map();
+  for (const point of points) {
+    const bearing = missionBearing(point);
+    if (bearing == null) continue;
+    const targetPoint = screenPoint(point);
+    const length = Math.hypot(targetPoint.x - origin.x, targetPoint.y - origin.y);
+    const [first, last] = compassGuideDirections(bearing);
+    for (const direction of [first, ...compassMinorTickDirections(bearing), last]) {
+      guideLengths.set(direction, Math.max(guideLengths.get(direction) ?? 0, length));
+    }
+  }
   const labels = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
-  const namedDirections = compassGuideDirections(bearing);
-  const directions = [
-    {direction:namedDirections[0], label:labels[Math.round(namedDirections[0] / 45) % 8]},
-    ...compassMinorTickDirections(bearing).map((direction, index) => ({
-      direction, label:`+${index + 1}`,
-    })),
-    {direction:namedDirections[1], label:labels[Math.round(namedDirections[1] / 45) % 8]},
-  ];
-  const guides = directions.map(({direction, label}) => {
-    const end = rayPoint(origin, direction, shotLength);
+  const guides = Array.from(guideLengths, ([direction, length]) => {
+    const tick = (direction % 45) / 15;
+    const label = tick ? `+${tick}` : labels[direction / 45];
+    const end = rayPoint(origin, direction, length);
     const labelX = end.x - end.dx * 9;
     const labelY = end.y - end.dy * 9;
     const width = label.length === 1 ? 22 : 30;
@@ -358,15 +358,24 @@ function clearSolution() {
   updateMissionGeometry();
 }
 
+function removeDesktopTarget(anchor, entry) {
+  entry.request = null;
+  anchor.remove();
+  entry.line.remove();
+  entry.readout.remove();
+  desktopTargets.delete(anchor);
+}
+
+function clearDesktopTargets() {
+  for (const [anchor, entry] of desktopTargets) removeDesktopTarget(anchor, entry);
+  nextTargetNumber = 1;
+  if (supportsMultipleTargets) $("#calibration-target").value = "";
+}
+
 function clearMission(resetMap = true) {
   gun = null;
   target = null;
-  for (const [anchor, entry] of desktopTargets) {
-    entry.request = null;
-    anchor.remove(); entry.line.remove(); entry.readout.remove();
-  }
-  desktopTargets.clear();
-  nextTargetNumber = 1;
+  clearDesktopTargets();
   refreshCalibrationTargets();
   gunAnchor.hidden = true;
   targetAnchor.hidden = true;
@@ -380,7 +389,8 @@ function clearMission(resetMap = true) {
 function setMode(nextMode) {
   if (sketcher?.active) { mode = "pan"; sketcher.status(); return; }
   mode = nextMode;
-  const placingTarget = mode === "target";
+  const addingTarget = mode === "add-target";
+  const placingTarget = mode === "target" || addingTarget;
   $("#gun-mode").classList.toggle("active", mode === "gun");
   $("#target-mode").classList.toggle("active", placingTarget);
   for (const [id, kind] of [["mobile-gun-mode", "gun"], ["mobile-target-mode", "target"]]) {
@@ -393,8 +403,9 @@ function setMode(nextMode) {
   modePill.textContent = mode === "pan"
     ? "HOLD & DRAG TO PAN"
     : mode === "gun" ? "CLICK MAP TO PLACE GUN" : mode === "impact"
-      ? "CLICK WHERE THE SHOT LANDED" : supportsMultipleTargets && placingTarget
-        ? "CLICK MAP TO ADD A TARGET" : "CLICK MAP TO PLACE TARGET";
+      ? "CLICK WHERE THE SHOT LANDED" : addingTarget
+        ? "CLICK MAP TO ADD A TARGET" : supportsMultipleTargets
+          ? "CLICK MAP TO PLACE A SINGLE TARGET" : "CLICK MAP TO PLACE TARGET";
 }
 
 function calibrationMode() {
@@ -554,7 +565,14 @@ function moveMarker(name, clientX, clientY, anchor = null) {
       const entry = desktopTargets.get(anchor);
       entry.point = point;
       clearDesktopSolution(entry);
-    } else createDesktopTarget(point);
+    } else {
+      if (name === "target") {
+        clearDesktopTargets();
+        impacts = [];
+        renderImpacts();
+      }
+      createDesktopTarget(point);
+    }
   } else {
     clearSolution();
     if (name === "gun") gun = point;
@@ -1116,9 +1134,7 @@ mapWrap.addEventListener("contextmenu", event => {
   const entry = desktopTargets.get(anchor);
   if (!entry) return;
   event.preventDefault();
-  entry.request = null;
-  anchor.remove(); entry.line.remove(); entry.readout.remove();
-  desktopTargets.delete(anchor);
+  removeDesktopTarget(anchor, entry);
   refreshCalibrationTargets();
   updateMissionGeometry();
 });
@@ -1148,7 +1164,7 @@ window.addEventListener("keydown", event => {
     return;
   }
   if (key === "g") setMode("gun");
-  if (key === "t" && !event.repeat) setMode("target");
+  if (key === "t" && !event.repeat) setMode(supportsMultipleTargets && event.shiftKey ? "add-target" : "target");
   if (key === "i" && calibrationMode()) setMode("impact");
   if (key === "escape") { setMode("pan"); closePanels(); }
   if (key === "f") fitWholeMap();
@@ -1164,12 +1180,13 @@ mapImage.addEventListener("load", () => {
   setMode(mode);
 });
 $("#gun-mode").addEventListener("click", () => setMode(mode === "gun" ? "pan" : "gun"));
-$("#target-mode").addEventListener("click", () => setMode(mode === "target" ? "pan" : "target"));
+const toggleTargetMode = () => setMode(mode === "target" || mode === "add-target" ? "pan" : "target");
+$("#target-mode").addEventListener("click", toggleTargetMode);
 $("#impact-mode").addEventListener("click", () => setMode(mode === "impact" ? "pan" : "impact"));
 $("#fit-map").addEventListener("click", fitWholeMap);
 $("#mobile-fit").addEventListener("click", fitWholeMap);
 $("#mobile-gun-mode").addEventListener("click", () => setMode(mode === "gun" ? "pan" : "gun"));
-$("#mobile-target-mode").addEventListener("click", () => setMode(mode === "target" ? "pan" : "target"));
+$("#mobile-target-mode").addEventListener("click", toggleTargetMode);
 $("#mobile-advanced").addEventListener("click", () => openPanel(sheet));
 $("#quick-cannon").addEventListener("click", () => {
   if (!options || applicationMode !== "calculator") return;

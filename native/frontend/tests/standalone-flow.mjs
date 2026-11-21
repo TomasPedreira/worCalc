@@ -69,18 +69,24 @@ try {
       await page.locator('#mobile-target-mode').click();await click(1000,1000);
       const markers = page.locator('.desktop-target .marker');
       const readouts = page.locator('.target-readout');
+      const compass = () => page.locator('#aim-overlay .aim-guide').evaluateAll(lines =>
+        lines.map(line => Number(line.dataset.bearing)).sort((first, second) => first - second));
       const waitForReadouts = count => page.waitForFunction(count => {
         const cards = [...document.querySelectorAll('.target-readout')];
         return cards.length === count && cards.every(card =>
           !card.hidden && [...card.querySelectorAll('b')].every(value => value.textContent !== '—'));
       }, count);
       await waitForReadouts(1);
+      assert.deepEqual(await compass(),[90,105,120,135]);
       await page.keyboard.press('Shift+t');
       assert.equal(await page.locator('#mode-pill').innerText(),'CLICK MAP TO ADD A TARGET');
       await click(1120,680);
+      await waitForReadouts(2);
+      assert.deepEqual(await compass(),[45,60,75,90,105,120,135]);
       await page.keyboard.press('Shift+t');
       await click(1200,1000);
       await waitForReadouts(3);
+      assert.deepEqual(await compass(),[45,60,75,90,105,120,135]);
       const values = await readouts.evaluateAll(cards => cards.map(card => [...card.querySelectorAll('b')].map(value => value.textContent)));
       for (const [elevation, fuze, height] of values) {
         assert.match(elevation,/^-?\d+\.\d+°$/);
@@ -112,6 +118,14 @@ try {
       await markers.nth(1).click({button:'right'});
       assert.deepEqual(await readouts.evaluateAll(cards => cards.map(card => card.dataset.targetNumber)),['1','3']);
       assert.equal(await page.evaluate(() => requests.length),7);
+      await page.keyboard.press('t');
+      assert.equal(await page.locator('#mode-pill').innerText(),'CLICK MAP TO PLACE A SINGLE TARGET');
+      assert.equal(await markers.count(),2);
+      await click(1050,600);
+      await waitForReadouts(1);
+      assert.deepEqual(await compass(),[45,60,75,90]);
+      assert.deepEqual(await readouts.evaluateAll(cards => cards.map(card => card.dataset.targetNumber)),['1']);
+      assert.equal(await page.evaluate(() => requests.length),8);
       await page.setViewportSize({width:390,height:844});
       await page.locator('#open-drawer').click();await page.locator('#mobile-advanced').click();await page.locator('#cannon-select').waitFor({state:'visible'});
       await page.screenshot({path:resolve(output,'phone-controls.png')});

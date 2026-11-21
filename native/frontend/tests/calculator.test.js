@@ -80,9 +80,9 @@ nativeApi.calculate=async ({target})=>{
   calculated.push([target.x,target.y]);
   return {elevation_degrees:target.x/100,fuze_seconds:target.y/10,height_above_target_metres:target.y/100,bearing_degrees:90,clearance_status:'clear'};
 };
-pressTarget(true,120,50);
+pressTarget(false,120,50);
 pressTarget(true,140,65);
-pressTarget(false,155,70);
+pressTarget(true,155,70);
 await Promise.resolve();
 const entries=[...desktopTargets.values()];
 assert.deepEqual(entries.map(entry=>entry.metrics.map(metric=>metric.value.textContent)),[
@@ -104,6 +104,42 @@ await Promise.resolve();
 assert.deepEqual(calculated.slice(4),[[125,55],[140,65],[155,70]]);
 clearMission(false);
 assert.equal(desktopTargets.size,0);assert.equal(mapWrap.children.length,0);
+`, windowsUserAgent));
+
+test("Windows compass combines the sectors of all targets without repeating a shared direction",async()=>runScenario(desktopTargetGestures+`
+const guides = () => Array.from(aimOverlay.innerHTML.matchAll(/data-bearing="([0-9]+)"/g), match => Number(match[1]));
+pressTarget(false,80,10);
+assert.deepEqual(guides(),[45,60,75,90]);
+pressTarget(true,100,35);
+assert.deepEqual(guides(),[45,60,75,90,105,120,135]);
+pressTarget(true,10,20);
+assert.deepEqual(guides(),[45,60,75,90,105,120,135]);
+rightClick(Array.from(desktopTargets.keys())[1]);
+assert.deepEqual(guides(),[45,60,75,90]);
+`, windowsUserAgent));
+
+test("Windows T replaces all targets on the next map click and cancels their pending calculations",async()=>runScenario(desktopTargetGestures+`
+const requests=[];
+nativeApi.calculate=({target})=>new Promise(resolve=>requests.push({target,resolve}));
+pressTarget(false,120,50);
+pressTarget(true,140,70);
+const previous=[...desktopTargets.values()];
+window.handlers.keydown({key:'t'});
+assert.equal(desktopTargets.size,2);
+window.handlers.keydown({key:'Escape'});
+assert.equal(desktopTargets.size,2);
+pressTarget(false,155,60);
+const [replacement]=desktopTargets.values();
+assert.equal(desktopTargets.size,1);
+assert.equal(replacement.number,1);
+assert.deepEqual([gun.x,gun.y],[10,20]);
+assert.deepEqual(requests.map(({target})=>[target.x,target.y]),[[120,50],[140,70],[155,60]]);
+assert.equal(mapWrap.children.length,2);
+assert.equal(scene.children.length,1);
+for (const [index,{resolve}] of requests.entries()) resolve({elevation_degrees:index+1,fuze_seconds:2.4});
+await Promise.resolve();
+assert.ok(previous.every(entry=>entry.solution===null));
+assert.equal(replacement.solution.elevation_degrees,3);
 `, windowsUserAgent));
 
 test("right-click removes individual Windows targets and discards a deleted target's pending result",async()=>runScenario(desktopTargetGestures+`
