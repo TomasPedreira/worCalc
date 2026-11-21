@@ -1,0 +1,432 @@
+{
+  "provenance": "Roof hull centres from placed CGF meshes and independently measured image roof components; held-out gun silhouettes from the user WoRTool reference, registered using non-gun landmarks; terrain ground samples from the native/raw-terrain audit. See docs/map-alignment-corrections.md. Cannon roots are not used as ground heights.",
+  "landmarks": [
+    {
+      "map_id": "map-17",
+      "name": "R-MillerFarm",
+      "world": {
+        "x": 1149.5448830682776,
+        "y": 3109.173008877106
+      },
+      "picture": {
+        "x": 477.99556681443954,
+        "y": 575.2792906903103
+      },
+      "max_error_pixels": 1.8
+    },
+    {
+      "map_id": "map-17",
+      "name": "R-MillerStables",
+      "world": {
+        "x": 1082.8841599237944,
+        "y": 3100.744141464759
+      },
+      "picture": {
+        "x": 373.9581455247907,
+        "y": 735.8815196394075
+      },
+      "max_error_pixels": 1.8
+    },
+    {
+      "map_id": "map-17",
+      "name": "R-MillerBarn",
+      "world": {
+        "x": 1071.9521576190803,
+        "y": 3070.0032728708607
+      },
+      "picture": {
+        "x": 419.02687411598305,
+        "y": 812.6371994342292
+      },
+      "max_error_pixels": 1.8
+    },
+    {
+      "map_id": "map-19",
+      "name": "R-MillerFarm",
+      "world": {
+        "x": 1149.5448830682767,
+        "y": 3109.1730088771187
+      },
+      "picture": {
+        "x": 1536.8694362017804,
+        "y": 1023.3115727002968
+      },
+      "max_error_pixels": 2.4
+    },
+    {
+      "map_id": "map-19",
+      "name": "R-MillerStables",
+      "world": {
+        "x": 1082.8841599237962,
+        "y": 3100.744141464757
+      },
+      "picture": {
+        "x": 1427.2137449039021,
+        "y": 1194.1357018054746
+      },
+      "max_error_pixels": 2.4
+    },
+    {
+      "map_id": "map-19",
+      "name": "R-MillerBarn",
+      "world": {
+        "x": 1071.9521576190832,
+        "y": 3070.0032728708816
+      },
+      "picture": {
+        "x": 1474.448722096409,
+        "y": 1275.14493691362
+      },
+      "max_error_pixels": 2.4
+    },
+    {
+      "map_id": "map-41",
+      "name": "R-MillerFarm",
+      "world": {
+        "x": 1386.7100513211149,
+        "y": 1592.0585342814477
+      },
+      "picture": {
+        "x": 962.9328358208955,
+        "y": 1064.7388059701493
+      },
+      "max_error_pixels": 0.8
+    },
+    {
+      "map_id": "map-41",
+      "name": "R-MillerStables",
+      "world": {
+        "x": 1402.5710322952002,
+        "y": 1518.8158886157432
+      },
+      "picture": {
+        "x": 973.9554455445544,
+        "y": 1115.381188118812
+      },
+      "max_error_pixels": 0.8
+    },
+    {
+      "map_id": "map-41",
+      "name": "R-MillerStables",
+      "world": {
+        "x": 1352.463425796127,
+        "y": 1387.7276092984741
+      },
+      "picture": {
+        "x": 939.5,
+        "y": 1206.5
+      },
+      "max_error_pixels": 0.8
+    },
+    {
+      "map_id": "map-41",
+      "name": "R-MillerTenantHouse",
+      "world": {
+        "x": 1498.9980972465305,
+        "y": 740.081295668334
+      },
+      "picture": {
+        "x": 1041,
+        "y": 1655.5
+      },
+      "max_error_pixels": 0.8
+    },
+    {
+      "map_id": "map-41",
+      "name": "R-MillerTenantHouse",
+      "world": {
+        "x": 1499.614421443402,
+        "y": 1930.1607686143807
+      },
+      "picture": {
+        "x": 1041.4777777777779,
+        "y": 829.7444444444444
+      },
+      "max_error_pixels": 0.8
+    },
+    {
+      "map_id": "map-41",
+      "name": "R-MillerFarm",
+      "world": {
+        "x": 1980.3824935157854,
+        "y": 1728.4247583658087
+      },
+      "picture": {
+        "x": 1375.3484848484848,
+        "y": 970.1969696969697
+      },
+      "max_error_pixels": 0.8
+    },
+    {
+      "map_id": "map-41",
+      "name": "R-MillerStables",
+      "world": {
+        "x": 2136.6436304500266,
+        "y": 1109.7688190554513
+      },
+      "picture": {
+        "x": 1483.5631578947368,
+        "y": 1399.4894736842105
+      },
+      "max_error_pixels": 0.8
+    },
+    {
+      "map_id": "map-41",
+      "name": "R-MillerTenantHouse",
+      "world": {
+        "x": 2045.2457767056592,
+        "y": 992.5385427881165
+      },
+      "picture": {
+        "x": 1420.1,
+        "y": 1480.88
+      },
+      "max_error_pixels": 0.8
+    },
+    {
+      "map_id": "map-41",
+      "name": "R-MillerTenantHouse",
+      "world": {
+        "x": 2041.9911969545963,
+        "y": 2385.2944540872763
+      },
+      "picture": {
+        "x": 1417.969387755102,
+        "y": 513.9285714285714
+      },
+      "max_error_pixels": 0.8
+    },
+    {
+      "map_id": "map-68",
+      "name": "R-MillerFarm",
+      "world": {
+        "x": 1320.5711728602773,
+        "y": 2077.123247621601
+      },
+      "picture": {
+        "x": 1589.408961593172,
+        "y": 815.6394025604552
+      },
+      "max_error_pixels": 4.5
+    },
+    {
+      "map_id": "map-68",
+      "name": "R-MillerTenantHouse",
+      "world": {
+        "x": 902.1007482602618,
+        "y": 1594.9740722317297
+      },
+      "picture": {
+        "x": 778.2139784946237,
+        "y": 1749.5666666666666
+      },
+      "max_error_pixels": 4.5
+    }
+  ],
+  "ground": [
+    {
+      "map_id": "map-17",
+      "name": "12-pounder Napoleon (USA) · Entity-1221",
+      "world": {
+        "x": 1293.81005859375,
+        "y": 2979.929931640625
+      },
+      "height_metres": 61.5070068359375
+    },
+    {
+      "map_id": "map-17",
+      "name": "10-pounder Parrott · Entity-1231",
+      "world": {
+        "x": 1428.780029296875,
+        "y": 2910.550048828125
+      },
+      "height_metres": 62.46600341796875
+    },
+    {
+      "map_id": "map-17",
+      "name": "3-inch Ordnance · Entity-1214",
+      "world": {
+        "x": 1314.47998046875,
+        "y": 2962.010009765625
+      },
+      "height_metres": 63.373498535156244
+    },
+    {
+      "map_id": "map-17",
+      "name": "12-pounder Napoleon (USA) · Entity-1220",
+      "world": {
+        "x": 1287.3900146484375,
+        "y": 2985.929931640625
+      },
+      "height_metres": 61.25350341796875
+    },
+    {
+      "map_id": "map-17",
+      "name": "12-pounder Napoleon (USA) · Entity-1232",
+      "world": {
+        "x": 1418.5400390625,
+        "y": 2920.429931640625
+      },
+      "height_metres": 62.678503417968756
+    },
+    {
+      "map_id": "map-17",
+      "name": "12-pounder Napoleon (USA) · Entity-1230",
+      "world": {
+        "x": 1412.510009765625,
+        "y": 2926.320068359375
+      },
+      "height_metres": 62.20949707031251
+    },
+    {
+      "map_id": "map-17",
+      "name": "12-pounder Napoleon (USA) · Entity-1222",
+      "world": {
+        "x": 1281.030029296875,
+        "y": 2991.52001953125
+      },
+      "height_metres": 61.37600097656251
+    },
+    {
+      "map_id": "map-17",
+      "name": "10-pounder Parrott · Entity-1229",
+      "world": {
+        "x": 1423.800048828125,
+        "y": 2915.860107421875
+      },
+      "height_metres": 62.80699462890625
+    },
+    {
+      "map_id": "map-17",
+      "name": "3-inch Ordnance · Entity-1219",
+      "world": {
+        "x": 1300.6500244140625,
+        "y": 2973.75
+      },
+      "height_metres": 62.0625
+    },
+    {
+      "map_id": "map-17",
+      "name": "3-inch Ordnance · Entity-1218",
+      "world": {
+        "x": 1307.6500244140625,
+        "y": 2967.7900390625
+      },
+      "height_metres": 62.70349731445313
+    },
+    {
+      "map_id": "map-41",
+      "name": "10-pounder Parrott · Entity-428",
+      "world": {
+        "x": 1429.22998046875,
+        "y": 1014.280029296875
+      },
+      "height_metres": 58.45
+    },
+    {
+      "map_id": "map-41",
+      "name": "12-pounder Napoleon (USA) · Entity-408",
+      "world": {
+        "x": 1416.75,
+        "y": 1018.3200073242188
+      },
+      "height_metres": 58.45
+    },
+    {
+      "map_id": "map-41",
+      "name": "3-inch Ordnance · Entity-429",
+      "world": {
+        "x": 1441.969970703125,
+        "y": 1010.5999755859375
+      },
+      "height_metres": 58.33150024414063
+    },
+    {
+      "map_id": "map-41",
+      "name": "12-pounder Napoleon (CSA) · Entity-409",
+      "world": {
+        "x": 1405.239990234375,
+        "y": 1021.8400268554688
+      },
+      "height_metres": 58.45000000000001
+    }
+  ],
+  "held_out_guns": {
+    "map_id": "map-17",
+    "reference_transform": {
+      "x": [
+        0.5417255711434289,
+        -0.0007719841193604953,
+        -14.653074499059725
+      ],
+      "y": [
+        -0.00009309751948690867,
+        0.544137306186437,
+        -17.550132692764812
+      ]
+    },
+    "measurements": [
+      {
+        "name": "12-pounder Napoleon (USA) · Entity-1222",
+        "picture": {
+          "x": 511.70588235294116,
+          "y": 258.1029411764706
+        },
+        "max_error_pixels": 3.1
+      },
+      {
+        "name": "12-pounder Napoleon (USA) · Entity-1220",
+        "picture": {
+          "x": 524.4685314685315,
+          "y": 256.53146853146853
+        },
+        "max_error_pixels": 3.1
+      },
+      {
+        "name": "12-pounder Napoleon (USA) · Entity-1221",
+        "picture": {
+          "x": 538.1527777777778,
+          "y": 254.77777777777777
+        },
+        "max_error_pixels": 3.1
+      },
+      {
+        "name": "3-inch Ordnance · Entity-1219",
+        "picture": {
+          "x": 551.9029850746268,
+          "y": 252.99253731343285
+        },
+        "max_error_pixels": 3.1
+      },
+      {
+        "name": "3-inch Ordnance · Entity-1218",
+        "picture": {
+          "x": 565.9632352941177,
+          "y": 250.00735294117646
+        },
+        "max_error_pixels": 3.1
+      },
+      {
+        "name": "3-inch Ordnance · Entity-1214",
+        "picture": {
+          "x": 579.1560283687943,
+          "y": 247.92198581560282
+        },
+        "max_error_pixels": 3.1
+      }
+    ],
+    "other_group": {
+      "names": [
+        "10-pounder Parrott · Entity-1231",
+        "12-pounder Napoleon (USA) · Entity-1232",
+        "12-pounder Napoleon (USA) · Entity-1230",
+        "10-pounder Parrott · Entity-1229"
+      ],
+      "picture": {
+        "x": 735.1046312178388,
+        "y": 165.66209262435677
+      },
+      "max_error_pixels": 3.5
+    }
+  }
+}

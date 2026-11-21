@@ -24,6 +24,13 @@
       }
       if (![plan.guns, plan.targets, plan.configurations].every(Array.isArray) ||
           plan.guns.length > 500 || plan.targets.length > 2000 || plan.configurations.length > 10000) fail("Invalid plan contents");
+      const revision = plan.coordinate_revision ?? 0;
+      if (!Number.isSafeInteger(revision) || revision < 0 || revision > (map.coordinate_revision ?? 0)) fail("Unsupported map alignment in plan");
+      if (plan.alignment_history != null && (!Array.isArray(plan.alignment_history) || plan.alignment_history.some(record =>
+          !record || !Number.isSafeInteger(record.coordinate_revision) || record.coordinate_revision < 0 ||
+          record.coordinate_revision >= revision || ![record.guns, record.targets, record.configurations].every(Array.isArray) ||
+          record.configurations.some(setting => !setting || typeof setting.gun_id !== "string" || typeof setting.target_id !== "string" ||
+            typeof setting.projectile !== "string" || typeof setting.airburst_mode !== "boolean" || typeof setting.notes !== "string")))) fail("Invalid previous map alignment");
       for (const key of ["next_gun_id", "next_target_id"]) if (plan[key] != null && (!Number.isSafeInteger(plan[key]) || plan[key] < 1)) fail("Invalid point ID counter");
       const validatePoints = (points, label) => {
         const ids = new Set();
@@ -56,6 +63,7 @@
             solution.airburst_mode !== setting.airburst_mode || solution.calibration_mode !== false ||
             !Number.isFinite(solution.bearing_degrees) || !Number.isFinite(solution.slant_range_yards) ||
             !Number.isFinite(solution.elevation_degrees) || !Number.isFinite(solution.fuze_seconds)) fail("Invalid calculated solution in plan");
+        if ((solution.coordinate_revision ?? 0) !== revision) fail("Calculated solution uses an outdated map alignment");
         for (const [key, number] of Object.entries(solution)) {
           if (typeof number === "number" && !Number.isFinite(number)) fail(`Invalid solution field: ${key}`);
         }
@@ -68,7 +76,27 @@
       }
     }
     const checked = copy(value);
-    for (const plan of Object.values(checked.maps)) for (const point of [...plan.guns, ...plan.targets]) delete point.name;
+    for (const [id, plan] of Object.entries(checked.maps)) {
+      const map = catalog.get(id), revision = map.coordinate_revision ?? 0;
+      if ((plan.coordinate_revision ?? 0) !== revision) {
+        const previous = {coordinate_revision:plan.coordinate_revision ?? 0,
+          guns:copy(plan.guns), targets:copy(plan.targets), configurations:copy(plan.configurations)};
+        plan.alignment_history = [...(plan.alignment_history || []), previous];
+        // Retain user-placed picture coordinates. Only guns at an exact old
+        // default position can be identified as world-backed spawn markers.
+        const migration = map.coordinate_migration;
+        if (migration?.from_revision === previous.coordinate_revision) for (const gun of plan.guns) {
+          const spawn = migration.gun_positions.find(p => Math.hypot(gun.x-p.old_x, gun.y-p.old_y) < 1e-6);
+          if (spawn && spawn.x >= 0 && spawn.y >= 0 && spawn.x <= plan.width && spawn.y <= plan.height) {
+            gun.x = spawn.x; gun.y = spawn.y;
+          }
+        }
+        plan.configurations = [];
+        plan.coordinate_revision = revision;
+      }
+      for (const point of [...plan.guns, ...plan.targets]) delete point.name;
+    }
+    if (JSON.stringify(checked).length > MAX_BYTES) fail("Plan file is too large after preserving the previous alignment");
     return checked;
   }
   function createPlan(map, locations, cannon, weapons = {}) {
@@ -81,10 +109,26 @@
       guns.push({id:`gun-${guns.length + 1}`, x:location.pixel_x, y:location.pixel_y, cannon:profile || cannon});
     }
     return {map_id:map.identifier, map_name:map.name, battlefield:map.battlefield || "", mode:map.mode || "",
+      ...(map.coordinate_revision ? {coordinate_revision:map.coordinate_revision} : {}),
       gameplay_area:map.gameplay_area ?? 0, width:map.width_pixels, height:map.height_pixels, guns, targets:[], configurations:[]};
   }
   function configuration(plan, gunId, targetId) {
     return plan.configurations.find(setting => setting.gun_id === gunId && setting.target_id === targetId) || null;
+  }
+  function previousConfiguration(plan, gunId, targetId) {
+    for (const record of [...(plan.alignment_history || [])].reverse()) {
+      const setting = record.configurations.find(s => s.gun_id === gunId && s.target_id === targetId);
+      if (setting) return setting;
+    }
+    return null;
+  }
+  function outdatedConfigurationCount(plan) {
+    const pairs = new Set();
+    for (const record of plan.alignment_history || []) for (const setting of record.configurations) {
+      if (plan.guns.some(gun => gun.id === setting.gun_id) && plan.targets.some(target => target.id === setting.target_id) &&
+          !configuration(plan, setting.gun_id, setting.target_id)) pairs.add(JSON.stringify([setting.gun_id,setting.target_id]));
+    }
+    return pairs.size;
   }
   function nextPointId(plan, kind) {
     const points = kind === "gun" ? plan.guns : plan.targets;
@@ -129,6 +173,14 @@
     gun.x = point.x; gun.y = point.y;
     plan.configurations = plan.configurations.filter(setting => setting.gun_id !== gunId);
   }
+  // Sketch positioning preserves the pre-calculated firing card verbatim.
+  function moveSavedPoint(plan, kind, id, point) {
+    const settings = plan.configurations;
+    if (kind === "gun") moveGun(plan, id, point);
+    else if (kind === "target") moveTarget(plan, id, point);
+    else fail("Unknown point kind");
+    plan.configurations = settings;
+  }
   function unlinkTarget(plan, gunId, targetId) {
     plan.configurations = plan.configurations.filter(setting => setting.gun_id !== gunId || setting.target_id !== targetId);
   }
@@ -152,7 +204,11 @@
     }
     async load() {
       const saved = await this.adapter.load();
-      this.data = validateLibrary(saved || emptyLibrary(), this.maps, this.options);
+      const checked = validateLibrary(saved || emptyLibrary(), this.maps, this.options);
+      if (saved && Object.keys(checked.maps).some(id => (checked.maps[id].coordinate_revision ?? 0) !== (saved.maps[id].coordinate_revision ?? 0))) {
+        await this.adapter.save(checked);
+      }
+      this.data = checked;
       this.ready = true;
     }
     update(change) {
@@ -180,5 +236,5 @@
     }
   }
   globalThis.WorCalcSketch = {VERSION, MAX_BYTES, copy, emptyLibrary, validateLibrary, createPlan,
-    configuration, visibleTargets, nextPointId, retainPointId, saveConfiguration, moveGun, moveTarget, removeGun, unlinkTarget, removeTarget, LibraryStore};
+    configuration, previousConfiguration, outdatedConfigurationCount, visibleTargets, nextPointId, retainPointId, saveConfiguration, moveSavedPoint, moveGun, moveTarget, removeGun, unlinkTarget, removeTarget, LibraryStore};
 })();

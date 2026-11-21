@@ -30,6 +30,7 @@ target/
 node_modules/
 native/frontend/generated/
 native/frontend/dist/
+native/frontend/dist-*/
 src-tauri/resources/
 src-tauri/gen/android/app/build/
 src-tauri/gen/android/.gradle/

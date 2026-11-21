@@ -1,5 +1,10 @@
 {
+  "productName": "worSketch",
   "identifier": "pt.tomaspedreira.worcalc.flowtest",
+  "build": {
+    "beforeBuildCommand": "npm run build:sketcher",
+    "frontendDist": "../native/frontend/dist-sketcher"
+  },
   "app": {
     "windows": [{"title":"worCalc workflow test","width":1280,"height":850,"visible":false}]
   }

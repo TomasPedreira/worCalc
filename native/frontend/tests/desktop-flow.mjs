@@ -33,7 +33,7 @@ async function launch() {
   page=browser.contexts()[0].pages()[0];
   page.on("pageerror",error=>errors.push(error.message));
   page.on("dialog",dialog=>dialog.accept());
-  await page.waitForSelector("#choose-sketcher:enabled");
+  await page.waitForFunction(()=>!document.querySelector("#workspace").inert);
   const identifier=await page.evaluate(()=>globalThis.__TAURI_INTERNALS__.invoke("plugin:app|identifier"));
   assert.equal(identifier,"pt.tomaspedreira.worcalc.flowtest","Refuse to change the normal application's plan files");
 }
@@ -54,14 +54,21 @@ async function saveInspector(){
 }
 async function inspector(){await page.locator("#sketch-form").waitFor();await page.waitForSelector("#sketch-save:enabled");}
 async function gun(id){await page.locator(`[data-sketch-gun="${id}"] .marker`).click();}
-async function target(id){await page.locator(`[data-sketch-target="${id}"] .marker`).click();}
+async function target(id){
+  const gunId=await page.locator("#sketch-gun-select").inputValue();
+  await page.locator(`[data-sketch-target="${id}"] .marker`).click();
+  const plan=(await stored()).maps["map-1"],choices=plan.configurations.filter(setting=>setting.target_id===id);
+  const index=choices.findIndex(setting=>setting.gun_id===gunId);
+  if(index>=0)await page.locator("#sketch-gun-options button").nth(index).click();
+}
 async function enterSketch() {
-  await page.locator("#choose-sketcher").click();
-  await page.waitForSelector("#sketch-toolbar:not([hidden])");
+  await page.waitForSelector("#sketch-view");
   await page.waitForFunction(()=>document.querySelector("#map-image").complete && document.querySelector("#map-image").naturalWidth>0);
   await page.waitForFunction(async()=>Boolean((await worcalcNative.sketchStorage.load()).maps["map-1"]));
 }
+async function editMode(){if((await page.locator("#sketch-edit").getAttribute("aria-pressed"))==="false")await page.locator("#sketch-edit").click();}
 async function placeGun(x,y) {
+  await editMode();
   const before=await page.locator("#sketch-gun-select").inputValue();
   await page.locator("#sketch-add-gun").click();await mapClick(x,y);
   await page.waitForFunction(previous=>document.querySelector("#sketch-gun-select").value!==previous,before);
@@ -73,6 +80,7 @@ async function placeGun(x,y) {
 }
 async function addTarget(x,y,elevation,fuze) {
   await page.locator("#sketch-add-target").click();await mapClick(x,y);await inspector();
+  await page.locator("#sketch-calculate").click();await page.waitForSelector("#sketch-save:enabled");
   const id=await page.locator(".sketch-marker.target.selected").getAttribute("data-sketch-target");
   if(elevation!=null)await page.locator("#sketch-angle").fill(String(elevation));
   if(fuze!=null)await page.locator("#sketch-fuze").fill(String(fuze));
@@ -85,8 +93,10 @@ async function values() {
 }
 function check(name){checks.push(name);console.log("PASS",name);}
 try {
-  await launch();await page.evaluate(()=>worcalcNative.sketchStorage.save({version:1,maps:{}}));
-  await page.reload();await page.waitForSelector("#choose-sketcher:enabled");await enterSketch();
+  await launch();
+  assert.equal(await page.locator("#app-chooser,#choose-app,#kill-tracker").count(),0);
+  await page.evaluate(()=>worcalcNative.sketchStorage.save({version:1,maps:{}}));
+  await page.reload();await page.waitForFunction(()=>!document.querySelector("#workspace").inert);await enterSketch();
   const defaults=(await stored()).maps["map-1"].guns.length;
   assert.equal(await page.locator("#sketch-name, #sketch-dialog, #sketch-gun-settings").count(),0);
   const a=await placeGun(700,800);
@@ -104,7 +114,8 @@ try {
   await page.screenshot({path:resolve(output,"view-gun-a.png")});
   check("Return to view mode and reveal every saved target and firing window with one gun click");
   const b=await placeGun(500,1050);
-  await target(bridge);await inspector();
+  await page.locator("#sketch-add-target").click();await target(bridge);await inspector();
+  await page.locator("#sketch-calculate").click();await page.waitForSelector("#sketch-save:enabled");
   assert.ok(!(await page.locator("#sketch-editor-context").innerText()).includes(b));
   await page.locator("#sketch-angle").fill("2.4");await page.locator("#sketch-fuze").fill("4.1");await saveInspector();
   library=await stored();plan=library.maps["map-1"];
@@ -120,7 +131,7 @@ try {
     globalThis.__TAURI_INTERNALS__.invoke=function(command,args,...rest){flowCalls.push({command,args});return original.call(this,command,args,...rest);};
   });
   const before=await stored();await gun(a);await target(bridge);await gun(b);await target(bridge);await target(road);await mapClick(1500,1200);
-  assert.equal(await page.locator("#range-chip").evaluate(chip=>chip.hidden),true);
+  assert.equal(await page.locator("#range-chip").isVisible(),false);
   assert.deepEqual(await stored(),before);
   assert.equal(await page.evaluate(()=>flowCalls.filter(call=>call.command==="native_request" && call.args.operation==="calculate" ||
     call.command==="native_sketch" && call.args.operation==="save").length),0);
@@ -137,7 +148,7 @@ try {
   assert.match(basename(exportPath),/^worcalc-plans-\d+-\d+\.json$/);
   const exported=await readFile(exportPath);assert.deepEqual(JSON.parse(exported),before);
   await writeFile(resolve(output,"exported-plan.json"),exported);
-  await target(bridge);await inspector();
+  await editMode();await target(bridge);await inspector();
   assert.equal(await page.locator("#sketch-angle").inputValue(),"2.4");assert.equal(await page.locator("#sketch-fuze").inputValue(),"4.1");
   await page.locator("#sketch-defaults").click();
   const bSetting=before.maps["map-1"].configurations.find(setting=>setting.gun_id===b && setting.target_id===bridge);
@@ -148,15 +159,16 @@ try {
   await page.locator("#sketch-file").setInputFiles({name:"exported-plan.json",mimeType:"application/json",buffer:exported});
   await page.waitForFunction(()=>document.querySelector("#mode-pill").textContent==="PLANS IMPORTED AND SAVED");
   assert.deepEqual(await stored(),before);await gun(b);assert.deepEqual(await values(),[{target:bridge,elevation:"2.40°",fuze:"4.100 s"}]);
-  check("Selecting in view mode opens editable saved settings; Save, defaults and export/import round-trip correctly");
+  check("Explicit Edit enables saved settings; Save, defaults and export/import round-trip correctly");
 
-  await target(bridge);await page.locator("#sketch-notes").fill("abc");
+  await editMode();await target(bridge);await page.locator("#sketch-notes").fill("abc");
   await page.locator("#sketch-notes").press("Home");await page.keyboard.press("Delete");
   assert.equal(await page.locator("#sketch-notes").inputValue(),"bc");assert.deepEqual(await stored(),before);
   await page.locator("#sketch-cancel").click();
   check("Delete inside the inspector edits text without deleting a gun or target");
 
   async function restore(){
+    await editMode();
     await page.locator("#sketch-file").setInputFiles({name:"exported-plan.json",mimeType:"application/json",buffer:exported});
     await page.waitForFunction(()=>document.querySelector("#mode-pill").textContent==="PLANS IMPORTED AND SAVED");
     assert.deepEqual(await stored(),before);
@@ -169,7 +181,7 @@ try {
   const afterDelete=await stored();await page.keyboard.press("Delete");assert.deepEqual(await stored(),afterDelete);
   check("Delete removes the most recently selected shared target and all its gun settings without falling back to the gun");
 
-  await restore();await gun(b);await target(bridge);await gun(a);await page.keyboard.press("Delete");
+  await restore();await editMode();await gun(b);await target(bridge);await gun(a);await page.keyboard.press("Delete");
   await page.waitForFunction(id=>!document.querySelector(`[data-sketch-gun="${id}"]`),a);
   plan=(await stored()).maps["map-1"];
   assert.equal(plan.guns.length,defaults+1);assert.equal(plan.targets.length,2);
@@ -180,35 +192,26 @@ try {
   assert.equal((await stored()).maps["map-1"].targets.length,1);
   check("Selecting a gun after a target deletes only that gun; targets remain selectable and deletable without an active gun");
 
-  await restore();await target(bridge);await inspector();
+  await restore();await editMode();await target(bridge);await inspector();
   await page.locator("#sketch-x").fill("1010");await saveInspector();
   plan=(await stored()).maps["map-1"];
   assert.equal(plan.targets.find(point=>point.id===bridge).x,1010);
   assert.equal(plan.configurations.length,1);assert.equal(plan.configurations[0].target_id,road);
   check("Editing shared target coordinates in the side column clears its outdated gun settings only");
-  await restore();await gun(a);await page.locator("#sketch-edit").click();
+  await restore();await editMode();await gun(a);
   const anchor=await page.locator(`[data-sketch-gun="${a}"] .marker`).boundingBox();
   await page.mouse.move(anchor.x+anchor.width/2,anchor.y+anchor.height/2);await page.mouse.down();
   await page.mouse.move(anchor.x+anchor.width/2+50,anchor.y+anchor.height/2+10,{steps:5});await page.mouse.up();
   await page.waitForFunction(()=>document.querySelector("#sketch-details-title").textContent==="Gun" && !document.querySelector("#sketch-editor-fields").disabled);
   plan=(await stored()).maps["map-1"];
   assert.notEqual(plan.guns.find(point=>point.id===a).x,700);assert.equal(plan.targets.length,2);
-  assert.equal(plan.configurations.length,1);assert.equal(plan.configurations[0].gun_id,b);
+  assert.deepEqual(plan.configurations,before.maps["map-1"].configurations);
   check("Gun dragging still works with the side inspector open and preserves another gun's shared-target settings");
   await restore();await gun(a);await page.locator("#sketch-edit").click();await page.locator("#sketch-add-target").click();
   await mapClick(1500,1200);await inspector();await page.locator("#sketch-details-title").click();await page.keyboard.press("Delete");
   await page.locator("#sketch-form").waitFor({state:"hidden"});assert.deepEqual(await stored(),before);
   check("Delete discards an unsaved target without modifying the saved plan");
   await page.screenshot({path:resolve(output,"deletion-complete.png")});
-  await page.locator("#choose-app").click();await page.locator("#choose-calculator").click();
-  await page.locator("#gun-mode").click();await mapClick(700,800);await page.locator("#target-mode").click();await mapClick(1000,1000);
-  await page.waitForFunction(()=>!document.querySelector("#range-chip").hidden);
-  assert.equal(await page.locator("#elevation").innerText(),`${defaultSetting.elevation_degrees.toFixed(2)}°`);
-  assert.equal(await page.locator("#fuze").innerText(),`${defaultSetting.fuze_seconds.toFixed(3)} s`);
-  assert.equal(await page.locator("#sketch-readouts").evaluate(layer=>layer.hidden),true);
-  check("The original calculator still places guns and targets and uses the same firing display");
-
-  await page.locator("#choose-app").click();await enterSketch();
   const legacy=JSON.parse(JSON.stringify(before)),legacyPlan=legacy.maps["map-1"];
   const replacements={
     [a]:"gun-17c9cb45-1736-4563-9518-9bb89512319a",
@@ -218,7 +221,7 @@ try {
   };
   for(const point of [...legacyPlan.guns,...legacyPlan.targets])point.id=replacements[point.id] || point.id;
   for(const setting of legacyPlan.configurations){setting.gun_id=replacements[setting.gun_id];setting.target_id=replacements[setting.target_id];}
-  await page.locator("#sketch-file").setInputFiles({name:"legacy-ids.json",mimeType:"application/json",buffer:Buffer.from(JSON.stringify(legacy))});
+  await editMode();await page.locator("#sketch-file").setInputFiles({name:"legacy-ids.json",mimeType:"application/json",buffer:Buffer.from(JSON.stringify(legacy))});
   await page.waitForFunction(()=>document.querySelector("#mode-pill").textContent==="PLANS IMPORTED AND SAVED");
   await gun(replacements[a]);await target(replacements[bridge]);
   for(const editing of [false,true]) {

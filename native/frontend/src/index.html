@@ -8,24 +8,33 @@
   <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
-  <section class="app-chooser" id="app-chooser" aria-labelledby="chooser-title">
-    <div class="chooser-content">
-      <p class="eyebrow">WORCALC</p>
-      <h1 id="chooser-title">Prepare. Aim. Execute.</h1>
-      <p>Choose your workspace.</p>
-      <div class="app-cards">
-        <button id="choose-calculator" disabled><span class="app-symbol">↗</span><strong>Fire calculator</strong><span>Calculate a live mission from a gun to a target.</span></button>
-        <button id="choose-sketcher" disabled><span class="app-symbol">⌖</span><strong>Sketcher</strong><span>Prepare shared targets and save firing settings for each gun position.</span></button>
-      </div>
-      <p id="chooser-status" role="status">Loading maps and artillery profiles…</p>
-    </div>
+  <!-- kill-tracker:start -->
+  <section id="kill-tracker" class="kill-tracker" aria-labelledby="kill-tracker-title">
+    <header class="panel-head"><h2 id="kill-tracker-title">Kill Tracker</h2></header>
+    <p>Start War of Rights, then start capture. Captures are saved locally. This reads the verified game build using read-only process access.</p>
+    <label><input type="checkbox" id="kill-authorize"> I authorize read-only capture from the running game.</label>
+    <div class="kill-controls"><button id="kill-start">Start capture</button><button id="kill-stop" disabled>Stop capture</button></div>
+    <p id="kill-status" role="status">Capture stopped.</p>
+    <p id="kill-output"></p>
+    <div class="kill-controls"><input id="kill-search" class="search" type="search" placeholder="Search names or Steam IDs" aria-label="Search kill feed"><select id="kill-filter" aria-label="Search players"><option value="all">All players</option><option value="killers">Killers</option><option value="victims">Victims</option></select></div>
+    <p id="kill-count"></p>
+    <div class="kill-feed"><table><thead><tr><th>Observed</th><th>Killer</th><th>Victim</th><th>Cause</th><th>Formation</th></tr></thead><tbody id="kill-rows"></tbody></table></div>
+    <p>Times show when events were observed. Existing events are marked “Earlier”. Unmapped cause and formation codes retain their original values.</p>
   </section>
+  <!-- kill-tracker:end -->
+  <!-- maps:start -->
   <div class="app" id="workspace" inert>
     <header class="topbar">
       <button class="icon-btn" id="open-drawer" aria-label="Open map library">☰</button>
-      <div class="brand"><strong>WORCALC</strong><span id="workspace-title">FIRE DIRECTION</span></div>
-      <button id="choose-app" aria-label="Choose workspace">APPS</button>
+      <div class="brand"><strong id="app-brand">WORCALC</strong><span id="workspace-title">FIRE DIRECTION</span></div>
+      <!-- sketcher:start -->
+      <div class="workspace-modes" role="group" aria-label="Sketch workspace mode">
+        <button id="sketch-view" aria-pressed="true">VIEW MODE</button>
+        <button id="sketch-edit" aria-pressed="false">EDIT MODE</button>
+      </div>
+      <!-- sketcher:end -->
       <button class="icon-btn" id="open-sheet" aria-label="Open fire controls">⌃</button>
+      <button class="mobile-fit" id="mobile-fit" aria-label="Fit map">FIT</button>
     </header>
 
     <nav class="placement-bar" id="calculator-toolbar" aria-label="Fire mission tools">
@@ -34,12 +43,13 @@
       <button id="impact-mode" hidden>MARK IMPACT</button>
       <button id="fit-map">FIT MAP</button>
     </nav>
+    <!-- sketcher:start -->
     <nav class="placement-bar sketch-toolbar" id="sketch-toolbar" aria-label="Sketch tools" hidden>
-      <button id="sketch-edit">EDIT</button>
-      <button id="sketch-add-gun" title="Place a gun anywhere on the map (G)">PLACE GUN (G)</button>
-      <button id="sketch-add-target" hidden>ADD TARGET</button>
+      <button id="sketch-add-gun" title="Place a gun anywhere on the map (G)"><span aria-hidden="true">⊕</span> Add gun <kbd>G</kbd></button>
+      <button id="sketch-add-target" hidden><span aria-hidden="true">⊙</span> Add target <kbd>T</kbd></button>
       <button id="sketch-fit">FIT MAP</button>
     </nav>
+    <!-- sketcher:end -->
 
     <main class="map-wrap" id="map-wrap">
       <div class="scene" id="scene">
@@ -48,13 +58,27 @@
         <div class="shot-line" id="shot-line" hidden></div>
       </div>
       <svg class="aim-overlay" id="aim-overlay" aria-hidden="true"></svg>
-      <div class="location-layer" id="location-layer" aria-hidden="true"></div>
+      <div class="location-layer" id="location-layer" role="group" aria-label="Map reference positions"></div>
+      <!-- sketcher:start -->
+      <div class="sketch-connections" id="sketch-connections" aria-hidden="true"></div>
       <div class="sketch-layer" id="sketch-layer" hidden></div>
       <div class="sketch-readout-layer" id="sketch-readouts" hidden></div>
+      <!-- sketcher:end -->
       <div class="marker-anchor" id="gun-anchor" data-marker="gun" hidden></div>
       <div class="marker-anchor" id="target-anchor" data-marker="target" hidden></div>
 
-      <div class="map-name"><b id="map-name">Loading maps…</b><small id="map-subtitle">WORCALC</small></div>
+      <div class="map-heading">
+        <div class="map-name"><b id="map-name">Loading maps…</b><small id="map-subtitle">WORCALC</small></div>
+        <nav class="placement-bar mobile-placement" aria-label="Map placement">
+          <button id="mobile-gun-mode" aria-pressed="false">GUN</button>
+          <button id="mobile-target-mode" aria-pressed="false">TARGET</button>
+        </nav>
+      </div>
+      <nav class="mobile-fire-settings" aria-label="Firing settings">
+        <button id="quick-cannon" disabled>RIFLED</button>
+        <button id="quick-projectile" disabled>SHELL</button>
+        <button id="quick-burst" disabled>GROUND</button>
+      </nav>
       <div class="mode-pill" id="mode-pill" role="status" aria-live="polite">DRAG OR PINCH MAP</div>
       <div class="range-chip" id="range-chip" hidden></div>
       <div class="status-bar">
@@ -68,7 +92,7 @@
           </div>
         </div>
         <div class="metric"><small>Distance</small><b id="distance">—</b></div>
-        <div class="metric"><small>Explosion height</small><b id="explosion-height">—</b></div>
+        <div class="metric" id="explosion-height-metric"><small>Explosion height</small><b id="explosion-height">—</b></div>
         <div class="metric"><small>Δ Height</small><b id="height">—</b></div>
       </div>
     </main>
@@ -79,7 +103,9 @@
   <aside class="drawer" id="drawer" aria-label="Map library" inert>
     <div class="panel-head"><h2>Map library</h2><button class="icon-btn close" aria-label="Close map library">×</button></div>
     <input class="search" id="map-search" type="search" placeholder="Filter battlefield, mode, or map">
+    <label class="map-overlay-control"><input id="artillery-names" type="checkbox" checked> Artillery names</label>
     <div class="map-list" id="map-list"></div>
+    <button class="mobile-advanced" id="mobile-advanced">ADVANCED CONTROLS</button>
   </aside>
 
   <section class="sheet" id="sheet" aria-label="Fire controls" inert>
@@ -93,25 +119,29 @@
       <div class="field full"><label for="calculation-mode">Calculation mode</label><select id="calculation-mode"><option value="operational">Operational clearance</option><option value="test">Calibration test</option></select></div>
       <div class="field full"><label for="burst-mode">Aim point</label><select id="burst-mode"><option value="ground">Ground level</option><option value="airburst">Airburst (+1 m)</option></select></div>
       <input id="method-select" type="hidden">
+      <div class="field full" id="calibration-target-field" hidden><label for="calibration-target">Target for impact recording</label><select id="calibration-target"></select></div>
       <div class="field full" id="calibration-angle-field" hidden><label for="actual-elevation">Actual elevation fired (degrees)</label><input id="actual-elevation" type="number" step="0.01" min="-8" max="14" placeholder="Required before marking impact"></div>
-      <p class="field full">Green squares (G): gun starting positions before movement. Amber circles (B): artillery crew spawn references.</p>
+      <p class="field full">Green squares (G): gun starting positions before movement. Small outlined text names the batteries. Toggle Artillery names in the map library.</p>
       <p class="field full" id="calibration-help" hidden>Calibration test: middle click to save an impact.<br>I: mark impact · Mark impacts before moving the gun or target.</p>
-      <p class="field full">Mouse wheel: zoom · Left drag: pan.<br>G: place gun · T: place target · F: fit map · Esc: pan.</p>
+      <p class="field full">Mouse wheel: zoom · Left drag: pan.<br>G: place gun · T: place target · F: fit map · Esc: pan.<span id="desktop-target-help" hidden><br>Shift+T: add target · Drag a target to move it · Right-click to remove it.</span></p>
     </div>
   </section>
 
+  <!-- sketcher:start -->
   <section class="sheet sketch-panel" id="sketch-panel" aria-label="Sketch plan" inert hidden>
     <div class="handle"></div>
     <div class="panel-head"><h2>Sketch plan</h2><button class="icon-btn close" aria-label="Close sketch plan">×</button></div>
     <p id="sketch-state" class="sketch-state" role="status">VIEW MODE</p>
+    <div id="sketch-edit-notice" class="edit-notice" hidden><b>Edit mode</b><span>Select a point to change its details. Save to apply your changes.</span></div>
     <p id="sketch-count"></p>
     <p id="sketch-help"></p>
-    <div class="field"><label for="sketch-gun-select">Gun position</label><select id="sketch-gun-select"></select></div>
+    <div class="field"><label for="sketch-gun-select">Active gun position</label><select id="sketch-gun-select"></select></div>
+    <div id="sketch-solution" class="solution-card" aria-label="Selected firing solution" hidden></div>
+    <div id="sketch-gun-options" aria-label="Saved cannon options for selected target" hidden></div>
     <h3 id="sketch-selected-gun">No gun selected</h3>
     <form id="sketch-form" class="sketch-editor" hidden aria-labelledby="sketch-details-title">
       <fieldset id="sketch-editor-fields">
         <h3 id="sketch-details-title">Selected point</h3>
-        <div class="sketch-editor-actions"><button type="button" id="sketch-cancel">CANCEL</button><button type="submit" id="sketch-save">SAVE</button></div>
         <button type="button" id="sketch-delete" class="sketch-danger" hidden>DELETE SELECTED POINT (Del)</button>
         <p id="sketch-editor-context"></p>
         <div class="form-grid">
@@ -135,13 +165,18 @@
         </fieldset>
         <p id="sketch-editor-status" role="status" aria-live="polite"></p>
         <button type="button" id="sketch-unlink" class="sketch-danger" hidden>Remove configuration for this gun</button>
+        <div class="sketch-editor-actions"><button type="button" id="sketch-cancel">CANCEL</button><button type="submit" id="sketch-save">SAVE CHANGES</button></div>
       </fieldset>
     </form>
+    <h3 class="list-heading" id="sketch-related-heading">Related targets</h3>
     <div id="sketch-target-list"></div>
     <p id="sketch-empty">Select a gun or target to edit its details. Delete removes the selected point.</p>
+    <details class="shared-targets" open><summary>All targets on map <span id="sketch-shared-count"></span></summary><div id="sketch-shared-list"></div></details>
     <div class="sketch-file-actions"><button id="sketch-export">EXPORT PLANS</button><button id="sketch-import">IMPORT PLANS</button></div>
     <input id="sketch-file" type="file" accept=".json,application/json" hidden>
   </section>
+  <!-- sketcher:end -->
+  <!-- maps:end -->
 
   <script type="module" src="./bootstrap.js"></script>
 </body>

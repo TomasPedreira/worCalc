@@ -1,0 +1,29 @@
+{
+  "calculator": {
+    "name": "worCalc",
+    "identifier": "pt.tomaspedreira.worcalc",
+    "feature": "calculator",
+    "config": "src-tauri/tauri.conf.json",
+    "directory": "worCalc",
+    "executable": "worcalc-app.exe",
+    "maps": true
+  },
+  "sketcher": {
+    "name": "worSketch",
+    "identifier": "pt.tomaspedreira.worsketch",
+    "feature": "sketcher",
+    "config": "src-tauri/tauri.sketcher.conf.json",
+    "directory": "worSketch",
+    "executable": "worsketch.exe",
+    "maps": true
+  },
+  "kill-tracker": {
+    "name": "Kill Tracker",
+    "identifier": "pt.tomaspedreira.killtracker",
+    "feature": "kill-tracker",
+    "config": "src-tauri/tauri.kill-tracker.conf.json",
+    "directory": "KillTracker",
+    "executable": "kill-tracker.exe",
+    "maps": false
+  }
+}

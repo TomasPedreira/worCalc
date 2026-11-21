@@ -12,6 +12,10 @@ const aimOverlay = $("#aim-overlay");
 const rangeChip = $("#range-chip");
 rangeChip.replaceChildren(...globalThis.WorCalcFireReadouts.create({ids:{elevationLabel:"elevation-label", elevation:"elevation", fuze:"fuze"}}).children);
 const modePill = $("#mode-pill");
+function showStatus(message) {
+  modePill.classList.remove("idle-hint");
+  modePill.textContent = message;
+}
 const drawer = $("#drawer");
 const sheet = $("#sheet");
 const backdrop = $("#backdrop");
@@ -24,8 +28,16 @@ let mapReady = false;
 let locations = [];
 let locationAnchors = [];
 let locationsReady = false;
+let showArtilleryNames = true;
 let sketcher = null;
-let applicationMode = "calculator";
+let applicationMode = globalThis.worcalcNative.variant || "calculator";
+const supportsMultipleTargets = applicationMode === "calculator" && /\bWindows\b/.test(navigator.userAgent);
+const desktopTargets = new Map();
+let nextTargetNumber = 1;
+if (supportsMultipleTargets) {
+  $("#desktop-target-help").hidden = false;
+  $(".status-bar").hidden = true;
+}
 let mode = "pan";
 let zoom = 1;
 let translateX = 0;
@@ -88,10 +100,10 @@ function applyView() {
   scene.style.setProperty("--inverse-zoom", String(1 / zoom));
   scene.style.transform = `translate(${translateX}px,${translateY}px) scale(${zoom})`;
   updateMarkerPositions();
+  sketcher?.positionMarkers();
   updateLocationPositions();
   updateRangeChipPosition();
   updateAimOverlay();
-  sketcher?.positionMarkers();
 }
 
 function gameCompassAim(bearingDegrees) {
@@ -117,10 +129,10 @@ function updateAimCompass(bearingDegrees) {
   $("#aim-needle").style.setProperty("--angle", `${aim?.bearing || 0}deg`);
 }
 
-function missionBearing() {
-  if (!gun || !target) return null;
-  const dx = target.x - gun.x;
-  const dy = target.y - gun.y;
+function missionBearing(point = target) {
+  if (!gun || !point) return null;
+  const dx = point.x - gun.x;
+  const dy = point.y - gun.y;
   if (dx === 0 && dy === 0) return null;
   return (Math.atan2(dx, -dy) * 180 / Math.PI + 360) % 360;
 }
@@ -143,13 +155,16 @@ function rayPoint(origin, bearingDegrees, distance) {
 }
 
 function updateAimOverlay() {
-  const bearing = missionBearing();
+  const point = supportsMultipleTargets
+    ? (desktopTargets.size === 1 ? desktopTargets.values().next().value.point : null)
+    : target;
+  const bearing = missionBearing(point);
   if (bearing == null) {
     aimOverlay.replaceChildren();
     return;
   }
   const origin = screenPoint(gun);
-  const targetPoint = screenPoint(target);
+  const targetPoint = screenPoint(point);
   const shotLength = Math.hypot(targetPoint.x - origin.x, targetPoint.y - origin.y);
   const labels = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
   const namedDirections = compassGuideDirections(bearing);
@@ -178,12 +193,22 @@ function resetView() {
   sceneHeight = mapImage.naturalHeight * baseScale;
   scene.style.width = `${sceneWidth}px`;
   scene.style.height = `${sceneHeight}px`;
-  zoom = 1;
-  translateX = (rect.width - sceneWidth) / 2;
-  translateY = (rect.height - sceneHeight) / 2;
+  zoom = applicationMode === "calculator" ? Math.min(MAX_ZOOM, Math.max(rect.width / sceneWidth, rect.height / sceneHeight)) : 1;
+  translateX = (rect.width - sceneWidth * zoom) / 2;
+  translateY = (rect.height - sceneHeight * zoom) / 2;
   renderLocations();
   renderImpacts();
   updateMissionGeometry();
+  applyView();
+}
+
+function fitWholeMap() {
+  resetView();
+  if (zoom === 1) return;
+  const rect = mapWrap.getBoundingClientRect();
+  zoom = 1;
+  translateX = (rect.width - sceneWidth) / 2;
+  translateY = (rect.height - sceneHeight) / 2;
   applyView();
 }
 
@@ -213,9 +238,14 @@ function updateMarkerPositions() {
   if (sketcher?.active) { gunAnchor.hidden = true; targetAnchor.hidden = true; return; }
   if (gun) setAnchor(gunAnchor, gun);
   if (target) setAnchor(targetAnchor, target);
+  else targetAnchor.hidden = true;
+  for (const [anchor, entry] of desktopTargets) setAnchor(anchor, entry.point);
+  if (supportsMultipleTargets) positionDesktopReadouts();
 }
 
 function updateLocationPositions() {
+  // Names stay attached to their map reference. Do not reflow them for zoom,
+  // nearby guns or viewport edges; the map container clips them naturally.
   locationAnchors.forEach((anchor, index) => {
     const location = locations[index];
     if (!location) return;
@@ -232,6 +262,11 @@ function updateRangeChipPosition() {
   const rect = mapWrap.getBoundingClientRect();
   const width = rangeChip.offsetWidth || 190;
   const height = rangeChip.offsetHeight || 54;
+  let bottom = 64;
+  if (applicationMode === "calculator") {
+    const readout = $(".status-bar").getBoundingClientRect();
+    if (readout.height > 0) bottom = Math.max(bottom, rect.bottom - readout.top + 8);
+  }
   // Prefer the side beyond the target, away from the gun-to-target segment.
   const xs = [second.x+24, second.x-width-24];
   const ys = [second.y+24, second.y-height-24];
@@ -239,7 +274,7 @@ function updateRangeChipPosition() {
   if (second.y < first.y) ys.reverse();
   const candidates = xs.flatMap(x => ys.map(y => ({
     x:Math.max(8, Math.min(rect.width-width-8, x)),
-    y:Math.max(8, Math.min(rect.height-height-64, y)),
+    y:Math.max(8, Math.min(rect.height-height-bottom, y)),
   })));
   const crossesFlight = box => {
     let low=0, high=1;
@@ -262,29 +297,37 @@ function updateRangeChipPosition() {
 }
 
 function updateMissionGeometry() {
-  if (gun) setAnchor(gunAnchor, gun);
-  if (target) setAnchor(targetAnchor, target);
-  if (sketcher?.active) { gunAnchor.hidden = true; targetAnchor.hidden = true; }
+  updateMarkerPositions();
+  if (supportsMultipleTargets) {
+    for (const entry of desktopTargets.values()) positionShotLine(entry.line, entry.point);
+    updateAimOverlay();
+    return;
+  }
   if (!gun || !target) {
     shotLine.hidden = true;
     rangeChip.hidden = true;
     updateAimOverlay();
     return;
   }
-  const gx = gun.x * baseScale;
-  const gy = gun.y * baseScale;
-  const tx = target.x * baseScale;
-  const ty = target.y * baseScale;
-  const dx = tx - gx;
-  const dy = ty - gy;
-  shotLine.style.left = `${gx}px`;
-  shotLine.style.top = `${gy}px`;
-  shotLine.style.width = `${Math.hypot(dx, dy)}px`;
-  shotLine.style.transform = `rotate(${Math.atan2(dy, dx)}rad)`;
-  shotLine.hidden = false;
+  positionShotLine(shotLine, target);
   rangeChip.hidden = !latestSolution;
   updateRangeChipPosition();
   updateAimOverlay();
+}
+
+function positionShotLine(line, point) {
+  line.hidden = !gun;
+  if (!gun) return;
+  const gx = gun.x * baseScale;
+  const gy = gun.y * baseScale;
+  const tx = point.x * baseScale;
+  const ty = point.y * baseScale;
+  const dx = tx - gx;
+  const dy = ty - gy;
+  line.style.left = `${gx}px`;
+  line.style.top = `${gy}px`;
+  line.style.width = `${Math.hypot(dx, dy)}px`;
+  line.style.transform = `rotate(${Math.atan2(dy, dx)}rad)`;
 }
 
 function cancelPendingSolution() {
@@ -298,6 +341,11 @@ function clearSolution() {
   latestSolution = null;
   impacts = [];
   renderImpacts();
+  if (supportsMultipleTargets) {
+    for (const entry of desktopTargets.values()) clearDesktopSolution(entry);
+    updateMissionGeometry();
+    return;
+  }
   for (const id of ["elevation", "fuze"]) {
     $(`#${id}`).textContent = "—";
   }
@@ -313,6 +361,13 @@ function clearSolution() {
 function clearMission(resetMap = true) {
   gun = null;
   target = null;
+  for (const [anchor, entry] of desktopTargets) {
+    entry.request = null;
+    anchor.remove(); entry.line.remove(); entry.readout.remove();
+  }
+  desktopTargets.clear();
+  nextTargetNumber = 1;
+  refreshCalibrationTargets();
   gunAnchor.hidden = true;
   targetAnchor.hidden = true;
   shotLine.hidden = true;
@@ -325,13 +380,21 @@ function clearMission(resetMap = true) {
 function setMode(nextMode) {
   if (sketcher?.active) { mode = "pan"; sketcher.status(); return; }
   mode = nextMode;
+  const placingTarget = mode === "target";
   $("#gun-mode").classList.toggle("active", mode === "gun");
-  $("#target-mode").classList.toggle("active", mode === "target");
+  $("#target-mode").classList.toggle("active", placingTarget);
+  for (const [id, kind] of [["mobile-gun-mode", "gun"], ["mobile-target-mode", "target"]]) {
+    const placing = kind === "target" ? placingTarget : mode === kind;
+    $("#" + id).classList.toggle("active", placing);
+    $("#" + id).setAttribute("aria-pressed", String(placing));
+  }
+  modePill.classList.toggle("idle-hint", !(supportsMultipleTargets && placingTarget));
   $("#impact-mode").classList.toggle("active", mode === "impact");
   modePill.textContent = mode === "pan"
     ? "HOLD & DRAG TO PAN"
     : mode === "gun" ? "CLICK MAP TO PLACE GUN" : mode === "impact"
-      ? "CLICK WHERE THE SHOT LANDED" : "CLICK MAP TO PLACE TARGET";
+      ? "CLICK WHERE THE SHOT LANDED" : supportsMultipleTargets && placingTarget
+        ? "CLICK MAP TO ADD A TARGET" : "CLICK MAP TO PLACE TARGET";
 }
 
 function calibrationMode() {
@@ -347,6 +410,7 @@ function updateCalculationMode() {
   $("#impact-mode").hidden = !enabled;
   $("#calibration-angle-field").hidden = !enabled;
   $("#calibration-help").hidden = !enabled;
+  refreshCalibrationTargets();
   if (!enabled && mode === "impact") setMode("pan");
 }
 
@@ -364,39 +428,138 @@ function renderImpacts() {
 
 async function markImpact(clientX, clientY, exactPoint = null) {
   if (!calibrationMode()) {
-    modePill.textContent = "SWITCH TO CALIBRATION TEST TO RECORD IMPACTS";
+    showStatus("SWITCH TO CALIBRATION TEST TO RECORD IMPACTS");
     return;
   }
-  if (!mapReady || !latestSolution?.calculation_id) {
-    modePill.textContent = "CALCULATE A SHOT BEFORE MARKING IMPACT";
+  if (supportsMultipleTargets && desktopTargets.size > 1 && !desktopCalibrationTarget()) {
+    showStatus("CHOOSE A TARGET IN THE CALIBRATION CONTROLS");
+    return;
+  }
+  const calibrationSolution = () => supportsMultipleTargets ? desktopCalibrationTarget()?.solution : latestSolution;
+  if (!mapReady || !calibrationSolution()?.calculation_id) {
+    showStatus("CALCULATE A SHOT BEFORE MARKING IMPACT");
     return;
   }
   const actualElevation = Number($("#actual-elevation").value);
   if (!Number.isFinite(actualElevation) || $("#actual-elevation").value.trim() === "") {
-    modePill.textContent = "ENTER THE ACTUAL ELEVATION FIRED";
+    showStatus("ENTER THE ACTUAL ELEVATION FIRED");
     $("#actual-elevation").focus();
     return;
   }
-  const shotId = latestSolution.calculation_id;
+  const shotId = calibrationSolution().calculation_id;
   const point = exactPoint || imagePoint(clientX, clientY);
-  modePill.textContent = "SAVING IMPACT...";
+  showStatus("SAVING IMPACT...");
   try {
     await nativeApi.recordImpact({calculation_id:shotId, impact:point,
                                   actual_elevation_degrees:actualElevation});
-    if (latestSolution?.calculation_id !== shotId) return;
+    if (calibrationSolution()?.calculation_id !== shotId) return;
     impacts.push(point);
     renderImpacts();
-    modePill.textContent = `IMPACT ${impacts.length} SAVED`;
+    showStatus(`IMPACT ${impacts.length} SAVED`);
   } catch (error) {
-    if (latestSolution?.calculation_id === shotId) modePill.textContent = error.message;
+    if (calibrationSolution()?.calculation_id === shotId) showStatus(error.message);
   }
 }
 
-function moveMarker(name, clientX, clientY) {
-  clearSolution();
+function createDesktopTarget(point) {
+  const number = nextTargetNumber++;
+  const name = `TARGET ${number}`;
+  const anchor = document.createElement("div");
+  anchor.className = "marker-anchor desktop-target";
+  anchor.dataset.marker = "target";
+  anchor.title = "Drag to move · Right-click to remove";
+  anchor.append(globalThis.WorCalcMapMarkers.create("target", name));
+
+  const line = document.createElement("div");
+  line.className = "shot-line";
+  scene.append(line);
+
+  const readout = document.createElement("div");
+  readout.className = "range-chip target-readout";
+  readout.dataset.targetNumber = String(number);
+  const heading = document.createElement("small");
+  heading.className = "target-readout-heading";
+  const metrics = ["ELEVATION", "FUZE", "BURST HEIGHT"].map(label => {
+    const column = document.createElement("div");
+    const title = document.createElement("small");
+    const value = document.createElement("b");
+    title.textContent = label;
+    column.append(title, value);
+    return {column, title, value};
+  });
+  readout.append(heading, ...metrics.map(metric => metric.column));
+  mapWrap.append(readout);
+  mapWrap.append(anchor);
+  const entry = {number, name, point, line, readout, heading, metrics, solution:null, request:null, error:false};
+  desktopTargets.set(anchor, entry);
+  renderDesktopSolution(entry);
+  refreshCalibrationTargets();
+}
+
+function positionDesktopReadouts() {
+  const viewport = mapWrap.getBoundingClientRect();
+  const occupied = [];
+  for (const {readout, point} of desktopTargets.values()) {
+    readout.hidden = !gun;
+    if (!gun) continue;
+    const size = {width:readout.offsetWidth || 200, height:readout.offsetHeight || 62};
+    const box = globalThis.WorCalcFireReadouts.position(screenPoint(point), viewport, size, occupied, true);
+    readout.style.left = `${box.x}px`;
+    readout.style.top = `${box.y}px`;
+    occupied.push(box);
+  }
+}
+
+function renderDesktopSolution(entry) {
+  const {solution, heading, metrics, line} = entry;
+  const aim = solution && Number.isFinite(solution.bearing_degrees) ? gameCompassAim(solution.bearing_degrees).instruction : null;
+  const status = entry.request ? "CALCULATING…" : entry.error ? "CALCULATION FAILED" : aim;
+  heading.textContent = status ? `${entry.name} · ${status}` : entry.name;
+  metrics[0].title.textContent = elevationLabel(solution);
+  metrics[0].value.textContent = solution ? globalThis.WorCalcFireReadouts.elevationText(solution.elevation_degrees) : "—";
+  metrics[1].value.textContent = globalThis.WorCalcFireReadouts.fuzeText(solution?.fuze_seconds);
+  metrics[2].value.textContent = solution ? explosionHeightText(solution.height_above_target_metres) : "—";
+  showClearance(line, solution);
+}
+
+function clearDesktopSolution(entry) {
+  entry.request = null;
+  entry.solution = null;
+  entry.error = false;
+  renderDesktopSolution(entry);
+}
+
+function desktopCalibrationTarget() {
+  if (desktopTargets.size === 1) return desktopTargets.values().next().value;
+  const number = Number($("#calibration-target").value);
+  return [...desktopTargets.values()].find(entry => entry.number === number);
+}
+
+function refreshCalibrationTargets() {
+  if (!supportsMultipleTargets) return;
+  const select = $("#calibration-target");
+  const previous = select.value;
+  addOptions(select, ["", ...[...desktopTargets.values()].map(entry => String(entry.number))]);
+  select.children[0].textContent = "Choose target";
+  for (const option of Array.from(select.children).slice(1)) option.textContent = `Target ${option.value}`;
+  select.value = [...desktopTargets.values()].some(entry => String(entry.number) === previous) ? previous : "";
+  $("#calibration-target-field").hidden = !calibrationMode() || desktopTargets.size < 2;
+  if (calibrationMode()) setActualElevation(desktopCalibrationTarget()?.solution);
+}
+
+function moveMarker(name, clientX, clientY, anchor = null) {
   const point = imagePoint(clientX, clientY);
-  if (name === "gun") gun = point;
-  else target = point;
+  if (supportsMultipleTargets && name !== "gun") {
+    if (anchor) {
+      const entry = desktopTargets.get(anchor);
+      entry.point = point;
+      clearDesktopSolution(entry);
+    } else createDesktopTarget(point);
+  } else {
+    clearSolution();
+    if (name === "gun") gun = point;
+    else target = point;
+  }
   updateMissionGeometry();
 }
 
@@ -495,20 +658,33 @@ async function prefetchSkirmishThumbnails(battlefield) {
 
 function renderLocations() {
   const layer = $("#location-layer");
+  const namedLocations = [];
   locationAnchors = locations.map((location) => {
     const anchor = document.createElement("span");
     anchor.className = "location-anchor";
+    const batteryName = globalThis.WorCalcArtilleryPositions.label(location);
+    anchor.hidden = location.kind === "battery" ? !batteryName || !showArtilleryNames : applicationMode === "sketcher";
     const dot = document.createElement("i");
     dot.className = `location-dot ${locationClass(location)}`;
     dot.textContent = location.kind === "gun_spawn" ? "G" : location.kind === "battery" ? "B" : location.kind === "objective" ? "P" : "S";
     const label = location.kind === "gun_spawn" ? "Gun starting position (before movement)"
       : location.kind === "battery" ? "Artillery crew spawn reference" : location.kind;
-    dot.title = [location.faction, label, location.name].filter(Boolean).join(" · ");
+    dot.hidden = location.kind === "battery";
+    dot.title = [location.faction, label, batteryName, location.name].filter(Boolean).join(" · ");
     anchor.append(dot);
+    const duplicate = namedLocations.some(item => item.name === batteryName && item.faction === location.faction &&
+      Math.hypot(item.x - location.pixel_x, item.y - location.pixel_y) < 4);
+    if (batteryName && showArtilleryNames && !duplicate) {
+      namedLocations.push({name:batteryName, faction:location.faction, x:location.pixel_x, y:location.pixel_y});
+      const name = document.createElement("span");
+      name.className = "artillery-position-label";
+      name.textContent = batteryName;
+      anchor.append(name);
+    }
     return anchor;
   });
-  updateLocationPositions();
   layer.replaceChildren(...locationAnchors);
+  updateLocationPositions();
 }
 
 function renderMapList(filter = "") {
@@ -625,7 +801,7 @@ async function selectMap(map) {
       await sketcher?.locationsChanged();
     }
   } catch (error) {
-    modePill.textContent = error.message.toUpperCase();
+    showStatus(error.message.toUpperCase());
   }
 }
 
@@ -636,7 +812,8 @@ async function loadMapImage(map) {
   const controller = new AbortController();
   mapImageFetchController = controller;
   mapWrap.classList.add("map-loading");
-  modePill.textContent = "LOADING SELECTED MAP...";
+  modePill.classList.remove("idle-hint");
+  showStatus("LOADING SELECTED MAP...");
   try {
     const objectUrl = URL.createObjectURL(await nativeApi.mapImage(map.image_path, controller.signal));
     if (requestId !== mapImageRequestSequence || currentMap?.identifier !== map.identifier) {
@@ -660,7 +837,7 @@ async function loadMapImage(map) {
       if (requestId !== mapImageRequestSequence || currentMap?.identifier !== map.identifier) return;
       mapWrap.classList.remove("map-loading");
       mapImageFetchController = null;
-      modePill.textContent = "SELECTED MAP FAILED TO LOAD";
+      showStatus("SELECTED MAP FAILED TO LOAD");
     });
     preloader.src = objectUrl;
   } catch (error) {
@@ -668,8 +845,45 @@ async function loadMapImage(map) {
     if (requestId !== mapImageRequestSequence || currentMap?.identifier !== map.identifier) return;
     mapWrap.classList.remove("map-loading");
     mapImageFetchController = null;
-    modePill.textContent = "SELECTED MAP FAILED TO LOAD";
+    showStatus("SELECTED MAP FAILED TO LOAD");
   }
+}
+
+const calculatorCannons = [
+  {value:"3-inch Ordnance", label:"Rifled"},
+  {value:"12-pounder Napoleon", label:"Smoothbore"},
+];
+
+function populateCannons() {
+  if (applicationMode !== "calculator") {
+    addOptions($("#cannon-select"), Object.keys(options.weapons));
+    $("#cannon-select").value = options.defaults.cannon;
+    return;
+  }
+  $("#cannon-select").replaceChildren(...calculatorCannons.filter(cannon => options.weapons[cannon.value]).map(cannon => {
+    const option = document.createElement("option"); option.value = cannon.value; option.textContent = cannon.label; return option;
+  }));
+  $("#cannon-select").value = options.defaults.cannon === "12-pounder Napoleon" ? "12-pounder Napoleon" : "3-inch Ordnance";
+}
+
+function syncQuickSettings() {
+  if (!options || applicationMode !== "calculator") return;
+  const cannon = calculatorCannons.find(item => item.value === $("#cannon-select").value);
+  $("#quick-cannon").textContent = (cannon?.label || "Rifled").toUpperCase();
+  $("#quick-projectile").textContent = $("#projectile-select").value.toUpperCase();
+  $("#quick-burst").textContent = airburstMode() ? "AIRBURST" : "GROUND";
+  for (const [id, name] of [["quick-cannon", "Cannon"], ["quick-projectile", "Ammunition"], ["quick-burst", "Aim point"]]) {
+    const button = $("#" + id); button.disabled = false;
+    button.setAttribute("aria-label", `${name}: ${button.textContent}. Tap to switch.`);
+  }
+  $("#quick-cannon").disabled = calculatorCannons.filter(item => options.weapons[item.value]).length < 2;
+  $("#quick-projectile").disabled = (options.weapons[$("#cannon-select").value] || []).length < 2;
+}
+
+function changeBurstMode() {
+  syncQuickSettings();
+  clearSolution();
+  requestSolution();
 }
 
 function updatePhysics() {
@@ -678,8 +892,9 @@ function updatePhysics() {
   const profile = options.physics[cannon][projectile];
   $("#muzzle-velocity").value = `${profile.speed} m/s`;
   $("#drag-factor").value = `${profile.drag} s⁻¹`;
+  syncQuickSettings();
   clearSolution();
-  if (gun && target && currentMap) requestSolution();
+  requestSolution();
 }
 
 function refreshProjectiles(preferred = null) {
@@ -693,15 +908,16 @@ function refreshProjectiles(preferred = null) {
 async function load() {
   try {
     [maps, options] = await Promise.all([nativeApi.maps(), nativeApi.options()]);
-    addOptions($("#cannon-select"), Object.keys(options.weapons));
+    populateCannons();
     addOptions($("#method-select"), options.methods);
-    $("#cannon-select").value = options.defaults.cannon;
     refreshProjectiles(options.defaults.projectile);
     $("#method-select").value = options.defaults.method;
     $("#calculation-mode").value = "operational";
     $("#burst-mode").value = "ground";
+    syncQuickSettings();
     updateCalculationMode();
-    sketcher = new globalThis.WorCalcSketcher({
+    if (applicationMode === "sketcher") {
+      sketcher = new globalThis.WorCalcSketcher({
       storage:globalThis.worcalcNative.sketchStorage, calculate:nativeApi.calculate,
       map:() => currentMap, locations:() => locations, locationsReady:() => locationsReady,
       mapReady:() => mapReady, options:() => options, position:screenPoint,
@@ -713,58 +929,43 @@ async function load() {
         if (savedSolution) displaySolution(savedSolution);
         updateMissionGeometry();
       },
-    });
-    await sketcher.initialize(maps, options);
+      });
+      await sketcher.initialize(maps, options);
+    }
+    document.body.classList.toggle("sketch-workspace", applicationMode === "sketcher");
+    $("#calculator-toolbar").hidden = applicationMode === "sketcher";
+    $("#sheet").hidden = applicationMode === "sketcher";
+    if (sketcher) {
+      $("#sketch-toolbar").hidden = false;
+      $("#sketch-panel").hidden = false;
+      $("#sketch-panel").inert = false;
+      $("#sketch-layer").hidden = false;
+      $("#sketch-readouts").hidden = false;
+      $("#workspace-title").textContent = "SKETCHER · SAVED FIRE PLANS";
+    }
     renderMapList();
-    if (maps.length) selectMap(maps[0]);
+    if (maps.length) await selectMap(maps[0]);
     else $("#map-name").textContent = "No maps found";
-    $("#choose-calculator").disabled = !maps.length;
-    $("#choose-sketcher").disabled = !maps.length;
-    $("#chooser-status").textContent = maps.length ? "Works offline in the installed app." : "No maps found";
+    $("#workspace").inert = false; drawer.inert = false; sheet.inert = false;
+    if (sketcher) await sketcher.enter();
+    resetView();
   } catch (error) {
     $("#map-name").textContent = error.message;
-    $("#chooser-status").textContent = error.message;
+    showStatus(error.message);
   }
-}
-
-async function chooseWorkspace(nextMode) {
-  if (!sketcher || sketcher.busy) return;
-  closePanels(); sketcher.leave(); clearMission(false);
-  applicationMode = nextMode;
-  const isSketch = nextMode === "sketcher";
-  $("#calculator-toolbar").hidden = isSketch;
-  $("#sketch-toolbar").hidden = !isSketch;
-  $("#sheet").hidden = isSketch; $("#sketch-panel").hidden = !isSketch;
-  $("#sketch-layer").hidden = !isSketch; $("#location-layer").hidden = isSketch;
-  $("#sketch-readouts").hidden = !isSketch;
-  $("#workspace-title").textContent = isSketch ? "SKETCHER · SAVED FIRE PLANS" : "FIRE DIRECTION";
-  $("#open-sheet").setAttribute("aria-label", isSketch ? "Open sketch plan" : "Open fire controls");
-  $("#app-chooser").hidden = true;
-  $("#workspace").inert = false; drawer.inert = false; sheet.inert = false; $("#sketch-panel").inert = false;
-  if (isSketch) await sketcher.enter();
-  else { renderLocations(); setMode("pan"); }
-  resetView(); $("#choose-app").focus();
-}
-
-function showWorkspaceChooser() {
-  if (sketcher?.busy) return;
-  closePanels(); sketcher?.leave(); clearMission(false);
-  $("#app-chooser").hidden = false;
-  $("#workspace").inert = true; drawer.inert = true; sheet.inert = true; $("#sketch-panel").inert = true;
-  $("#choose-calculator").focus();
 }
 
 function openPanel(panel) {
   drawer.classList.toggle("open", panel === drawer);
   sheet.classList.toggle("open", panel === sheet);
-  $("#sketch-panel").classList.toggle("open", panel === $("#sketch-panel"));
-  backdrop.classList.add("show");
+  $("#sketch-panel")?.classList.toggle("open", panel === $("#sketch-panel"));
+  backdrop.classList.toggle("show", panel !== $("#sketch-panel"));
 }
 
 function closePanels() {
   drawer.classList.remove("open");
   sheet.classList.remove("open");
-  $("#sketch-panel").classList.remove("open");
+  $("#sketch-panel")?.classList.remove("open");
   backdrop.classList.remove("show");
 }
 
@@ -823,14 +1024,14 @@ mapWrap.addEventListener("pointerdown", (event) => {
     event.preventDefault();
     if (sketcher?.active) return;
     const targetMarker = event.target?.closest?.('[data-marker="target"]');
-    markImpact(event.clientX, event.clientY, targetMarker ? target : null);
+    markImpact(event.clientX, event.clientY, targetMarker ? desktopTargets.get(targetMarker)?.point || target : null);
     return;
   }
   if (event.button != null && event.button !== 0) return;
   if (!mapReady) return;
-  const sketchGunMarker = sketcher?.active ? event.target.closest("[data-sketch-gun]") : null;
+  const sketchGunMarker = sketcher?.active ? event.target.closest("[data-sketch-gun],[data-sketch-target]") : null;
   if (sketchGunMarker) {
-    if (!pointers.size && !sketcher.beginGunMove(sketchGunMarker.dataset.sketchGun)) return;
+    if (!pointers.size && !sketcher.beginGunMove(sketchGunMarker.dataset.sketchGun || sketchGunMarker.dataset.sketchTarget, sketchGunMarker.dataset.sketchGun ? "gun" : "target")) return;
   } else if (event.target.closest("button,.map-name,.mode-pill,.status-bar,.range-chip")) return;
   mapWrap.setPointerCapture(event.pointerId);
   pointers.set(event.pointerId, {x:event.clientX, y:event.clientY});
@@ -841,10 +1042,10 @@ mapWrap.addEventListener("pointerdown", (event) => {
   startTranslation = {x:translateX, y:translateY};
   dragged = false;
   const marker = event.target.closest("[data-marker]");
-  draggingMarker = marker?.dataset.marker || null;
-  draggingSketchGun = sketchGunMarker?.dataset.sketchGun || null;
+  draggingMarker = marker;
+  draggingSketchGun = sketchGunMarker ? {id:sketchGunMarker.dataset.sketchGun || sketchGunMarker.dataset.sketchTarget, kind:sketchGunMarker.dataset.sketchGun ? "gun" : "target"} : null;
   markerMoveStarted = false;
-  pendingPlacement = draggingSketchGun ? null : sketcher?.active ? "sketch" : marker ? null : (["gun", "target", "impact"].includes(mode) ? mode : null);
+  pendingPlacement = draggingSketchGun ? null : sketcher?.active ? "sketch" : marker || mode === "pan" ? null : mode;
 });
 
 mapWrap.addEventListener("pointermove", (event) => {
@@ -858,11 +1059,8 @@ mapWrap.addEventListener("pointermove", (event) => {
   if (draggingSketchGun && dragged) {
     sketcher.previewGunMove(imagePoint(event.clientX, event.clientY));
   } else if (draggingMarker && dragged) {
-    if (!markerMoveStarted) {
-      cancelPendingSolution();
-      markerMoveStarted = true;
-    }
-    moveMarker(draggingMarker, event.clientX, event.clientY);
+    markerMoveStarted = true;
+    moveMarker(draggingMarker.dataset.marker, event.clientX, event.clientY, draggingMarker);
   }
   else if (dragged) {
     translateX = startTranslation.x + dx;
@@ -884,9 +1082,9 @@ function endPointer(event) {
     const cancelled = event.type === "pointercancel";
     let shouldRequestSolution = draggingMarker && markerMoveStarted;
     if (draggingSketchGun) {
-      const gunId = draggingSketchGun;
+      const point = draggingSketchGun;
       if (dragged && !cancelled) sketcher.commitGunMove();
-      else {sketcher.cancelGunMove(); if (!cancelled) sketcher.selectGun(gunId);}
+      else {sketcher.cancelGunMove(); if (!cancelled) {if (point.kind === "gun") sketcher.selectGun(point.id); else sketcher.selectTarget(point.id, sketcher.tool !== "target");}}
     }
     if (pendingPlacement && !dragged && !cancelled) {
       if (pendingPlacement === "sketch") {
@@ -894,7 +1092,6 @@ function endPointer(event) {
       } else if (pendingPlacement === "impact") {
         markImpact(event.clientX, event.clientY);
       } else {
-        cancelPendingSolution();
         moveMarker(pendingPlacement, event.clientX, event.clientY);
         shouldRequestSolution = true;
       }
@@ -908,11 +1105,23 @@ function endPointer(event) {
     markerMoveStarted = false;
     pendingPlacement = null;
     dragged = false;
-    if (!cancelled && shouldRequestSolution && gun && target) requestSolution();
+    if (shouldRequestSolution && (!cancelled || supportsMultipleTargets)) requestSolution();
   }
 }
 
 mapWrap.addEventListener("pointerup", endPointer);
+mapWrap.addEventListener("contextmenu", event => {
+  if (!supportsMultipleTargets || !mapReady || pointers.size || event.button !== 2) return;
+  const anchor = event.target.closest('[data-marker="target"]');
+  const entry = desktopTargets.get(anchor);
+  if (!entry) return;
+  event.preventDefault();
+  entry.request = null;
+  anchor.remove(); entry.line.remove(); entry.readout.remove();
+  desktopTargets.delete(anchor);
+  refreshCalibrationTargets();
+  updateMissionGeometry();
+});
 mapWrap.addEventListener("auxclick", event => { if (event.button === 1) event.preventDefault(); });
 mapWrap.addEventListener("wheel", event => {
   if (!mapReady) return;
@@ -926,7 +1135,8 @@ mapWrap.addEventListener("wheel", event => {
   applyView();
 }, {passive:false});
 window.addEventListener("keydown", event => {
-  if (!$("#app-chooser").hidden) return;
+  if (globalThis.worcalcKillTrackerVisible) return;
+  if ($("#workspace").inert) return;
   if (event.target?.closest("input,select,textarea,[contenteditable]:not([contenteditable='false'])") || event.ctrlKey || event.metaKey || event.altKey) return;
   const key = event.key.toLowerCase();
   if (sketcher?.active) {
@@ -938,10 +1148,10 @@ window.addEventListener("keydown", event => {
     return;
   }
   if (key === "g") setMode("gun");
-  if (key === "t") setMode("target");
+  if (key === "t" && !event.repeat) setMode("target");
   if (key === "i" && calibrationMode()) setMode("impact");
   if (key === "escape") { setMode("pan"); closePanels(); }
-  if (key === "f") resetView();
+  if (key === "f") fitWholeMap();
 });
 mapWrap.addEventListener("pointercancel", endPointer);
 mapImage.addEventListener("load", () => {
@@ -956,89 +1166,164 @@ mapImage.addEventListener("load", () => {
 $("#gun-mode").addEventListener("click", () => setMode(mode === "gun" ? "pan" : "gun"));
 $("#target-mode").addEventListener("click", () => setMode(mode === "target" ? "pan" : "target"));
 $("#impact-mode").addEventListener("click", () => setMode(mode === "impact" ? "pan" : "impact"));
-$("#fit-map").addEventListener("click", resetView);
+$("#fit-map").addEventListener("click", fitWholeMap);
+$("#mobile-fit").addEventListener("click", fitWholeMap);
+$("#mobile-gun-mode").addEventListener("click", () => setMode(mode === "gun" ? "pan" : "gun"));
+$("#mobile-target-mode").addEventListener("click", () => setMode(mode === "target" ? "pan" : "target"));
+$("#mobile-advanced").addEventListener("click", () => openPanel(sheet));
+$("#quick-cannon").addEventListener("click", () => {
+  if (!options || applicationMode !== "calculator") return;
+  const next = calculatorCannons.find(item => options.weapons[item.value] && item.value !== $("#cannon-select").value);
+  if (!next) return;
+  const projectile = $("#projectile-select").value;
+  $("#cannon-select").value = next.value; refreshProjectiles(projectile);
+});
+$("#quick-projectile").addEventListener("click", () => {
+  if (!options || applicationMode !== "calculator") return;
+  const values = options.weapons[$("#cannon-select").value] || [];
+  if (values.length < 2) return;
+  $("#projectile-select").value = values[(values.indexOf($("#projectile-select").value) + 1) % values.length];
+  updatePhysics();
+});
+$("#quick-burst").addEventListener("click", () => {
+  if (!options || applicationMode !== "calculator") return;
+  $("#burst-mode").value = airburstMode() ? "ground" : "airburst";
+  changeBurstMode();
+});
+// Pointer activation should not leave a keyboard-focus ring on the last button.
+window.addEventListener("click", event => {
+  if (applicationMode === "calculator" && event.detail > 0) event.target?.closest?.("button")?.blur();
+});
 $("#open-drawer").addEventListener("click", () => openPanel(drawer));
 $("#open-sheet").addEventListener("click", () => openPanel(sketcher?.active ? $("#sketch-panel") : sheet));
-$("#choose-calculator").addEventListener("click", () => chooseWorkspace("calculator"));
-$("#choose-sketcher").addEventListener("click", () => chooseWorkspace("sketcher"));
-$("#choose-app").addEventListener("click", showWorkspaceChooser);
 backdrop.addEventListener("click", closePanels);
 document.querySelectorAll(".close").forEach((button) => button.addEventListener("click", closePanels));
 $("#map-search").addEventListener("input", (event) => {
   cancelThumbnailPrefetch();
   renderMapList(event.target.value);
 });
-$("#cannon-select").addEventListener("change", () => refreshProjectiles());
+$("#artillery-names").addEventListener("change", (event) => {
+  showArtilleryNames = event.target.checked;
+  renderLocations();
+});
+$("#cannon-select").addEventListener("change", () => refreshProjectiles($("#projectile-select").value));
 $("#projectile-select").addEventListener("change", updatePhysics);
 $("#method-select").addEventListener("change", () => {
   clearSolution();
-  if (gun && target && currentMap) requestSolution();
+  requestSolution();
 });
 $("#calculation-mode").addEventListener("change", () => {
   updateCalculationMode();
   clearSolution();
-  if (gun && target && currentMap) requestSolution();
+  requestSolution();
 });
-$("#burst-mode").addEventListener("change", () => {
-  clearSolution();
-  if (gun && target && currentMap) requestSolution();
+$("#burst-mode").addEventListener("change", changeBurstMode);
+$("#calibration-target").addEventListener("change", () => {
+  setActualElevation(desktopCalibrationTarget()?.solution);
 });
+
+function solutionInput(point) {
+  return {
+    map_id:currentMap.identifier,
+    gun:{...gun},
+    target:{...point},
+    cannon:$("#cannon-select").value,
+    projectile:$("#projectile-select").value,
+    method:$("#method-select").value,
+    calibration_mode:calibrationMode(),
+    airburst_mode:airburstMode(),
+  };
+}
+
+async function requestDesktopSolution(entry) {
+  const request = solutionInput(entry.point);
+  entry.request = request;
+  entry.error = false;
+  renderDesktopSolution(entry);
+  try {
+    const data = await nativeApi.calculate(request);
+    if (entry.request !== request) return;
+    entry.solution = data;
+    if (calibrationMode() && desktopCalibrationTarget() === entry) setActualElevation(data);
+  } catch {
+    if (entry.request === request) entry.error = true;
+  } finally {
+    if (entry.request === request) {
+      entry.request = null;
+      renderDesktopSolution(entry);
+      positionDesktopReadouts();
+    }
+  }
+}
 
 async function requestSolution() {
   if (sketcher?.active) return;
-  if (!gun || !target || !currentMap || !mapReady) return;
+  if (!gun || !currentMap || !mapReady) return;
+  if (supportsMultipleTargets) {
+    for (const entry of desktopTargets.values()) {
+      if (!entry.request && !entry.solution) requestDesktopSolution(entry);
+    }
+    return;
+  }
+  if (!target) return;
   clearSolution();
   const requestId = ++solutionRequestSequence;
-  const requestedGun = {...gun};
-  const requestedTarget = {...target};
   let succeeded = false;
   mapWrap.classList.add("solution-loading");
-  modePill.textContent = "CALCULATING FIRE SOLUTION...";
+  modePill.classList.remove("idle-hint");
+  showStatus("CALCULATING FIRE SOLUTION...");
   updateMissionGeometry();
   try {
-    const data = await nativeApi.calculate({
-        map_id:currentMap.identifier,
-        gun:requestedGun,
-        target:requestedTarget,
-        cannon:$("#cannon-select").value,
-        projectile:$("#projectile-select").value,
-        method:$("#method-select").value,
-        calibration_mode:calibrationMode(),
-        airburst_mode:airburstMode(),
-    });
+    const data = await nativeApi.calculate(solutionInput(target));
     if (requestId !== solutionRequestSequence) return;
     displaySolution(data);
     succeeded = true;
     updateMissionGeometry();
   } catch (error) {
-    if (requestId === solutionRequestSequence) modePill.textContent = error.message.toUpperCase();
+    if (requestId === solutionRequestSequence) showStatus(error.message.toUpperCase());
   } finally {
     if (requestId === solutionRequestSequence) {
       mapWrap.classList.remove("solution-loading");
       if (succeeded) setMode(mode);
       if (succeeded && latestSolution?.elevation_degrees == null) {
-        modePill.textContent = "NO SOLUTION FOR THIS RANGE AND HEIGHT";
+        showStatus("NO SOLUTION FOR THIS RANGE AND HEIGHT");
       }
       updateMissionGeometry();
     }
   }
 }
 
+function setActualElevation(data) {
+  $("#actual-elevation").value = data?.elevation_degrees == null
+    ? "" : (Math.round(data.elevation_degrees * 100) / 100).toFixed(2);
+}
+
+function elevationLabel(data) {
+  return data?.elevation_source?.startsWith("saved_") ? "SAVED ELEVATION" :
+    data?.elevation_source === "calibration_test" ? "TEST ELEVATION" :
+    data?.elevation_source === "terrain_clearance" ? "CLEARANCE" : "ELEVATION";
+}
+
+function explosionHeightText(height) {
+  return height == null ? "N/A" : `${height >= 0 ? "+" : ""}${height.toFixed(1)} m`;
+}
+
+function showClearance(line, data) {
+  line.classList.toggle("clear", data?.clearance_status === "clear");
+  line.classList.toggle("obstructed", data?.clearance_status === "obstructed");
+}
+
 function displaySolution(data) {
   latestSolution = data;
-  $("#actual-elevation").value = data.elevation_degrees == null
-    ? "" : (Math.round(data.elevation_degrees * 100) / 100).toFixed(2);
+  setActualElevation(data);
   $("#distance").textContent = `${data.slant_range_yards.toFixed(0)} yd`;
   updateAimCompass(data.bearing_degrees);
   $("#height").textContent = data.height_difference_metres == null ? "N/A" : `${data.height_difference_metres.toFixed(1)} m`;
   $("#elevation").textContent = globalThis.WorCalcFireReadouts.elevationText(data.elevation_degrees);
-  $("#elevation-label").textContent = data.elevation_source?.startsWith("saved_") ? "SAVED ELEVATION" :
-    data.elevation_source === "calibration_test" ? "TEST ELEVATION" : data.elevation_source === "terrain_clearance" ? "CLEARANCE" : "ELEVATION";
+  $("#elevation-label").textContent = elevationLabel(data);
   $("#fuze").textContent = globalThis.WorCalcFireReadouts.fuzeText(data.fuze_seconds);
-  $("#explosion-height").textContent = data.height_above_target_metres == null ? "N/A" :
-    `${data.height_above_target_metres >= 0 ? "+" : ""}${data.height_above_target_metres.toFixed(1)} m`;
-  shotLine.classList.toggle("clear", data.clearance_status === "clear");
-  shotLine.classList.toggle("obstructed", data.clearance_status === "obstructed");
+  $("#explosion-height").textContent = explosionHeightText(data.height_above_target_metres);
+  showClearance(shotLine, data);
 }
 
 window.addEventListener("resize", resetView);

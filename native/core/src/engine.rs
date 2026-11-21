@@ -10,7 +10,7 @@ use std::{collections::VecDeque, sync::Arc};
 pub trait AssetStore: Send + Sync {
     fn read(&self, path: &str) -> Result<Vec<u8>>;
 }
-#[derive(Clone, Deserialize)]
+#[derive(Clone, Deserialize, Serialize)]
 pub struct Calibration {
     pub pixel_x_world_x: f64,
     pub pixel_x_world_y: f64,
@@ -41,6 +41,8 @@ pub struct Map {
     pub calibration: Calibration,
     pub top_left_x_metres: f64,
     pub top_left_y_metres: f64,
+    #[serde(default)]
+    pub coordinate_revision: u32,
 }
 impl Map {
     fn validate(&self, p: Point) -> Result<()> {
@@ -70,6 +72,8 @@ pub struct Observation {
     pub projectile: String,
     pub actual_elevation_degrees: f64,
     pub observed_range_yards: f64,
+    #[serde(default)]
+    pub coordinate_revision: u32,
 }
 struct Shot {
     id: String,
@@ -105,11 +109,12 @@ pub struct Engine {
 }
 impl Engine {
     pub fn new(store: Arc<dyn AssetStore>) -> Result<Self> {
-        let catalog: Value =
+        let mut catalog: Value =
             serde_json::from_slice(&store.read("catalog.json")?).map_err(|e| e.to_string())?;
         if catalog["version"] != 1 {
             return Err("Unsupported map catalog".into());
         }
+        crate::alignment::align_catalog(&mut catalog)?;
         let maps: Vec<Map> =
             serde_json::from_value(catalog["maps"].clone()).map_err(|e| e.to_string())?;
         if maps.is_empty() {
@@ -197,6 +202,8 @@ impl Engine {
                     return false;
                 };
                 m.battlefield == map.battlefield
+                    && o.coordinate_revision == map.coordinate_revision
+                    && m.coordinate_revision == map.coordinate_revision
                     && m.mode == map.mode
                     && m.layer == map.layer
                     && o.cannon == cannon
@@ -276,7 +283,7 @@ impl Engine {
             range,
         );
         let id = uuid::Uuid::new_v4().to_string();
-        let result = json!({"calculation_id":id,"map_id":mission.map_id,"cannon":mission.cannon,"projectile":mission.projectile,
+        let result = json!({"calculation_id":id,"map_id":mission.map_id,"coordinate_revision":map.coordinate_revision,"cannon":mission.cannon,"projectile":mission.projectile,
             "method":self.catalog["options"]["defaults"]["method"],"horizontal_range_yards":range,
             "slant_range_yards":range.hypot(aim_height*METRES_TO_YARDS),"gun_elevation_metres":gun_elevation,
             "target_elevation_metres":target_elevation,"height_difference_metres":difference,"bearing_degrees":bearing,
@@ -335,6 +342,7 @@ impl Engine {
             projectile: shot.projectile.clone(),
             actual_elevation_degrees: angle,
             observed_range_yards: observed,
+            coordinate_revision: shot.map.coordinate_revision,
         });
         if self.observations.len() > 2000 {
             self.observations.remove(0);

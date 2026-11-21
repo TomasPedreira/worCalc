@@ -30,6 +30,82 @@ function setup() {
 }
 async function initialized() {const f=setup();await f.sketch.initialize([f.map],f.options);await f.sketch.enter();return f;}
 const flush=async()=>{for(let n=0;n<8;n++)await Promise.resolve();};
+
+test("old alignment firing cards stay hidden and recalculation preserves notes without reusing overrides",async()=>{
+  const f=setup();
+  f.map.coordinate_revision=1;
+  f.map.coordinate_migration={from_revision:0,gun_positions:[{old_x:10,old_y:20,x:15,y:24}]};
+  // The stored fixture was created under the original projection.
+  await f.sketch.initialize([f.map],f.options); await f.sketch.enter();
+  assert.equal(f.writes,1);
+  f.sketch.selectGun("a"); f.sketch.selectTarget("t");
+  assert.equal(f.$("#sketch-solution").hidden,true);
+  assert.equal(f.$("#sketch-readouts").children.length,0);
+  assert.match(f.$("#sketch-help").textContent,/1 saved firing setting needs recalculation/);
+  f.sketch.toggleEdit(); f.sketch.selectGun("a"); f.sketch.selectTarget("t");
+  assert.equal(f.$("#sketch-angle").value,""); assert.equal(f.$("#sketch-fuze").value,"");
+  assert.equal(f.$("#sketch-notes").value,"Fence");
+  assert.match(f.$("#sketch-simulation").textContent,/Calculate new/);
+  f.solution.coordinate_revision=1;
+  await f.sketch.calculateDraft(false); f.sketch.useDefaults(); await f.sketch.saveDraft();
+  assert.equal(f.sketch.plan().configurations[0].solution.coordinate_revision,1);
+  assert.equal(f.sketch.plan().configurations[0].notes,"Fence");
+  assert.equal(M.outdatedConfigurationCount(f.sketch.plan()),0);
+  assert.equal(f.sketch.plan().alignment_history[0].configurations[0].elevation_degrees,1.8);
+});
+
+test("saved guns render and move without repositioning battery references",async()=>{
+  const f=await initialized();
+  const layouts=[];
+  f.sketch.hooks.referenceLayout=()=>layouts.push(f.sketch.markers.filter(marker=>marker.type==='gun').map(marker=>({
+    id:marker.point.id,left:marker.button.style.left,top:marker.button.style.top
+  })));
+  f.sketch.render();
+  assert.ok(f.sketch.markers.some(marker=>marker.point.id==='a' && marker.button.style.left==='10px' && marker.button.style.top==='20px'));
+  f.sketch.toggleEdit();
+  assert.equal(f.sketch.beginGunMove('a'),true);
+  f.sketch.previewGunMove({x:70,y:80});
+  assert.ok(f.sketch.markers.some(marker=>marker.point.id==='a' && marker.button.style.left==='70px' && marker.button.style.top==='80px'));
+  assert.equal(layouts.length,0);
+  assert.equal(f.writes,0);
+});
+test("workspace modes expose state and View discards edits without saving",async()=>{
+  const f=await initialized();f.sketch.selectGun("a");
+  assert.equal(f.$("#sketch-view").attributes["aria-pressed"],"true");
+  assert.equal(f.$("#sketch-edit").attributes["aria-pressed"],"false");
+  f.$("#sketch-view").click();assert.equal(f.sketch.editing,false);
+  f.$("#sketch-edit").click();f.$("#sketch-x").value="80";
+  assert.equal(f.$("#sketch-edit-notice").hidden,false);
+  assert.equal(f.$("#sketch-edit").attributes["aria-pressed"],"true");
+  f.$("#sketch-view").click();assert.equal(f.sketch.draft,null);
+  assert.equal(f.$("#sketch-edit-notice").hidden,true);
+  assert.equal(f.sketch.plan().guns[0].x,10);assert.equal(f.writes,0);
+});
+test("saved connections and solution inspector follow selection without calculations",async()=>{
+  const f=await initialized();f.sketch.hooks.calculate=()=>{throw Error("Viewing must not calculate");};
+  f.sketch.selectGun("a");
+  const line=f.$("#sketch-connections").children[0];
+  assert.equal(line.style.left,"10px");assert.equal(line.style.top,"20px");
+  assert.equal(line.style.width,`${Math.hypot(90,60)}px`);
+  assert.equal(f.$("#sketch-solution").hidden,true);
+  f.sketch.selectTarget("t");
+  const card=f.$("#sketch-solution");assert.equal(card.hidden,false);
+  assert.equal(card.children[1].children[0].children[1].textContent,"1.80°");
+  assert.equal(card.children[1].children[1].children[1].textContent,"3.100 s");
+  assert.equal(card.children[3].textContent,"Fence");
+  f.sketch.toggleEdit();assert.equal(f.$("#sketch-connections").children.length,0);assert.equal(card.hidden,true);
+  f.sketch.toggleEdit();f.sketch.selectGun("b");assert.equal(f.$("#sketch-connections").children.length,0);assert.equal(card.hidden,true);
+  f.sketch.leave();assert.equal(f.$("#sketch-connections").children.length,0);assert.equal(f.writes,0);
+});
+test("shared target list includes unconfigured points and uses normal target selection",async()=>{
+  const f=await initialized();f.sketch.plan().targets.push({id:"unlinked",x:160,y:120});f.sketch.render();
+  assert.equal(f.$("#sketch-shared-count").textContent,"2");
+  const rows=f.$("#sketch-shared-list").children;
+  assert.equal(rows[0].children[0].textContent,"1 saved solution");
+  assert.equal(rows[1].children[0].textContent,"0 saved solutions");
+  rows[1].click();assert.equal(f.sketch.targetId,"unlinked");assert.equal(f.sketch.gunId,null);
+  assert.equal(f.$("#sketch-solution").hidden,true);assert.equal(f.writes,0);
+});
 test("Sketcher uses the calculator marker shapes without labels or tooltips and retains selection hooks",async()=>{
   const f=await initialized();
   const markers=f.$("#sketch-layer").children;
@@ -80,7 +156,7 @@ test("selecting a gun reveals every saved firing window without a target click o
 test("edit, save and return to view reveal the new configuration and keep other firing windows",async()=>{
   const f=await initialized();f.sketch.selectGun("a");assert.equal(f.$("#sketch-readouts").children.length,1);
   f.sketch.toggleEdit();assert.equal(f.$("#sketch-readouts").children.length,0);
-  f.sketch.setTool("target");await f.sketch.canvasClick({x:155,y:110});await flush();
+  f.sketch.setTool("target");await f.sketch.canvasClick({x:155,y:110});await f.sketch.calculateDraft(false);
   assert.equal(f.$("#sketch-angle").value,f.solution.elevation_degrees);
   f.$("#sketch-angle").value="2.2";f.$("#sketch-fuze").value="3.8";
   await f.sketch.saveDraft();assert.equal(f.sketch.draft.kind,"target");
@@ -120,9 +196,10 @@ test("the gun selector distinguishes nearby or overlapping map markers",async()=
   assert.equal(f.$("#sketch-gun-select").value,"b");
   assert.equal(f.writes,0);
 });
-test("Place gun is available immediately and a map click saves a freely positioned gun",async()=>{
-  const f=await initialized();assert.equal(f.sketch.editing,false);assert.equal(f.$("#sketch-add-gun").hidden,false);
-  f.$("#sketch-add-gun").click();assert.equal(f.sketch.editing,true);assert.equal(f.sketch.tool,"gun");
+test("Place gun requires Edit before a map click saves a freely positioned gun",async()=>{
+  const f=await initialized();assert.equal(f.sketch.editing,false);assert.equal(f.$("#sketch-add-gun").hidden,true);
+  f.$("#sketch-add-gun").click();assert.equal(f.sketch.editing,false);assert.equal(f.sketch.tool,null);
+  f.sketch.toggleEdit();f.$("#sketch-add-gun").click();assert.equal(f.sketch.editing,true);assert.equal(f.sketch.tool,"gun");
   await f.sketch.canvasClick({x:160,y:110});
   const gun=f.saved.maps["map-1"].guns.at(-1);
   assert.deepEqual({x:gun.x,y:gun.y,cannon:gun.cannon},{x:160,y:110,cannon:"Ordnance"});
@@ -130,19 +207,19 @@ test("Place gun is available immediately and a map click saves a freely position
   assert.equal(f.saved.maps["map-1"].configurations.length,1);
 });
 test("gun placement is independent of default positions and nearby guns do not snap",async()=>{
-  const f=await initialized();f.sketch.store.data.maps["map-1"].guns[0].cannon="Napoleon";
+  const f=await initialized();f.sketch.toggleEdit();f.sketch.store.data.maps["map-1"].guns[0].cannon="Napoleon";
   f.sketch.store.data.maps["map-1"].configurations=[];f.sketch.selectGun("a");f.sketch.setTool("gun");
   await f.sketch.canvasClick({x:11,y:22});
   assert.equal(f.saved.maps["map-1"].guns.length,3);
   assert.equal(f.saved.maps["map-1"].guns.at(-1).x,11);assert.equal(f.saved.maps["map-1"].guns.at(-1).cannon,"Napoleon");
 });
 test("a map without default guns supports several freely placed guns",async()=>{
-  const f=await initialized();f.sketch.store.data.maps["map-1"]=M.createPlan(f.map,[],"Ordnance");
+  const f=await initialized();f.sketch.toggleEdit();f.sketch.store.data.maps["map-1"]=M.createPlan(f.map,[],"Ordnance");
   for(const point of [{x:35,y:50},{x:145,y:80}]) {f.sketch.setTool("gun");await f.sketch.canvasClick(point);}
   assert.equal(f.saved.maps["map-1"].guns.length,2);assert.equal(f.sketch.plan().guns[0].x,35);
 });
 test("failed or blocked placements preserve the saved plan",async()=>{
-  const f=await initialized(),before=M.copy(f.sketch.store.data);
+  const f=await initialized();f.sketch.toggleEdit();const before=M.copy(f.sketch.store.data);
   f.sketch.setTool("gun");f.sketch.hooks.mapReady=()=>false;await f.sketch.canvasClick({x:120,y:60});assert.equal(f.writes,0);
   f.sketch.hooks.mapReady=()=>true;f.sketch.store.adapter.save=async()=>{throw Error("disk full");};
   await f.sketch.canvasClick({x:120,y:60});assert.deepEqual(f.sketch.store.data,before);assert.match(f.status,/disk full/);
@@ -162,7 +239,7 @@ test("saving a moved gun preserves other guns, shared targets and independent se
     {...M.configuration(f.sketch.plan(),"a","t"),elevation_degrees:2.2}));
   f.sketch.toggleEdit();f.sketch.beginGunMove("a");f.sketch.previewGunMove({x:60,y:40});await f.sketch.commitGunMove();
   const plan=f.saved.maps["map-1"];assert.equal(plan.guns[0].x,60);assert.equal(plan.guns[1].x,20);
-  assert.equal(plan.targets.length,1);assert.equal(M.configuration(plan,"a","t"),null);
+  assert.equal(plan.targets.length,1);assert.equal(M.configuration(plan,"a","t").elevation_degrees,1.8);
   assert.equal(M.configuration(plan,"b","t").elevation_degrees,2.2);
   assert.equal(f.sketch.gunId,"a");assert.equal(f.sketch.gunMove,null);
 });
@@ -173,7 +250,7 @@ test("failed moves restore the saved position and its settings",async()=>{
   assert.equal(f.$("#sketch-layer").children[0].style.left,"10px");assert.equal(f.sketch.gunMove,null);assert.match(f.status,/disk full/);
 });
 test("adding a configuration to an existing point preserves the other gun's settings",async()=>{
-  const f=await initialized();f.sketch.selectGun("b");f.sketch.toggleEdit();f.sketch.selectTarget("t");await flush();
+  const f=await initialized();f.sketch.selectGun("b");f.sketch.toggleEdit();f.sketch.selectTarget("t");await f.sketch.calculateDraft(false);
   assert.equal(f.$("#sketch-angle").value,1.234); assert.equal(f.$("#sketch-fuze").value,2.456);
   f.$("#sketch-angle").value="2.2";f.$("#sketch-fuze").value="3.8";
   await f.sketch.saveDraft();
@@ -191,7 +268,7 @@ test("opening an existing configuration keeps saved overrides until defaults are
 test("cancelling a new target and stale calculations cannot modify saved plans",async()=>{
   const f=await initialized();f.sketch.selectGun("a");f.sketch.toggleEdit();
   let finish;f.sketch.hooks.calculate=()=>new Promise(resolve=>{finish=resolve;});
-  f.sketch.editTarget({id:"new",x:130,y:90});f.sketch.closeEditor();
+  f.sketch.editTarget({id:"new",x:130,y:90});f.sketch.calculateDraft(false);f.sketch.closeEditor();
   finish(f.solution);await flush();assert.equal(f.sketch.draft,null);assert.equal(f.writes,0);
   assert.equal(f.sketch.plan().targets.length,1);
 });
@@ -226,12 +303,12 @@ test("hidden target fields are disabled while editing a gun",async()=>{
   assert.equal(f.$("#sketch-target-fields").disabled,true);assert.equal(f.$("#sketch-gun-fields").disabled,false);
 });
 test("invalid file imports leave saved settings intact and report the error",async()=>{
-  const f=await initialized();const before=M.copy(f.sketch.store.data);
+  const f=await initialized();f.sketch.toggleEdit();const before=M.copy(f.sketch.store.data);
   await f.sketch.importFile({size:20,text:async()=>JSON.stringify({version:99,maps:{}})});
   assert.deepEqual(f.sketch.store.data,before);assert.match(f.status,/IMPORT FAILED/);assert.equal(f.sketch.busy,false);
 });
 test("a valid file import updates included maps after confirmation",async()=>{
-  const f=await initialized();const imported=M.copy(f.sketch.store.data);
+  const f=await initialized();f.sketch.toggleEdit();const imported=M.copy(f.sketch.store.data);
   imported.maps["map-1"].configurations[0].elevation_degrees=2.4;
   let confirms=0;globalThis.confirm=()=>{confirms++;return true;};
   await f.sketch.importFile({size:20,text:async()=>JSON.stringify(imported)});
@@ -239,11 +316,11 @@ test("a valid file import updates included maps after confirmation",async()=>{
   assert.equal(f.status,"PLANS IMPORTED AND SAVED");
 });
 
-test("selecting a gun or target opens editable details directly in the right column without calculations or writes",async()=>{
-  const f=await initialized();let inspections=0;f.sketch.hooks.inspect=()=>{inspections++;};
+test("Edit mode opens editable details in the right column without calculations or writes",async()=>{
+  const f=await initialized();f.sketch.toggleEdit();let inspections=0;f.sketch.hooks.inspect=()=>{inspections++;};
   f.sketch.hooks.calculate=async()=>{throw Error("Selection must not calculate");};
   f.sketch.selectGun("a");
-  assert.equal(f.sketch.editing,false);assert.equal(f.$("#sketch-form").hidden,false);
+  assert.equal(f.sketch.editing,true);assert.equal(f.$("#sketch-form").hidden,false);
   assert.equal(f.$("#sketch-gun-fields").disabled,false);assert.equal(f.$("#sketch-x").value,10);
   assert.equal(f.$("#sketch-details-title").textContent,"Gun");
   f.sketch.selectTarget("t");assert.equal(f.$("#sketch-details-title").textContent,"Target");
@@ -255,7 +332,7 @@ test("selecting a gun or target opens editable details directly in the right col
 });
 
 test("deletion acts on the last selected object and never falls back to the firing gun",async()=>{
-  const f=await initialized();f.sketch.selectGun("a");f.sketch.selectTarget("t");
+  const f=await initialized();f.sketch.toggleEdit();f.sketch.selectGun("a");f.sketch.selectTarget("t");
   f.$("#sketch-delete").click();await flush();
   assert.equal(f.sketch.plan().guns.length,2);assert.equal(f.sketch.plan().targets.length,0);
   assert.equal(f.sketch.gunId,"a");assert.equal(f.sketch.selection,null);assert.equal(f.sketch.draft,null);
@@ -264,7 +341,7 @@ test("deletion acts on the last selected object and never falls back to the firi
 });
 
 test("selecting a gun after a target deletes that gun and keeps the shared target and other settings",async()=>{
-  const f=await initialized();await f.sketch.store.update(library=>M.saveConfiguration(library.maps["map-1"],"b",f.sketch.plan().targets[0],
+  const f=await initialized();f.sketch.toggleEdit();await f.sketch.store.update(library=>M.saveConfiguration(library.maps["map-1"],"b",f.sketch.plan().targets[0],
     {...M.configuration(f.sketch.plan(),"a","t"),elevation_degrees:2.2}));
   f.sketch.selectGun("b");f.sketch.selectTarget("t");f.sketch.selectGun("a");await f.sketch.deleteSelected();
   assert.deepEqual(f.sketch.plan().guns.map(gun=>gun.id),["b"]);assert.equal(f.sketch.plan().targets.length,1);
@@ -273,7 +350,7 @@ test("selecting a gun after a target deletes that gun and keeps the shared targe
 });
 
 test("a target is editable and deletable even without a selected gun",async()=>{
-  const f=await initialized();f.sketch.selectTarget("t");
+  const f=await initialized();f.sketch.toggleEdit();f.sketch.selectTarget("t");
   assert.equal(f.sketch.gunId,null);assert.equal(f.$("#sketch-target-fields").disabled,true);
   f.$("#sketch-x").value="115";await f.sketch.saveDraft();
   assert.equal(f.sketch.plan().targets[0].x,115);assert.equal(f.sketch.plan().configurations.length,0);
@@ -281,14 +358,14 @@ test("a target is editable and deletable even without a selected gun",async()=>{
 });
 
 test("failed deletion retains the selected point, editor and every saved configuration for retry",async()=>{
-  const f=await initialized();f.sketch.selectGun("a");f.sketch.selectTarget("t");const before=M.copy(f.sketch.store.data);
+  const f=await initialized();f.sketch.toggleEdit();f.sketch.selectGun("a");f.sketch.selectTarget("t");const before=M.copy(f.sketch.store.data);
   f.sketch.store.adapter.save=async()=>{throw Error("disk full");};await f.sketch.deleteSelected();
   assert.deepEqual(f.sketch.store.data,before);assert.deepEqual(f.sketch.selection,{kind:"target",id:"t"});
   assert.equal(f.$("#sketch-form").hidden,false);assert.match(f.$("#sketch-editor-status").textContent,/disk full/);
 });
 
 test("deleting an unsaved target discards it without deleting the active gun or writing",async()=>{
-  const f=await initialized();f.sketch.selectGun("a");f.sketch.selectTarget("t");assert.equal(f.mission[2].elevation_degrees,1.8);
+  const f=await initialized();f.sketch.toggleEdit();f.sketch.selectGun("a");f.sketch.selectTarget("t");assert.equal(f.mission[2].elevation_degrees,1.8);
   f.sketch.setTool("target");await f.sketch.canvasClick({x:155,y:110});await flush();
   assert.equal(f.mission[1],null);assert.equal(f.mission[2],null);
   assert.equal(f.$("#sketch-layer").children.length,4);await f.sketch.deleteSelected();
@@ -297,7 +374,7 @@ test("deleting an unsaved target discards it without deleting the active gun or 
 });
 
 test("saving target coordinates recalculates the current gun and invalidates only that point's other configurations",async()=>{
-  const f=await initialized();await f.sketch.store.update(library=>M.saveConfiguration(library.maps["map-1"],"b",f.sketch.plan().targets[0],
+  const f=await initialized();f.sketch.toggleEdit();await f.sketch.store.update(library=>M.saveConfiguration(library.maps["map-1"],"b",f.sketch.plan().targets[0],
     {...M.configuration(f.sketch.plan(),"a","t"),elevation_degrees:2.2}));
   let requests=[];f.sketch.hooks.calculate=async request=>{requests.push(request);return f.solution;};
   f.sketch.selectGun("a");f.sketch.selectTarget("t");f.$("#sketch-x").value="110";
@@ -307,7 +384,7 @@ test("saving target coordinates recalculates the current gun and invalidates onl
 });
 
 test("saving gun coordinates from the inspector clears only its own settings",async()=>{
-  const f=await initialized();await f.sketch.store.update(library=>M.saveConfiguration(library.maps["map-1"],"b",f.sketch.plan().targets[0],
+  const f=await initialized();f.sketch.toggleEdit();await f.sketch.store.update(library=>M.saveConfiguration(library.maps["map-1"],"b",f.sketch.plan().targets[0],
     {...M.configuration(f.sketch.plan(),"a","t"),elevation_degrees:2.2}));
   f.sketch.selectGun("a");f.$("#sketch-x").value="60";f.$("#sketch-y").value="40";await f.sketch.saveDraft();
   assert.equal(f.sketch.plan().guns[0].x,60);assert.equal(M.configuration(f.sketch.plan(),"a","t"),null);
@@ -315,7 +392,7 @@ test("saving gun coordinates from the inspector clears only its own settings",as
 });
 
 test("cancel resets inspector changes without writing and leaves saved selection active",async()=>{
-  const f=await initialized();f.sketch.selectGun("a");f.$("#sketch-x").value="60";f.sketch.cancelDraft();
+  const f=await initialized();f.sketch.toggleEdit();f.sketch.selectGun("a");f.$("#sketch-x").value="60";f.sketch.cancelDraft();
   assert.equal(f.$("#sketch-x").value,10);assert.deepEqual(f.sketch.selection,{kind:"gun",id:"a"});
   f.sketch.selectTarget("t");f.$("#sketch-angle").value="9";f.sketch.cancelDraft();
   assert.equal(f.$("#sketch-angle").value,1.8);assert.equal(f.writes,0);
@@ -330,9 +407,9 @@ test("legacy storage hashes never appear in markers, tooltips, inspector, select
   const texts=element=>[element.textContent,...element.children.flatMap(texts)].join(" ");
   for(const editing of [false,true]) {
     f.sketch.editing=editing;f.sketch.selectGun(gunId);
-    assert.equal(f.$("#sketch-details-title").textContent,"Gun");
+    if(editing)assert.equal(f.$("#sketch-details-title").textContent,"Gun");
     f.sketch.selectTarget(targetId);
-    assert.equal(f.$("#sketch-details-title").textContent,"Target");
+    if(editing)assert.equal(f.$("#sketch-details-title").textContent,"Target");
     for(const selector of ["#sketch-layer","#sketch-gun-select","#sketch-target-list","#sketch-editor-context","#sketch-selected-gun","#sketch-readouts"]) {
       const text=texts(f.$(selector));assert.ok(!text.includes(gunId));assert.ok(!text.includes(targetId));
     }
@@ -343,4 +420,81 @@ test("legacy storage hashes never appear in markers, tooltips, inspector, select
   }
   assert.deepEqual(f.sketch.plan(),before);assert.equal(f.writes,0);
   await f.sketch.deleteSelected();assert.equal(f.status,"TARGET DELETED");
+});
+
+test("target drag works in Edit mode and retains every pre-calculated cannon card without calculating",async()=>{
+  const f=await initialized();f.sketch.toggleEdit();
+  await f.sketch.store.update(library=>M.saveConfiguration(library.maps["map-1"],"b",f.sketch.plan().targets[0],
+    {...M.configuration(f.sketch.plan(),"a","t"),elevation_degrees:2.2}));
+  const settings=M.copy(f.sketch.plan().configurations),writes=f.writes;
+  f.sketch.hooks.calculate=()=>{throw Error("Dragging must never calculate");};
+  assert.equal(f.sketch.beginGunMove("t","target"),true);
+  f.sketch.previewGunMove({x:130,y:100});
+  assert.equal(f.$("#sketch-layer").children[2].style.left,"130px");assert.equal(f.writes,writes);
+  await f.sketch.commitGunMove();
+  assert.equal(f.sketch.plan().targets[0].x,130);assert.deepEqual(f.sketch.plan().configurations,settings);
+  assert.equal(f.writes,writes+1);
+});
+
+test("clicking a shared target offers both cannons and only selects one when requested",async()=>{
+  const f=await initialized();
+  await f.sketch.store.update(library=>M.saveConfiguration(library.maps["map-1"],"b",f.sketch.plan().targets[0],
+    {...M.configuration(f.sketch.plan(),"a","t"),elevation_degrees:2.2}));
+  f.sketch.hooks.calculate=()=>{throw Error("Selection must never calculate");};
+  f.sketch.selectGun("a");f.$("#sketch-layer").children[2].click();
+  assert.equal(f.sketch.gunId,null);assert.equal(f.$("#sketch-gun-options").children.length,2);
+  f.$("#sketch-gun-options").children[1].click();
+  assert.equal(f.sketch.gunId,"b");assert.equal(f.mission[2].elevation_degrees,2.2);assert.equal(f.$("#sketch-form").hidden,true);
+  assert.equal(f.$("#sketch-gun-options").children.length,2);
+});
+
+test("Add target can link an existing target to a different cannon",async()=>{
+  const f=await initialized();f.sketch.toggleEdit();f.sketch.selectGun("b");f.sketch.setTool("target");
+  f.$("#sketch-layer").children[2].click();assert.equal(f.sketch.gunId,"b");assert.equal(f.sketch.draft.gun.id,"b");
+  assert.equal(f.sketch.draft.existing,null);
+  await f.sketch.calculateDraft(false);await f.sketch.saveDraft();
+  assert.equal(f.sketch.plan().configurations.length,2);
+  assert.equal(M.configuration(f.sketch.plan(),"a","t").elevation_degrees,1.8);
+});
+
+test("View mode shows only saved target rows and blocks every editing entry point",async()=>{
+  const f=await initialized(),before=M.copy(f.sketch.store.data);let calculations=0;
+  f.sketch.hooks.calculate=async()=>{calculations++;return f.solution;};
+  f.sketch.selectGun("a");
+  assert.equal(f.$("#sketch-form").hidden,true);assert.equal(f.$("#sketch-editor-fields").disabled,true);
+  assert.equal(f.sketch.draft,null);assert.equal(f.$("#sketch-target-list").children.length,1);
+  assert.equal(f.$("#sketch-target-list").children[0].children[0].textContent,"1.80° · 3.100 s");
+  assert.equal(f.$("#sketch-target-list").children[0].children[2].textContent,"Fence");
+  for(const id of ["sketch-add-gun","sketch-add-target","sketch-import"])assert.equal(f.$("#"+id).hidden,true);
+  f.sketch.setTool("gun");await f.sketch.canvasClick({x:130,y:100});await f.sketch.placeGun({x:130,y:100});
+  f.sketch.setTool("target");assert.equal(f.sketch.editing,false);assert.equal(f.sketch.tool,null);
+  for(const [kind,id] of [["gun","a"],["target","t"]])assert.equal(f.sketch.beginGunMove(id,kind),false);
+  f.sketch.editGun();f.sketch.editTarget(f.sketch.plan().targets[0]);assert.equal(f.sketch.draft,null);
+  f.$("#sketch-target-list").children[0].click();assert.equal(f.sketch.targetId,"t");assert.equal(f.$("#sketch-form").hidden,true);
+  await f.sketch.deleteSelected();await f.sketch.unlinkSelected();await f.sketch.saveDraft();await f.sketch.calculateDraft(false);
+  await f.sketch.importFile({size:1,text:async()=>{throw Error("View must not read imports");}});
+  assert.equal(await f.sketch.persist(()=>{throw Error("View must not persist edits");}),false);
+  assert.equal(f.writes,0);assert.equal(calculations,0);assert.deepEqual(f.sketch.store.data,before);
+});
+
+test("leaving Edit discards unsaved fields, disarms dragging and restores read-only selection",async()=>{
+  const f=await initialized(),before=M.copy(f.sketch.store.data);f.sketch.selectGun("a");f.sketch.toggleEdit();
+  assert.equal(f.$("#sketch-form").hidden,false);assert.equal(f.sketch.draft.kind,"gun");
+  f.$("#sketch-x").value="90";f.sketch.beginGunMove("a");f.sketch.previewGunMove({x:90,y:60});
+  f.sketch.toggleEdit();await f.sketch.commitGunMove();await f.sketch.saveDraft();await f.sketch.deleteSelected();
+  assert.equal(f.sketch.draft,null);assert.equal(f.sketch.gunMove,null);assert.equal(f.sketch.gunId,"a");
+  assert.equal(f.$("#sketch-form").hidden,true);assert.equal(f.$("#sketch-target-list").children.length,1);
+  assert.deepEqual(f.sketch.store.data,before);assert.equal(f.writes,0);
+  f.sketch.toggleEdit();assert.equal(f.$("#sketch-x").value,10);
+  f.sketch.setTool("target");await f.sketch.canvasClick({x:155,y:110});f.sketch.toggleEdit();
+  assert.equal(f.sketch.draft,null);assert.equal(f.sketch.targetId,null);assert.equal(f.sketch.gunId,"a");
+  assert.equal(f.$("#sketch-layer").children.length,3);assert.equal(f.writes,0);
+});
+
+test("a calculation completing after leaving Edit cannot reopen the editor or save",async()=>{
+  const f=await initialized();f.sketch.selectGun("a");f.sketch.toggleEdit();f.sketch.selectTarget("t");
+  let finish;f.sketch.hooks.calculate=()=>new Promise(resolve=>{finish=resolve;});
+  const pending=f.sketch.calculateDraft(false);f.sketch.toggleEdit();finish(f.solution);await pending;
+  assert.equal(f.sketch.draft,null);assert.equal(f.$("#sketch-form").hidden,true);assert.equal(f.writes,0);
+  assert.equal(f.mission[2].elevation_degrees,1.8);
 });

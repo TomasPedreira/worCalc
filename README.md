@@ -1,22 +1,38 @@
 # worCalc
 
-worCalc is an offline Tauri application for War of Rights. Open it and choose:
+Three standalone Tauri applications for War of Rights, version 1.1.8:
 
-- **Fire calculator**: place a gun and target, calculate elevation and fuze,
+- **worCalc**: place a gun and target, calculate elevation and fuze,
   inspect terrain clearance, or record observed impacts for calibration.
-- **Sketcher**: prepare shared targets and save independent firing settings for
+- **worSketch**: prepare shared targets and save independent firing settings for
   each gun position. Select a gun to highlight its targets and use saved values.
   Plans persist locally and can be exported/imported as JSON.
+- **Kill Tracker**: on Windows, explicitly start read-only capture of the running
+  supported game build, search the live kill feed and save raw/decoded events
+  locally. See `docs/kill-tracker.md` for supported builds and output files.
 
-The application includes 99 maps, projected game markers and battlefield terrain.
+worCalc and worSketch include 99 maps, projected game markers and battlefield terrain.
+Kill Tracker does not include map assets. Each app opens directly, without a hub.
 Calculations run in Rust. The interface is embedded in the Tauri WebView. Python,
 a web server and a separate launcher are unnecessary.
 
 ## Windows
 
-Open `worcalc-app.exe` in the portable desktop folder, keeping its `resources`
-folder alongside it. See `RUNNING_ON_WINDOWS.txt`. This workspace's desktop build
-is under `artifacts/desktop/worCalc`; the ZIP contains that complete folder.
+Use the desktop shortcuts or the independent portable folders:
+
+- `artifacts/desktop/worCalc/worcalc-app.exe`
+- `artifacts/desktop/worSketch/worsketch.exe`
+- `artifacts/desktop/KillTracker/kill-tracker.exe`
+
+Keep each map app's `resources` folder beside its executable. Every app also has
+its own portable ZIP. Existing Sketcher plans are copied into worSketch on first
+launch, without removing the original library. See `RUNNING_ON_WINDOWS.txt`.
+
+## Android
+
+`npm.cmd run android:build` produces the calculator-only, signed ARM64 APK at
+`artifacts/android/worcalc-1.1.8-arm64.apk`, with all maps available offline.
+The existing application ID and signing key are retained for upgrades.
 
 ## Development
 
@@ -30,7 +46,7 @@ npm.cmd ci
 npm.cmd test
 cargo test --workspace
 npm.cmd run tauri -- dev
-# Release executable and complete portable ZIP:
+# Three standalone executables, portable ZIPs and desktop shortcuts:
 npm.cmd run desktop:build
 # Windows installer, when required:
 npm.cmd run tauri -- build --bundles nsis

@@ -1,0 +1,10 @@
+{
+  "productName": "Kill Tracker",
+  "identifier": "pt.tomaspedreira.worcalc.flowtest",
+  "build": {
+    "beforeBuildCommand": "npm run build:kill-tracker",
+    "frontendDist": "../native/frontend/dist-kill-tracker"
+  },
+  "app": {"windows":[{"title":"Kill Tracker workflow test","width":1100,"height":760,"visible":false}]},
+  "bundle": {"resources":[]}
+}

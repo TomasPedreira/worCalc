@@ -1,9 +1,22 @@
 # Gun starting positions
 
 The Tauri calculator shows static green squares marked G for playable gun starts.
-Amber battery markers remain artillery crew spawn references. Sketcher seeds its
+Named batteries are labelled at their artillery crew spawn references. Sketcher seeds its
 initial gun positions from the same catalog and allows selecting them for saved
 plans. These positions do not track movement during a match.
+
+The map overlay also labels artillery crew references with readable battery names
+(for example, Battery French, Battery Lane and Battery Matthews) as small white
+outlined text, without boxes, faction prefixes or extra spawn markers. Names stay
+fixed beside their map references through zoom and pan, with no automatic
+repositioning around guns or viewport edges. These appear in both the calculator
+and Sketcher. Use **Artillery
+names** in the map library to hide or show them. They identify crew spawn
+references, not individual guns or their current positions. Generic base, staging
+and unnamed artillery references are omitted. The English titles come from
+`GameData.pak/Localization/english/RegimentNames.json`; catalog spellings such as
+`Philips` and `Weaver` display as the game's Phillips and Wever. Walker comes from
+its named spawn entity. No nearest-gun association is inferred.
 
 The prepared `native/assets/catalog.json` retains positions decoded from each
 battlefield's `level.pak/objects.cgb`: object tables, entity archetype IDs, XYZ

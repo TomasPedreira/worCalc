@@ -1,6 +1,7 @@
 # worCalc native application
 
-Desktop and Android use Tauri, the same embedded interface and `worcalc-core`.
+Desktop has independent worCalc, worSketch and Kill Tracker applications.
+Android builds only worCalc. The two map applications use `worcalc-core`.
 The build uses Node.js and Rust. Runtime requires no Python, PAK files, web server
 or launcher. The fire calculator and Sketcher share native calculations and maps.
 
@@ -14,7 +15,9 @@ npm.cmd run desktop:build
 ```
 
 The release executable and resource folder stay together. This workspace also
-provides a portable copy under `artifacts/desktop/worCalc`. `tauri dev` uses a
+provides separate portable folders and ZIPs under `artifacts/desktop` plus direct
+desktop shortcuts. Use `native/build-desktop.ps1 -Apps calculator` to build one
+app, or omit `-Apps` to build all three. `tauri dev` uses a
 local Vite server for development only; release HTML/JS/CSS are embedded.
 
 ## Offline data
@@ -48,11 +51,13 @@ $env:NDK_HOME = "$env:ANDROID_HOME/ndk/29.0.14206865"
 npm.cmd run android:build
 ```
 
-The PowerShell builder copies native resources explicitly and signs the ARM64 APK
+The PowerShell builder compiles only the `calculator` Cargo feature, embeds only
+the calculator frontend and signs the versioned ARM64 APK
 with the local development key under `artifacts/android`. Keep that key for
 subsequent upgrades. Use an appropriate release signing process for distribution.
-This desktop migration has been validated on Windows; Android device validation
-must be repeated after a new APK build.
+Android retains `pt.tomaspedreira.worcalc` and its existing signing key for updates.
+The APK filename includes its version, with a SHA-256 sidecar. Android device
+validation must be repeated after a new APK build.
 
 ## Validation
 

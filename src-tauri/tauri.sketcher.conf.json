@@ -1,0 +1,12 @@
+{
+  "productName": "worSketch",
+  "identifier": "pt.tomaspedreira.worsketch",
+  "build": {
+    "beforeBuildCommand": "npm run build:sketcher",
+    "beforeDevCommand": "npm run dev:sketcher",
+    "frontendDist": "../native/frontend/dist-sketcher"
+  },
+  "app": {
+    "windows": [{"title":"worSketch", "width":1280, "height":850}]
+  }
+}

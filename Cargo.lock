@@ -4254,16 +4254,18 @@ checksum = "1ebf944e87a7c253233ad6766e082e3cd714b5d03812acc24c318f549614536e"
 
 [[package]]
 name = "worcalc-app"
-version = "1.0.0"
+version = "1.1.8"
 dependencies = [
  "jni",
  "ndk",
  "ndk-context",
  "ndk-sys",
  "serde_json",
+ "sha2",
  "tauri",
  "tauri-build",
  "tauri-plugin-fs",
+ "windows-sys 0.61.2",
  "worcalc-core",
 ]
 

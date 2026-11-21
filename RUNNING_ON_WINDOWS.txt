@@ -1,15 +1,22 @@
 worCalc - Windows
 =================
 
-Open artifacts/desktop/worCalc/worcalc-app.exe directly.
-The portable ZIP is artifacts/desktop/worCalc-desktop.zip.
+Use the worCalc, worSketch and Kill Tracker desktop shortcuts, or open:
+  artifacts/desktop/worCalc/worcalc-app.exe
+  artifacts/desktop/worSketch/worsketch.exe
+  artifacts/desktop/KillTracker/kill-tracker.exe
+
+Each folder has its own portable ZIP under artifacts/desktop.
 
 Extract the whole ZIP before opening the executable. Keep the resources folder
-beside worcalc-app.exe; it contains the offline maps and terrain. Windows needs
+beside worCalc and worSketch; it contains the offline maps and terrain. Windows needs
 the Microsoft Edge WebView2 Runtime for Tauri's embedded interface.
 
-Choose Fire calculator or Sketcher on the entry screen. Both run locally.
-Sketcher saves plans in the application's private data folder; Export plans
+Each app opens directly into its tool. All run locally. Kill Tracker requires the running supported War of Rights build:
+check its read-only authorization box and click Start capture. Stop capture closes
+the game handle. The tracker displays the folder containing the saved event files.
+worSketch saves plans in its own private data folder and imports an existing
+library from the former worCalc app on first launch. Export plans
 writes JSON to Downloads, and Import plans reads a previously exported file.
 
 There is no Python setup, browser URL, web server or separate launcher.
@@ -22,5 +29,5 @@ Microsoft C++ Build Tools and WebView2. Restore native/assets if necessary, then
     cargo test --workspace
     npm.cmd run desktop:build
 
-The resulting executable is target/release/worcalc-app.exe. Keep its bundled
-resources alongside it when copying the application.
+The build creates and packages each app in turn. Use the artifacts/desktop
+folders above; target/release contains only the most recently built app.

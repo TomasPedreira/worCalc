@@ -1,18 +1,77 @@
+#[cfg(not(any(feature = "calculator", feature = "kill-tracker")))]
+compile_error!("Select the calculator, sketcher or kill-tracker application feature.");
+
 use serde_json::Value;
-use std::{
-    path::PathBuf,
-    sync::{Arc, Mutex},
-};
-#[cfg(not(target_os = "android"))]
+use std::sync::Mutex;
+#[cfg(feature = "calculator")]
+use std::{path::PathBuf, sync::Arc};
+#[cfg(all(feature = "calculator", not(target_os = "android")))]
 use tauri::path::BaseDirectory;
-use tauri::{AppHandle, Manager, State};
-#[cfg(not(target_os = "android"))]
+use tauri::{AppHandle, Manager};
+#[cfg(feature = "calculator")]
+use tauri::State;
+#[cfg(all(feature = "calculator", not(target_os = "android")))]
 use tauri_plugin_fs::FsExt;
-use worcalc_core::{AssetStore, Engine, Result};
+#[cfg(feature = "calculator")]
+use worcalc_core::{AssetStore, Engine};
+type Result<T> = std::result::Result<T, String>;
+#[cfg(feature = "kill-tracker")]
+mod kill_tracker;
+#[cfg(feature = "sketcher")]
 mod sketch_store;
+#[cfg(feature = "kill-tracker")]
+#[derive(Default)]
+struct KillTrackerState(Mutex<Option<kill_tracker::Session>>);
+
+#[cfg(feature = "kill-tracker")]
+#[tauri::command]
+async fn native_kill_tracker(app: AppHandle, operation: String, authorized: bool) -> Result<Value> {
+    tauri::async_runtime::spawn_blocking(move || {
+        let state = app.state::<KillTrackerState>();
+        let mut session = state.0.lock().map_err(|_| "Kill tracker lock failed")?;
+        match operation.as_str() {
+            "start" => {
+                if !authorized {
+                    return Err("Authorize read-only capture before starting".into());
+                }
+                if session.is_some() {
+                    return Err("Capture is already running".into());
+                }
+                let root = app
+                    .path()
+                    .app_data_dir()
+                    .map_err(|e| e.to_string())?
+                    .join("kill-captures");
+                let mut capture = kill_tracker::Session::start(root)?;
+                let snapshot = capture.poll()?;
+                *session = Some(capture);
+                Ok(snapshot)
+            }
+            "poll" => {
+                let Some(capture) = session.as_mut() else {
+                    return Ok(serde_json::json!({"running":false,"deaths":[]}));
+                };
+                let result = capture.poll();
+                if result.is_err() {
+                    *session = None;
+                }
+                result
+            }
+            "stop" => {
+                *session = None;
+                Ok(serde_json::json!({"running":false,"deaths":[]}))
+            }
+            _ => Err("Unknown kill tracker operation".into()),
+        }
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+#[cfg(feature = "sketcher")]
 #[derive(Default)]
 struct SketchState(Mutex<()>);
 
+#[cfg(feature = "sketcher")]
 #[tauri::command]
 async fn native_sketch(app: AppHandle, operation: String, data: Value) -> Result<Value> {
     tauri::async_runtime::spawn_blocking(move || {
@@ -24,7 +83,18 @@ async fn native_sketch(app: AppHandle, operation: String, data: Value) -> Result
             .map_err(|e| e.to_string())?
             .join("sketches.json");
         match operation.as_str() {
-            "load" => sketch_store::load(&path),
+            "load" => {
+                if app.config().identifier == "pt.tomaspedreira.worsketch" {
+                    let legacy = path
+                        .parent()
+                        .and_then(|directory| directory.parent())
+                        .ok_or("Missing application data directory")?
+                        .join("pt.tomaspedreira.worcalc")
+                        .join("sketches.json");
+                    sketch_store::migrate_if_missing(&path, &legacy)?;
+                }
+                sketch_store::load(&path)
+            }
             "save" => {
                 sketch_store::save(&path, &data)?;
                 Ok(Value::Null)
@@ -40,7 +110,9 @@ async fn native_sketch(app: AppHandle, operation: String, data: Value) -> Result
     .map_err(|e| e.to_string())?
 }
 
+#[cfg(feature = "calculator")]
 struct BundledAssets(#[cfg_attr(target_os = "android", allow(dead_code))] AppHandle);
+#[cfg(feature = "calculator")]
 impl AssetStore for BundledAssets {
     fn read(&self, path: &str) -> Result<Vec<u8>> {
         #[cfg(target_os = "android")]
@@ -57,7 +129,7 @@ impl AssetStore for BundledAssets {
     }
 }
 
-#[cfg(target_os = "android")]
+#[cfg(all(feature = "calculator", target_os = "android"))]
 fn android_asset(path: &str) -> Result<Vec<u8>> {
     use std::{ffi::CString, io::Read, ptr::NonNull};
     let context = ndk_context::android_context();
@@ -91,6 +163,7 @@ fn android_asset(path: &str) -> Result<Vec<u8>> {
     Ok(bytes)
 }
 
+#[cfg(feature = "calculator")]
 #[tauri::command]
 async fn native_resource(app: AppHandle, path: String) -> Result<tauri::ipc::Response> {
     let file = path
@@ -108,8 +181,10 @@ async fn native_resource(app: AppHandle, path: String) -> Result<tauri::ipc::Res
     .await
     .map_err(|e| e.to_string())?
 }
+#[cfg(feature = "calculator")]
 #[derive(Default)]
 struct NativeState(Mutex<Option<Engine>>);
+#[cfg(feature = "calculator")]
 fn observations_path(app: &AppHandle) -> Result<PathBuf> {
     Ok(app
         .path()
@@ -118,6 +193,7 @@ fn observations_path(app: &AppHandle) -> Result<PathBuf> {
         .join("observations.json"))
 }
 
+#[cfg(feature = "calculator")]
 #[tauri::command]
 async fn native_request(
     app: AppHandle,
@@ -170,14 +246,23 @@ async fn native_request(
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    tauri::Builder::default()
-        .plugin(tauri_plugin_fs::init())
-        .manage(NativeState::default())
-        .manage(SketchState::default())
+    let builder = tauri::Builder::default().plugin(tauri_plugin_fs::init());
+    #[cfg(feature = "calculator")]
+    let builder = builder.manage(NativeState::default());
+    #[cfg(feature = "sketcher")]
+    let builder = builder.manage(SketchState::default());
+    #[cfg(feature = "kill-tracker")]
+    let builder = builder.manage(KillTrackerState::default());
+    builder
         .invoke_handler(tauri::generate_handler![
+            #[cfg(feature = "calculator")]
             native_request,
+            #[cfg(feature = "calculator")]
             native_resource,
-            native_sketch
+            #[cfg(feature = "sketcher")]
+            native_sketch,
+            #[cfg(feature = "kill-tracker")]
+            native_kill_tracker
         ])
         .run(tauri::generate_context!())
         .expect("Could not start worCalc");

@@ -30,6 +30,11 @@ button:disabled { opacity:.45; }
 .brand { min-width:0; text-align:center; }
 .brand strong { display:block; font-size:15px; letter-spacing:.04em; }
 .brand span { display:block; color:var(--accent); font:10px/1.2 monospace; letter-spacing:.08em; margin-top:2px; }
+body[data-app-variant="calculator"] .topbar { grid-template-columns:44px minmax(0,1fr) 44px; }
+body[data-app-variant="sketcher"] .topbar { grid-template-columns:44px minmax(70px,1fr) auto 44px; }
+@media (min-width:1100px) and (pointer:fine) {
+  body[data-app-variant="sketcher"] .topbar { grid-template-columns:minmax(80px,1fr) auto; }
+}
 .placement-bar { z-index:25; display:grid; grid-template-columns:repeat(4,1fr); gap:7px; padding:6px 8px; background:#0e160f; border-bottom:1px solid var(--line); }
 .placement-bar button { min-height:40px; }
 .placement-bar button.active { border-color:var(--accent); color:var(--accent); background:#1e2a1e; }
@@ -59,6 +64,9 @@ button:disabled { opacity:.45; }
 .marker span { position:absolute; top:27px; left:50%; transform:translateX(-50%); color:white; background:#101710; border:1px solid #42513d; border-radius:4px; padding:2px 5px; font:9px monospace; white-space:nowrap; }
 .location-dot { position:absolute; display:grid; place-items:center; width:9px; height:9px; transform:translate(-50%,-50%); transform-origin:center; border:1px solid #17191c; border-radius:50%; color:#101410; font:800 6px/1 monospace; }
 .location-dot.battery { background:#f2ad3d; }
+.artillery-position-label { position:absolute; left:5px; top:-5px; padding:0; color:#fff; font:700 8px/1.15 Georgia,"Times New Roman",serif; text-transform:uppercase; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-shadow:-1px -1px 0 #222,0 -1px 0 #222,1px -1px 0 #222,1px 0 0 #222,1px 1px 0 #222,0 1px 0 #222,-1px 1px 0 #222,-1px 0 0 #222; z-index:1; }
+.map-overlay-control { display:flex; align-items:center; gap:7px; min-height:36px; font-size:11px; color:var(--text); cursor:pointer; }
+.map-overlay-control input { accent-color:var(--accent); margin:0; width:15px; height:15px; }
 .location-dot.gun_spawn { background:#40d6a0; border-radius:1px; }
 .location-dot.spawn.usa { background:#3f8cff; }
 .location-dot.spawn.csa { background:#e34f4f; }
@@ -73,6 +81,9 @@ button:disabled { opacity:.45; }
 .range-chip small { display:block; color:var(--muted); font:8px monospace; }
 .range-chip b { display:block; margin-top:2px; color:var(--accent); font:14px monospace; white-space:nowrap; }
 .range-chip > span { width:1px; height:26px; background:var(--line); }
+.target-readout { grid-template-columns:repeat(3,minmax(0,1fr)); width:224px; gap:5px; }
+.target-readout .target-readout-heading { grid-column:1/-1; text-align:center; color:var(--text); font-size:9px; font-weight:700; }
+.target-readout > div small { line-height:1.15; }
 .status-bar { position:absolute; left:8px; right:8px; bottom:calc(7px + var(--safe-bottom)); z-index:20; display:grid; grid-template-columns:1.35fr repeat(3,minmax(0,1fr)); gap:5px; padding:6px; background:rgba(10,17,11,.9); border:1px solid var(--line); border-radius:6px; }
 .metric { min-width:0; text-align:center; }
 .metric small { display:block; color:var(--muted); font:8px monospace; text-transform:uppercase; }
@@ -138,15 +149,6 @@ button:disabled { opacity:.45; }
 }
 
 .impact-mark { position:absolute; transform:scale(var(--inverse-zoom)) translate(-50%,-50%); transform-origin:center; color:#fff; background:#77391b; border:1px solid #ffa85d; border-radius:3px; font:bold 13px monospace; padding:1px 3px; pointer-events:none; z-index:10; }
-@media (min-width:1100px) and (pointer:fine) {
-  .app { left:280px; right:320px; }
-  .drawer { width:280px; transform:none; box-shadow:none; border-right:1px solid var(--line); }
-  .sheet { top:0; bottom:0; right:0; left:auto; width:320px; max-height:none; border-radius:0; transform:none; box-shadow:none; border-left:1px solid var(--line); }
-  .drawer .close,.sheet .close,.handle,#open-drawer,#open-sheet { display:none; }
-  .topbar { grid-template-columns:1fr 60px; }
-  .backdrop.show { display:none; }
-  .mode-pill { left:auto; right:10px; top:68px; transform:none; }
-}
 
 .app-chooser { position:fixed; inset:0; z-index:100; overflow:auto; display:grid; place-items:center; padding:32px 20px; background:radial-gradient(ellipse at top,#263a28,#0c120d 70%); }
 .chooser-content { width:min(760px,100%); }
@@ -154,6 +156,16 @@ button:disabled { opacity:.45; }
 .chooser-content h1 { font-size:clamp(28px,5vw,46px); margin:12px 0; }
 .chooser-content p { color:var(--muted); line-height:1.5; }
 .app-cards { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px; margin:30px 0; }
+.kill-tracker { position:fixed; inset:0; z-index:101; overflow:auto; padding:24px; background:var(--bg); }
+.kill-tracker p { color:var(--muted); line-height:1.5; overflow-wrap:anywhere; }
+.kill-controls { display:flex; gap:12px; margin:16px 0; }
+.kill-controls button,.kill-controls select { padding:8px 16px; }
+.kill-controls select { background:var(--panel); border:1px solid var(--line); border-radius:7px; }
+.kill-controls .search { margin:0; flex:1; min-width:0; }
+.kill-feed { overflow:auto; max-height:60vh; border:1px solid var(--line); }
+.kill-feed table { width:100%; border-collapse:collapse; }
+.kill-feed th { position:sticky; top:0; background:var(--panel); text-align:left; }
+.kill-feed th,.kill-feed td { padding:12px; border-bottom:1px solid var(--line); overflow-wrap:anywhere; }
 .app-cards button { text-align:left; display:flex; flex-direction:column; align-items:flex-start; gap:14px; padding:26px; border-radius:16px; background:var(--panel); }
 .app-cards button:hover { border-color:var(--accent); background:var(--panel2); }
 .app-cards strong { font-size:22px; }
@@ -165,7 +177,7 @@ button:disabled { opacity:.45; }
 .sketch-readout-layer { position:absolute; inset:0; z-index:17; pointer-events:none; }
 .sketch-marker { display:block; width:0; height:0; min-height:0; padding:0; border:0; background:transparent; border-radius:0; overflow:visible; outline:none; }
 .sketch-marker.dimmed { opacity:.3; }
-.sketch-marker.selected { z-index:9; }
+.sketch-marker.selected { z-index:9; opacity:1; }
 .sketch-marker.selected .marker:before,.sketch-marker:focus-visible .marker:before { box-shadow:0 0 0 2px var(--accent); }
 .sketch-marker:active { transform:none; }
 .mode-pill { max-width:calc(100% - 20px); white-space:normal; overflow-wrap:anywhere; text-align:center; }
@@ -192,3 +204,151 @@ button:disabled { opacity:.45; }
 #sketch-delete { margin-top:8px; }
 #sketch-save { border-color:var(--accent); color:var(--accent); }
 @media (max-width:520px) { .app-cards { grid-template-columns:1fr; gap:12px; margin:20px 0; } .app-cards button { padding:20px; gap:8px; } }
+
+/* The plan inspector reserves its own column and never covers the map. */
+body.sketch-workspace { --sketch-sidebar:320px; }
+.sketch-workspace .app { right:var(--sketch-sidebar); }
+.sketch-workspace .sketch-panel { top:0; right:0; bottom:0; left:auto; width:var(--sketch-sidebar); max-height:none; border-radius:0; transform:none; box-shadow:none; border-left:1px solid var(--line); }
+.sketch-workspace .sketch-panel .close,.sketch-workspace .sketch-panel .handle,.sketch-workspace #open-sheet { display:none; }
+.sketch-marker { cursor:pointer; }
+.sketch-marker.movable { cursor:grab; }
+.sketch-marker.movable:active { cursor:grabbing; }
+.sketch-workspace #range-chip,.sketch-workspace .status-bar { display:none; }
+.app-chooser { background:var(--bg); }
+.chooser-content { width:min(820px,100%); }
+.app-cards button { border-radius:7px; }
+#choose-calculator { border-color:var(--accent); }
+#choose-kill-tracker { grid-column:1/-1; padding:14px 20px; flex-direction:row; align-items:center; }
+#choose-kill-tracker strong { font-size:16px; white-space:nowrap; }
+#choose-kill-tracker .app-symbol { font-size:20px; }
+@media (max-width:650px) { body.sketch-workspace { --sketch-sidebar: min(280px,48vw); } .sketch-panel .form-grid { grid-template-columns:1fr; } .sketch-toolbar { flex-wrap:wrap; } }
+
+/* Sketch workspace: quiet chrome, parchment canvas and explicit operating modes. */
+:root { --bg:#080e0c; --panel:#0d1511; --panel2:#17231b; --line:#2c3c32; --text:#edf1e9; --muted:#97a89d; --accent:#f0cf60; --blue:#40d4e5; }
+body { font-family:"Segoe UI",Arial,sans-serif; }
+button,input,select,textarea { transition:border-color .15s,background-color .15s,box-shadow .15s; }
+button { cursor:pointer; }
+body:not([data-app-variant="calculator"]) button:hover:enabled { background:#1b2b21; border-color:#6e826e; }
+button:disabled { cursor:default; }
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible { outline:2px solid var(--blue); outline-offset:3px; }
+body[data-app-variant="calculator"] button { appearance:none; -webkit-appearance:none; outline:none; box-shadow:none; }
+body[data-app-variant="calculator"] button:focus-visible { border-color:var(--muted); }
+* { scrollbar-width:none; }
+*::-webkit-scrollbar { display:none; }
+.app { grid-template-areas:"header" "tools" "map"; grid-template-rows:auto auto minmax(0,1fr); }
+.topbar { grid-area:header; background:linear-gradient(180deg,#111c16,#0c1410); }
+.placement-bar { grid-area:tools; }
+.map-wrap { grid-area:map; }
+.workspace-modes { display:none; gap:8px; }
+.sketch-workspace .workspace-modes { display:flex; }
+.workspace-modes button { min-height:34px; padding:0 14px; font-size:10px; font-weight:700; letter-spacing:.04em; white-space:nowrap; }
+#sketch-view[aria-pressed="true"] { color:var(--accent); border-color:#9e9145; background:#252b16; box-shadow:inset 0 0 0 1px #f0cf6015; }
+#sketch-edit[aria-pressed="true"],#sketch-save { color:#14180e; background:var(--accent); border-color:var(--accent); font-weight:700; }
+#sketch-save:hover:enabled,#sketch-edit[aria-pressed="true"]:hover:enabled { background:#ffe28a; }
+.sketch-workspace .topbar { grid-template-columns:36px minmax(70px,1fr) auto 52px; gap:6px; }
+.sketch-workspace .topbar #open-sheet { display:none; }
+.sketch-toolbar:not(.editing) { display:none; }
+.sketch-toolbar { gap:6px; padding:7px 10px; }
+.sketch-toolbar button { min-height:38px; font-size:11px; }
+.sketch-toolbar button > span { color:var(--blue); font-size:20px; vertical-align:middle; margin-right:6px; }
+.sketch-toolbar #sketch-add-target > span { color:#ff6969; }
+kbd { margin-left:5px; color:var(--muted); font:9px monospace; border:1px solid var(--line); border-radius:3px; padding:1px 3px; }
+.brand strong { font-size:14px; letter-spacing:.12em; }
+.brand span { font-size:9px; letter-spacing:.1em; margin-top:4px; }
+.panel-head { border-color:#27372d; padding-bottom:12px; }
+.panel-head h2 { font-size:13px; font-weight:600; }
+.search { background:#080f0b; border-radius:5px; font-size:11px; min-height:34px; padding:0 10px; }
+.map-group-toggle { min-height:34px; font-size:10px; border-radius:4px; background:#101b14; }
+.mode-group-toggle { min-height:30px; font-size:9px; border-radius:4px; }
+.mode-groups { padding-left:0; gap:4px; }
+.map-variants { gap:2px; padding:5px 0 0; }
+.map-card { min-height:49px; grid-template-columns:46px minmax(0,1fr); gap:9px; padding:4px 6px; border-color:var(--line); background:transparent; border-radius:4px; }
+.map-card img { width:46px; height:38px; border-radius:3px; }
+.map-card b { font-size:11px; font-weight:600; }
+.map-card small { font-size:9px; margin-top:2px; }
+.map-card.active { background:#213122; border-color:#506d42; }
+.map-name { top:12px; left:12px; background:#0b140df2; border-color:#56613d; border-radius:5px; padding:8px 11px; box-shadow:0 2px 10px #0003; }
+.map-name b { font-size:14px; }
+.map-name small { margin-top:3px; }
+.sketch-workspace .mode-pill { top:auto; bottom:12px; right:12px; left:12px; transform:none; max-width:none; width:fit-content; margin:auto; padding:7px 12px; border-radius:5px; color:#bcc9be; font:9px/1.5 "Segoe UI",sans-serif; letter-spacing:.05em; background:#0a130dea; pointer-events:none; }
+.sketch-workspace .aim-overlay { display:none; }
+.marker.gun:before { background:#30c8db; }
+.sketch-marker.selected .marker:before { box-shadow:0 0 0 2px var(--blue),0 0 0 5px #122d3460; }
+.sketch-marker.target.selected .marker:before { box-shadow:0 0 0 2px #ff7774,0 0 0 5px #ff625d35; }
+.sketch-connections { position:absolute; inset:0; z-index:9; overflow:hidden; pointer-events:none; }
+.sketch-connection { position:absolute; height:2px; transform-origin:0 50%; background:repeating-linear-gradient(90deg,#35cad9 0 6px,transparent 6px 11px); opacity:.8; }
+.range-chip { border-color:#b59f48; border-radius:5px; background:#0a140eed; min-width:170px; padding:9px 12px; }
+.range-chip b { font-size:13px; }
+.sketch-panel { padding:16px 14px; background:linear-gradient(135deg,#111c15,#0b120e 70%); }
+.sketch-panel .sketch-state { font-size:9px; letter-spacing:.06em; margin:12px 0 5px; }
+.sketch-panel p { font-size:11px; line-height:1.6; }
+#sketch-count { color:#c7d2c5; margin:0 0 15px; }
+.sketch-panel .field label { color:#bccab9; font:11px "Segoe UI",sans-serif; text-transform:none; letter-spacing:0; }
+.sketch-panel .field select,.sketch-panel .field input { min-height:34px; font-size:11px; border-radius:4px; background:#09120c; }
+.sketch-panel h3 { font-size:12px; font-weight:600; }
+.sketch-panel .list-heading { padding-top:13px; border-top:1px solid var(--line); color:#c7d1c5; }
+#sketch-selected-gun { color:var(--blue); font-size:11px; margin:10px 0; }
+.sketch-target-row { position:relative; min-height:40px; border-radius:4px; margin:4px 0; padding:9px 10px 9px 25px; background:#0a140e; }
+.sketch-target-row::before,.shared-target-row::before { content:""; position:absolute; left:10px; top:14px; width:7px; height:7px; border-radius:50%; background:#fb6666; box-shadow:0 0 0 2px #fb666614; }
+.sketch-target-row b { font:12px monospace; }
+.sketch-target-row small { font-size:10px; margin-top:4px; }
+.sketch-target-row span { font-size:11px; margin-top:5px; }
+.sketch-target-row.selected { background:#11262b; border-color:#399eb0; }
+#sketch-gun-options .sketch-target-row::before { background:var(--blue); }
+.sketch-toolbar button { white-space:nowrap; }
+.edit-notice { display:grid; gap:4px; border:1px solid #9d8439; background:#2b2711; border-radius:5px; padding:10px; margin:12px 0; font-size:11px; }
+.edit-notice b { color:var(--accent); }
+.edit-notice span { color:#d0cead; line-height:1.5; }
+.solution-card { margin-top:16px; padding:12px; border:1px solid #35554f; border-radius:6px; background:#10201d; }
+.solution-card h3 { margin:0 0 12px; }
+.solution-metrics { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.solution-metrics small { display:block; color:var(--muted); font-size:10px; }
+.solution-metrics b { display:block; font:600 22px/1.6 "Segoe UI",sans-serif; }
+.solution-card p { margin-bottom:0; overflow-wrap:anywhere; white-space:pre-wrap; }
+.shared-targets { margin-top:18px; border-top:1px solid var(--line); padding-top:12px; }
+.shared-targets summary { cursor:pointer; font-size:11px; color:#c7d1c5; }
+#sketch-shared-count { float:right; color:var(--muted); }
+.shared-target-row { position:relative; display:block; width:100%; text-align:left; min-height:42px; padding:8px 8px 8px 25px; margin-top:4px; background:transparent; border:1px solid transparent; font-size:11px; }
+.shared-target-row small { display:block; color:var(--muted); font-size:9px; margin-top:3px; }
+.shared-target-row.selected { border-color:#42614a; background:#19261c; }
+.sketch-file-actions { border-top:1px solid var(--line); padding-top:12px; margin-top:18px; }
+.sketch-file-actions button,.sketch-editor-actions button,.sketch-calculation-actions button { min-height:34px; font-size:10px; border-radius:4px; }
+.sketch-editor-actions { position:sticky; bottom:-16px; background:var(--panel); padding:12px 0; border-top:1px solid var(--line); margin-top:16px; }
+.sketch-danger { min-height:32px; padding:6px; border-color:#63352c; font-size:10px; }
+.sketch-editor textarea { border-radius:4px; font-size:11px; }
+@media (min-width:1100px) and (pointer:fine) {
+  body.sketch-workspace { --sketch-sidebar:300px; }
+  .sketch-workspace .app { top:12px; bottom:12px; left:252px; right:312px; border:1px solid #425348; border-radius:0 7px 7px 0; }
+  .sketch-workspace .drawer { top:12px; bottom:12px; left:12px; width:240px; padding:14px 10px; border:1px solid #425348; border-radius:7px 0 0 7px; transform:none; box-shadow:none; }
+  .sketch-workspace .sheet { top:12px; right:12px; bottom:12px; left:auto; width:300px; max-height:none; border:1px solid #425348; border-radius:7px; transform:none; box-shadow:none; }
+  .sketch-workspace :is(.drawer .close,.sheet .close,.handle,#open-drawer,#open-sheet,.backdrop.show) { display:none; }
+  .sketch-workspace .topbar { min-height:56px; padding:8px 12px; grid-template-columns:minmax(80px,1fr) auto 52px; gap:14px; }
+  .topbar #choose-app { min-height:32px; font-size:10px; }
+  .sketch-workspace .sketch-toolbar { position:absolute; top:68px; left:50%; transform:translateX(-50%); width:min(380px,calc(100% - 24px)); border:1px solid #9e9145; border-radius:6px; background:#0c1710f5; box-shadow:0 4px 16px #0004; }
+  .sketch-workspace .map-wrap { border-top:1px solid var(--line); }
+}
+@media (max-width:1099px) {
+  .sketch-workspace .topbar { grid-template-columns:32px 1fr 48px; }
+  .sketch-workspace .workspace-modes { grid-column:1/-1; justify-content:center; }
+  .workspace-modes button { flex:1; }
+}
+@media (prefers-reduced-motion:reduce) { *,*::before,*::after { transition:none !important; } }
+
+/* Shared calculator layout on touchscreens and desktop. */
+.map-heading { display:contents; }
+.mobile-fit,.mobile-placement,.mobile-fire-settings,.mobile-advanced { display:none; }
+body[data-app-variant="calculator"] :is(#calculator-toolbar,#open-sheet) { display:none; }
+body[data-app-variant="calculator"] .status-bar { display:grid; grid-template-columns:minmax(0,1fr); left:8px; right:auto; bottom:calc(60px + var(--safe-bottom)); max-width:calc(100% - 16px); padding:8px 12px; pointer-events:none; }
+body[data-app-variant="calculator"] .status-bar .metric:not(#explosion-height-metric) { display:none; }
+body[data-app-variant="calculator"] #explosion-height-metric small { font-size:11px; }
+body[data-app-variant="calculator"] #explosion-height { margin-top:3px; font-size:14px; font-weight:700; }
+body[data-app-variant="calculator"] .mobile-fit { display:block; width:44px; height:44px; padding:0; font-size:14px; font-weight:700; }
+body[data-app-variant="calculator"] .map-heading { position:absolute; top:12px; left:12px; right:12px; display:grid; grid-template-columns:minmax(0,1fr) auto; gap:8px; align-items:center; z-index:25; pointer-events:none; }
+body[data-app-variant="calculator"] .map-heading .map-name { position:relative; top:auto; left:auto; width:fit-content; min-width:0; max-width:100%; }
+body[data-app-variant="calculator"] .mobile-placement { position:static; display:grid; grid-area:auto; grid-template-columns:auto auto; gap:5px; padding:0; border:0; background:transparent; pointer-events:auto; }
+body[data-app-variant="calculator"] .mobile-placement button { min-width:44px; min-height:44px; padding:0 7px; font-size:14px; font-weight:700; }
+body[data-app-variant="calculator"] .mobile-fire-settings { position:absolute; bottom:calc(8px + var(--safe-bottom)); left:8px; right:8px; z-index:25; display:grid; grid-template-columns:1.4fr .85fr 1.15fr; gap:7px; }
+body[data-app-variant="calculator"] .mobile-fire-settings button { min-width:0; min-height:44px; padding:0 7px; font-size:14px; font-weight:700; }
+body[data-app-variant="calculator"] .mobile-advanced { display:block; flex:none; min-height:36px; margin-top:8px; font-size:14px; font-weight:700; }
+body[data-app-variant="calculator"] .mode-pill { top:76px; bottom:auto; left:12px; right:12px; transform:none; margin:auto; max-width:calc(100% - 24px); width:fit-content; border-radius:5px; }
+body[data-app-variant="calculator"] .mode-pill.idle-hint { display:none; }

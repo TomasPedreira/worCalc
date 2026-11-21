@@ -17,6 +17,64 @@ function setting(angle=1.2,fuze=2.4) {
       elevation_degrees:1.2,fuze_seconds:2.4,bearing_degrees:74,slant_range_yards:300,clearance_status:"clear"}};
 }
 const library = plan => ({version:1,maps:{"map-1":plan}});
+const correctedMaps = () => [{...maps[0],coordinate_revision:1,
+  coordinate_migration:{from_revision:0,gun_positions:[{old_x:10,old_y:20,x:15,y:24}]}},maps[1]];
+
+test("alignment migration preserves originals, moves only exact default guns and retires old firing values",()=>{
+  const plan=fixture(); M.saveConfiguration(plan,"a",target,setting(2.3,4.5));
+  const value=library(plan), before=M.copy(value), catalog=correctedMaps();
+  const checked=M.validateLibrary(value,catalog,options), migrated=checked.maps["map-1"];
+  assert.deepEqual(value,before);
+  assert.equal(migrated.coordinate_revision,1);
+  assert.deepEqual([migrated.guns[0].x,migrated.guns[0].y],[15,24]);
+  assert.deepEqual([migrated.guns[1].x,migrated.guns[1].y],[20,30]);
+  assert.deepEqual([migrated.targets[0].x,migrated.targets[0].y],[100,80]);
+  assert.equal(M.configuration(migrated,"a",target.id),null);
+  assert.deepEqual(migrated.alignment_history[0].configurations,before.maps["map-1"].configurations);
+  assert.deepEqual(migrated.alignment_history[0].guns,before.maps["map-1"].guns);
+  assert.equal(M.previousConfiguration(migrated,"a",target.id).elevation_degrees,2.3);
+  assert.equal(M.outdatedConfigurationCount(migrated),1);
+  assert.deepEqual(M.validateLibrary(checked,catalog,options),checked);
+  const updated=setting(); updated.solution.coordinate_revision=1;
+  M.saveConfiguration(migrated,"a",target,updated);
+  assert.equal(M.outdatedConfigurationCount(migrated),0);
+  assert.doesNotThrow(()=>M.validateLibrary(checked,catalog,options));
+});
+test("neutral map plans retain their firing values and new plans carry the corrected revision",()=>{
+  const plan=fixture(); M.saveConfiguration(plan,"a",target,setting(2.3,4.5));
+  const value=library(plan), checked=M.validateLibrary(value,maps,options);
+  assert.deepEqual(checked.maps["map-1"].configurations,plan.configurations);
+  assert.equal(checked.maps["map-1"].alignment_history,undefined);
+  const fresh=M.createPlan(correctedMaps()[0],[],"Ordnance");
+  assert.equal(fresh.coordinate_revision,1);
+  const migrated=M.validateLibrary(value,correctedMaps(),options);
+  M.saveConfiguration(migrated.maps["map-1"],"a",target,setting());
+  assert.throws(()=>M.validateLibrary(migrated,correctedMaps(),options),/outdated map alignment/);
+});
+test("alignment migration is saved once and a failed migration write preserves the original document",async()=>{
+  const plan=fixture(); M.saveConfiguration(plan,"a",target,setting()); const original=library(plan);
+  let saved=M.copy(original), writes=0, fail=true;
+  const adapter={load:async()=>saved,save:async value=>{if(fail)throw Error("Disk full");saved=M.copy(value);writes++;}};
+  const store=new M.LibraryStore(adapter,correctedMaps(),options);
+  await assert.rejects(store.load(),/Disk full/);
+  assert.equal(store.ready,false); assert.deepEqual(saved,original);
+  fail=false; await store.load(); assert.equal(writes,1);
+  await store.load(); assert.equal(writes,1);
+  const imported=new M.LibraryStore(adapter,correctedMaps(),options); await imported.load();
+  await imported.import(original);
+  assert.equal(imported.data.maps["map-1"].coordinate_revision,1);
+  assert.equal(imported.data.maps["map-1"].alignment_history.length,1);
+  assert.equal(imported.data.maps["map-1"].configurations.length,0);
+});
+test("alignment revisions and archive shape are validated before accepting a plan",()=>{
+  for(const revision of [-1,0.5,2,"1"]) {
+    const plan=fixture(); plan.coordinate_revision=revision;
+    assert.throws(()=>M.validateLibrary(library(plan),correctedMaps(),options),/alignment/);
+  }
+  const migrated=M.validateLibrary(library(fixture()),correctedMaps(),options);
+  migrated.maps["map-1"].alignment_history[0].configurations=null;
+  assert.throws(()=>M.validateLibrary(migrated,correctedMaps(),options),/previous map alignment/);
+});
 test("guns share a physical target but retain independent fire settings", () => {
   const plan=fixture();
   M.saveConfiguration(plan,"a",target,setting());
@@ -154,4 +212,14 @@ test("deleting a gun preserves shared geometry and another gun's pairs; deleting
   M.removeTarget(plan,"shared");assert.equal(plan.guns.length,2);
   assert.deepEqual(plan.targets.map(point=>point.id),["other"]);
   assert.equal(plan.configurations.length,1);assert.equal(plan.configurations[0].target_id,"other");
+});
+
+test("saved-plan repositioning preserves settings and rejects invalid moves",()=>{
+  const plan=fixture();M.saveConfiguration(plan,"a",target,setting());M.saveConfiguration(plan,"b",target,setting(2.5,3.1));
+  const settings=M.copy(plan.configurations);
+  M.moveSavedPoint(plan,"gun","a",{x:50,y:50});M.moveSavedPoint(plan,"target","shared",{x:130,y:100});
+  assert.deepEqual(plan.configurations,settings);assert.equal(plan.targets[0].x,130);
+  assert.deepEqual(M.validateLibrary(library(plan),maps,options).maps["map-1"].configurations,settings);
+  const before=M.copy(plan);assert.throws(()=>M.moveSavedPoint(plan,"target","shared",{x:-1,y:0}),/outside/);
+  assert.deepEqual(plan,before);
 });

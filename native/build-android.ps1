@@ -12,7 +12,10 @@ if (-not $env:NDK_HOME) {
 function Assert-NativeSuccess([string]$step) { if ($LASTEXITCODE -ne 0) { throw "$step failed with exit code $LASTEXITCODE" } }
 Push-Location $repoRoot
 try {
-    if (-not $SkipFrontend) { & npm.cmd run build; Assert-NativeSuccess 'Frontend/assets build' }
+    if (-not $SkipFrontend) { & npm.cmd run build:calculator; Assert-NativeSuccess 'Calculator frontend/assets build' }
+    $buildInfo = Get-Content -LiteralPath (Join-Path $repoRoot 'native/frontend/dist-calculator/build-info.json') -Raw | ConvertFrom-Json
+    $releaseConfig = Get-Content -LiteralPath (Join-Path $repoRoot 'src-tauri/tauri.conf.json') -Raw | ConvertFrom-Json
+    if ($buildInfo.variant -ne 'calculator' -or $buildInfo.version -ne $releaseConfig.version) { throw 'Rebuild the calculator frontend for the current release before building Android.' }
     if (-not (Test-Path -LiteralPath (Join-Path $androidProject 'tauri.settings.gradle'))) {
         & npm.cmd run android:init; Assert-NativeSuccess 'Android initialization'
         $gradleFile = Join-Path $androidProject 'app/build.gradle.kts'
@@ -25,7 +28,7 @@ try {
     $env:WRY_ANDROID_PACKAGE = 'pt.tomaspedreira.worcalc'
     $env:WRY_ANDROID_LIBRARY = 'worcalc_app'
     $env:WRY_ANDROID_KOTLIN_FILES_OUT_DIR = Join-Path $androidProject 'app/src/main/java/pt/tomaspedreira/worcalc/generated'
-    if (-not $SkipRust) { & cargo build -p worcalc-app --lib --release --target aarch64-linux-android --features custom-protocol; Assert-NativeSuccess 'Rust Android build' }
+    if (-not $SkipRust) { & cargo build -p worcalc-app --lib --release --target aarch64-linux-android --no-default-features --features calculator,custom-protocol; Assert-NativeSuccess 'Rust Android calculator build' }
 
     # Explicit copies work on Windows without symbolic-link privileges.
     $jniDirectory = Join-Path $androidProject 'app/src/main/jniLibs/arm64-v8a'
@@ -42,7 +45,6 @@ try {
         }
     }
 
-    $releaseConfig = Get-Content -LiteralPath (Join-Path $repoRoot 'src-tauri/tauri.conf.json') -Raw | ConvertFrom-Json
     $versionParts = $releaseConfig.version.Split('.')
     $androidVersionCode = [int]$versionParts[0] * 1000000 + [int]$versionParts[1] * 1000 + [int]$versionParts[2]
     $versionProperties = "tauri.android.versionName=$($releaseConfig.version)`ntauri.android.versionCode=$androidVersionCode`n"
@@ -62,10 +64,16 @@ try {
     }
     $buildTools = Get-ChildItem -LiteralPath (Join-Path $env:ANDROID_HOME 'build-tools') -Directory | Sort-Object Name -Descending | Select-Object -First 1
     $unsigned = Join-Path $androidProject 'app/build/outputs/apk/universal/release/app-universal-release-unsigned.apk'
-    $output = Join-Path $artifactDirectory 'worcalc-offline-arm64.apk'
+    $output = Join-Path $artifactDirectory "worcalc-$($releaseConfig.version)-arm64.apk"
     & (Join-Path $buildTools.FullName 'apksigner.bat') sign --ks $keystore --ks-key-alias worcalc-development --ks-pass pass:android --key-pass pass:android --out $output $unsigned
     Assert-NativeSuccess 'APK signing'
     & (Join-Path $buildTools.FullName 'apksigner.bat') verify $output
     Assert-NativeSuccess 'APK signature verification'
+    Copy-Item -LiteralPath $output -Destination (Join-Path $artifactDirectory 'worcalc-offline-arm64.apk') -Force
+    $hasher = [System.Security.Cryptography.SHA256]::Create()
+    $apkStream = [System.IO.File]::OpenRead($output)
+    try { $checksum = [System.BitConverter]::ToString($hasher.ComputeHash($apkStream)).Replace('-','').ToLowerInvariant() }
+    finally { $hasher.Dispose(); $apkStream.Dispose() }
+    [System.IO.File]::WriteAllText("$output.sha256", "$checksum  $([System.IO.Path]::GetFileName($output))`n")
     Get-Item -LiteralPath $output | Select-Object FullName, Length
 } finally { Pop-Location }

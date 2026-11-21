@@ -34,6 +34,16 @@ pub fn load(path: &Path) -> Result<Value> {
     Ok(value)
 }
 
+pub fn migrate_if_missing(path: &Path, legacy: &Path) -> Result<()> {
+    if path.exists() || path.with_extension("bak").exists() || path == legacy {
+        return Ok(());
+    }
+    if legacy.exists() || legacy.with_extension("bak").exists() {
+        save(path, &load(legacy)?)?;
+    }
+    Ok(())
+}
+
 pub fn save(path: &Path, value: &Value) -> Result<()> {
     let bytes = encode(value)?;
     fs::create_dir_all(path.parent().ok_or("Missing plan directory")?)
@@ -106,6 +116,40 @@ mod tests {
         fn drop(&mut self) {
             let _ = fs::remove_dir_all(&self.0);
         }
+    }
+    #[test]
+    fn standalone_migration_copies_plans_without_overwriting_either_library() {
+        let fixture = Fixture::new("migration");
+        let legacy = fixture.0.join("old/sketches.json");
+        let current = fixture.0.join("new/sketches.json");
+        let first = json!({"version":1,"maps":{"map-1":{"guns":[]}}});
+        let second = json!({"version":1,"maps":{"map-2":{"targets":[]}}});
+        save(&legacy, &first).unwrap();
+        migrate_if_missing(&current, &legacy).unwrap();
+        assert_eq!(load(&current).unwrap(), first);
+        assert_eq!(load(&legacy).unwrap(), first);
+        save(&current, &second).unwrap();
+        migrate_if_missing(&current, &legacy).unwrap();
+        assert_eq!(load(&current).unwrap(), second);
+        fs::remove_file(&current).unwrap();
+        migrate_if_missing(&current, &legacy).unwrap();
+        assert!(!current.exists());
+        assert_eq!(load(&current).unwrap(), first);
+    }
+    #[test]
+    fn migration_recovers_a_legacy_backup_but_refuses_invalid_plans() {
+        let fixture = Fixture::new("migration-recovery");
+        let legacy = fixture.0.join("old/sketches.json");
+        let current = fixture.0.join("new/sketches.json");
+        let value = json!({"version":1,"maps":{}});
+        save(&legacy, &value).unwrap();
+        fs::rename(&legacy, legacy.with_extension("bak")).unwrap();
+        migrate_if_missing(&current, &legacy).unwrap();
+        assert_eq!(load(&current).unwrap(), value);
+        fs::remove_file(&current).unwrap();
+        fs::write(&legacy, b"invalid").unwrap();
+        assert!(migrate_if_missing(&current, &legacy).is_err());
+        assert!(!current.exists());
     }
     #[test]
     fn saves_and_recovers_the_previous_revision_after_interruption() {

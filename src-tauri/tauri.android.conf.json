@@ -1,0 +1,7 @@
+{
+  "build": {
+    "beforeBuildCommand": "npm run build:calculator",
+    "beforeDevCommand": "npm run dev:calculator",
+    "frontendDist": "../native/frontend/dist-calculator"
+  }
+}

@@ -9,6 +9,7 @@
       this.gunId = null; this.targetId = null; this.selection = null; this.draft = null; this.busy = false;
       this.calculationSequence = 0; this.markers = []; this.readouts = []; this.seeding = new Map(); this.gunMove = null;
       $("#sketch-edit").addEventListener("click", () => this.toggleEdit());
+      $("#sketch-view").addEventListener("click", () => {if (this.editing) this.toggleEdit();});
       $("#sketch-add-gun").addEventListener("click", () => this.setTool("gun"));
       $("#sketch-add-target").addEventListener("click", () => this.setTool("target"));
       $("#sketch-fit").addEventListener("click", hooks.fit);
@@ -23,7 +24,7 @@
         $("#" + id).addEventListener("change", () => {if (this.draft?.kind === "target" && this.draft.gun) this.calculateDraft(false);});
       }
       $("#sketch-export").addEventListener("click", () => this.export());
-      $("#sketch-import").addEventListener("click", () => $("#sketch-file").click());
+      $("#sketch-import").addEventListener("click", () => {if (this.editing && !this.busy) $("#sketch-file").click();});
       $("#sketch-file").addEventListener("change", event => this.importFile(event.target.files?.[0]));
     }
     async initialize(maps, options) {
@@ -49,6 +50,7 @@
       this.cancelGunMove(); this.closeEditor(); this.active = false; this.editing = false; this.tool = null;
       this.selection = null; this.markers = []; this.readouts = [];
       $("#sketch-layer").replaceChildren(); $("#sketch-readouts").replaceChildren();
+      $("#sketch-connections").replaceChildren();
     }
     mapChanged() {
       this.cancelGunMove(); this.closeEditor(); this.gunId = null; this.targetId = null; this.selection = null; this.tool = null; this.editing = false;
@@ -64,17 +66,18 @@
       if (!this.active) return;
       this.hooks.status(this.loadError || (this.busy ? "SAVING PLAN..." : this.tool === "gun" ? "CLICK MAP TO PLACE A GUN" :
         this.tool === "target" ? "CLICK MAP TO ADD A TARGET OR USE AN EXISTING POINT" :
-        this.selection ? "SELECTED DETAILS ON THE RIGHT · SAVE CHANGES · DEL TO DELETE" : "SELECT A GUN OR TARGET · DEL DELETES THE SELECTED POINT"));
+        !this.editing ? "VIEW SAVED TARGETS ON THE RIGHT · EDIT TO MAKE CHANGES" :
+        this.selection ? "SELECTED DETAILS ON THE RIGHT · SAVE CHANGES · DEL TO DELETE" : "DRAG GUNS OR TARGETS · SELECT TO EDIT"));
     }
     toggleEdit() {
       if (this.busy || !this.store?.ready || this.loadError) return;
-      this.cancelGunMove(); this.editing = !this.editing; this.tool = null;
-      if (!this.editing && this.targetId && M.configuration(this.plan(), this.gunId, this.targetId)) this.showMission(this.targetId);
-      this.render(); this.status();
+      this.cancelGunMove(); this.closeEditor(); this.editing = !this.editing; this.tool = null;
+      if (this.targetId && this.plan().targets.some(target => target.id === this.targetId)) this.selectTarget(this.targetId);
+      else this.selectGun(this.gunId);
     }
     setTool(tool) {
-      if (this.busy || !this.store?.ready || this.loadError || (tool === "target" && !this.gunId)) return;
-      this.editing = true; this.cancelGunMove();
+      if (!this.active || !this.editing || this.busy || !this.store?.ready || this.loadError || (tool === "target" && !this.gunId)) return;
+      this.cancelGunMove();
       this.tool = this.tool === tool ? null : tool; this.render(); this.status();
     }
     async canvasClick(point) {
@@ -102,21 +105,20 @@
       });
       if (saved) this.selectGun(gun.id);
     }
-    beginGunMove(id) {
+    beginGunMove(id, kind = "gun") {
       if (!this.active || !this.editing || !this.hooks.mapReady() || !this.store?.ready || this.loadError || this.busy) return false;
-      const gun = this.plan().guns.find(gun => gun.id === id); if (!gun) return false;
-      this.selectGun(id);
-      this.gunMove = {id, mapId:this.hooks.map().identifier, point:{x:gun.x, y:gun.y}, original:{x:gun.x, y:gun.y}};
+      const gun = this.plan()[kind === "gun" ? "guns" : "targets"].find(point => point.id === id); if (!gun) return false;
+      this.gunMove = {id, kind, mapId:this.hooks.map().identifier, point:{x:gun.x, y:gun.y}, original:{x:gun.x, y:gun.y}};
       return true;
     }
     previewGunMove(point) {if (this.gunMove && !this.busy) {this.gunMove.point = point; this.positionMarkers();}}
     cancelGunMove() {this.gunMove = null; this.positionMarkers();}
     async commitGunMove() {
       const move = this.gunMove;
-      if (!move || !this.editing || this.busy || this.hooks.map()?.identifier !== move.mapId) {this.cancelGunMove(); return;}
+      if (!move || !this.active || !this.editing || this.busy || this.hooks.map()?.identifier !== move.mapId) {this.cancelGunMove(); return;}
       if (move.point.x === move.original.x && move.point.y === move.original.y) {this.cancelGunMove(); return;}
-      const saved = await this.persist(library => M.moveGun(library.maps[move.mapId], move.id, move.point));
-      this.gunMove = null; if (saved) this.selectGun(move.id); else this.render();
+      const saved = await this.persist(library => M.moveSavedPoint(library.maps[move.mapId], move.kind, move.id, move.point));
+      this.gunMove = null; if (saved) {if (move.kind === "gun") this.selectGun(move.id); else this.selectTarget(move.id);} else this.render();
     }
     cancelTool() {this.cancelGunMove(); this.tool = null; this.cancelDraft(); this.status();}
     selectGun(id) {
@@ -124,13 +126,22 @@
       this.closeEditor(); this.gunId = id; this.targetId = null; this.tool = null;
       const gun = this.plan().guns.find(gun => gun.id === id) || null;
       this.selection = gun ? {kind:"gun", id} : null; this.hooks.mission(gun, null, null);
-      if (gun) this.editGun(); this.render(); this.status();
+      if (gun && this.editing) this.editGun();
+      else this.hooks.inspect?.();
+      this.render(); this.status();
     }
-    selectTarget(id) {
+    selectTarget(id, chooseGun = false) {
       if (!this.hooks.mapReady() || this.busy) return;
       const target = this.plan().targets.find(target => target.id === id); if (!target) return;
+      if (chooseGun) {
+        const settings = this.plan().configurations.filter(setting => setting.target_id === id);
+        this.gunId = settings.length === 1 ? settings[0].gun_id : null;
+      }
       this.selection = {kind:"target", id}; this.targetId = id; this.tool = null;
-      this.showMission(id); this.editTarget(target); this.render(); this.status();
+      this.closeEditor(); this.showMission(id);
+      if (this.editing) this.editTarget(target);
+      else this.hooks.inspect?.();
+      this.render(); this.status();
     }
     showMission(id) {
       const plan = this.plan(), gun = plan.guns.find(gun => gun.id === this.gunId), target = plan.targets.find(target => target.id === id);
@@ -144,6 +155,7 @@
     marker(point, kind, active, click) {
       const button = document.createElement("button"); button.type = "button";
       button.className = `marker-anchor sketch-marker ${kind}${active ? " configured" : " dimmed"}`;
+      button.classList.toggle("movable", this.editing);
       button.classList.toggle("selected", this.selection?.kind === kind && this.selection.id === point.id);
       button.setAttribute("data-sketch-" + kind, point.id);
       button.setAttribute("aria-label", `${label(kind)} at ${point.x}, ${point.y}`);
@@ -159,11 +171,18 @@
       $("#sketch-layer").replaceChildren(...plan.guns.map(gun => this.marker(gun, "gun", true, () => this.selectGun(gun.id))),
         ...targets.map(target => this.marker(target, "target", Boolean(target.configuration) || target.pending, () => {
           if (target.pending) {this.selection = {kind:"target", id:target.id}; this.hooks.inspect?.();}
-          else this.selectTarget(target.id);
+          else this.selectTarget(target.id, this.tool !== "target");
         })));
-      $("#sketch-edit").textContent = this.editing ? "DONE EDITING" : "EDIT";
+      $("#sketch-edit").textContent = "EDIT MODE";
+      $("#sketch-edit").setAttribute("aria-pressed", String(this.editing));
+      $("#sketch-view").setAttribute("aria-pressed", String(!this.editing));
+      $("#sketch-view").disabled = this.busy;
+      $("#sketch-toolbar").classList.toggle("editing", this.editing);
+      $("#sketch-panel").classList.toggle("editing", this.editing);
+      $("#sketch-edit-notice").hidden = !this.editing;
       for (const id of ["sketch-edit", "sketch-add-gun"]) $("#" + id).disabled = !this.store?.ready || Boolean(this.loadError) || this.busy;
-      $("#sketch-add-gun").hidden = false; $("#sketch-add-target").hidden = !this.editing;
+      $("#sketch-add-gun").hidden = !this.editing; $("#sketch-add-target").hidden = !this.editing;
+      $("#sketch-import").hidden = !this.editing; $("#sketch-import").disabled = !this.editing || this.busy;
       $("#sketch-add-target").disabled = !gun || this.busy;
       $("#sketch-add-gun").classList.toggle("active", this.tool === "gun"); $("#sketch-add-target").classList.toggle("active", this.tool === "target");
       const placeholder = document.createElement("option"); placeholder.value = ""; placeholder.textContent = "Choose a gun";
@@ -176,10 +195,53 @@
       $("#sketch-count").textContent = `${plan.guns.length} guns · ${plan.targets.length} shared targets`;
       $("#sketch-state").textContent = this.editing ? "MAP EDIT · PLACE OR MOVE POINTS" : "MAP VIEW · SAVED PLAN";
       $("#workspace-title").textContent = this.editing ? "SKETCHER · EDIT MODE" : "SKETCHER · VIEW MODE";
-      $("#sketch-help").textContent = this.loadError || "Select a point to edit · Save applies changes · Del deletes selection.";
-      $("#sketch-help").hidden = Boolean(this.selection) && !this.loadError;
-      $("#sketch-form").hidden = !this.draft; $("#sketch-editor-fields").disabled = this.busy || !this.store?.ready || Boolean(this.loadError);
+      const outdated = M.outdatedConfigurationCount(plan);
+      $("#sketch-help").textContent = this.loadError || (outdated ? `Map alignment updated. ${outdated} saved firing ${outdated === 1 ? "setting needs" : "settings need"} recalculation. Original settings are retained in the exported plan.` :
+        this.editing ? "Drag any point to reposition it. Saved firing values stay unchanged." : "Select a gun to view its saved targets. Choose Edit to make changes.");
+      $("#sketch-help").hidden = Boolean(this.selection) && !this.loadError && !outdated;
+      $("#sketch-form").hidden = !this.editing || !this.draft; $("#sketch-editor-fields").disabled = !this.editing || this.busy || !this.store?.ready || Boolean(this.loadError);
+      const choices = this.selection?.kind === "target" ? plan.configurations.filter(setting => setting.target_id === this.targetId) : [];
+      $("#sketch-gun-options").hidden = !choices.length;
+      $("#sketch-gun-options").replaceChildren(...choices.map(setting => {
+        const owner = plan.guns.find(point => point.id === setting.gun_id);
+        const button = document.createElement("button"); button.type = "button"; button.className = "sketch-target-row";
+        button.classList.toggle("selected", owner.id === this.gunId);
+        button.textContent = owner.cannon + " · " + Math.round(owner.x) + ", " + Math.round(owner.y) + " · " + setting.elevation_degrees.toFixed(2) + "° · " + setting.fuze_seconds.toFixed(3) + " s";
+        button.addEventListener("click", () => {this.gunId = owner.id; this.selectTarget(setting.target_id);});
+        return button;
+      }));
       const settings = plan.configurations.filter(setting => setting.gun_id === this.gunId);
+      $("#sketch-related-heading").textContent = `Related targets · ${settings.length}`;
+      this.connections = this.editing || !gun ? [] : settings.map(setting => {
+        const point = plan.targets.find(target => target.id === setting.target_id);
+        const line = document.createElement("div"); line.className = "sketch-connection";
+        return {line, gun, point};
+      });
+      $("#sketch-connections").replaceChildren(...this.connections.map(item => item.line));
+      const selected = M.configuration(plan, this.gunId, this.targetId);
+      const solution = $("#sketch-solution"); solution.hidden = this.editing || !selected;
+      solution.replaceChildren();
+      if (selected && !this.editing) {
+        const heading = document.createElement("h3"); heading.textContent = "Saved firing solution";
+        const metrics = document.createElement("div"); metrics.className = "solution-metrics";
+        for (const [name, value] of [["Elevation", `${selected.elevation_degrees.toFixed(2)}°`], ["Fuze", `${selected.fuze_seconds.toFixed(3)} s`]]) {
+          const metric = document.createElement("div"), caption = document.createElement("small"), number = document.createElement("b");
+          caption.textContent = name; number.textContent = value; metric.append(caption, number); metrics.append(metric);
+        }
+        const ammo = document.createElement("p"); ammo.textContent = selected.projectile;
+        solution.append(heading, metrics, ammo);
+        if (selected.notes) {const notes = document.createElement("p"); notes.textContent = selected.notes; solution.append(notes);}
+      }
+      $("#sketch-shared-count").textContent = String(plan.targets.length);
+      $("#sketch-shared-list").replaceChildren(...plan.targets.map(target => {
+        const button = document.createElement("button"); button.type = "button"; button.className = "shared-target-row";
+        button.classList.toggle("selected", target.id === this.targetId);
+        button.textContent = `Target at ${Math.round(target.x)}, ${Math.round(target.y)}`;
+        const count = document.createElement("small");
+        const links = plan.configurations.filter(setting => setting.target_id === target.id).length;
+        count.textContent = `${links} saved ${links === 1 ? "solution" : "solutions"}`; button.append(count);
+        button.addEventListener("click", () => this.selectTarget(target.id, true)); return button;
+      }));
       this.readouts = [];
       $("#sketch-readouts").replaceChildren(...(this.editing ? [] : settings.filter(setting => setting.target_id !== this.targetId).map(setting => {
         const point = plan.targets.find(target => target.id === setting.target_id);
@@ -192,15 +254,23 @@
         button.classList.toggle("selected", this.selection?.kind === "target" && this.selection.id === setting.target_id);
         const values = document.createElement("b"); values.textContent = `${setting.elevation_degrees.toFixed(2)}° · ${setting.fuze_seconds.toFixed(3)} s`;
         const ammunition = document.createElement("small"); ammunition.textContent = setting.projectile;
-        button.append(values, ammunition); button.addEventListener("click", () => this.selectTarget(setting.target_id)); return button;
+        button.append(values, ammunition);
+        if (setting.notes) {const notes = document.createElement("span"); notes.textContent = setting.notes; button.append(notes);}
+        button.addEventListener("click", () => this.selectTarget(setting.target_id)); return button;
       }));
       $("#sketch-empty").hidden = Boolean(this.draft) || settings.length > 0;
-      $("#sketch-empty").textContent = gun ? "No saved targets for this gun. Add a target, or select an existing target to configure it." : "Select a gun or target to see its details.";
+      $("#sketch-empty").textContent = gun ? (this.editing ? "No saved targets for this gun. Add a target, or select an existing target to configure it." : "No saved targets for this gun.") : "Select a gun or target to see its details.";
       this.positionMarkers();
     }
     positionMarkers() {
+      for (const {line, gun, point} of this.connections || []) {
+        const start = this.hooks.position(gun), end = this.hooks.position(point);
+        line.style.left = `${start.x}px`; line.style.top = `${start.y}px`;
+        line.style.width = `${Math.hypot(end.x - start.x, end.y - start.y)}px`;
+        line.style.transform = `rotate(${Math.atan2(end.y - start.y, end.x - start.x)}rad)`;
+      }
       for (const {button, point, type} of this.markers) {
-        const position = this.gunMove?.id === point.id && type === "gun" ? this.gunMove.point : point;
+        const position = this.gunMove?.id === point.id && type === this.gunMove.kind ? this.gunMove.point : point;
         const screen = this.hooks.position(position); button.style.left = `${screen.x}px`; button.style.top = `${screen.y}px`;
       }
       const viewport = this.hooks.viewport?.(); if (!viewport) return;
@@ -213,6 +283,7 @@
       }
     }
     openEditor(draft) {
+      if (!this.active || !this.editing || this.busy) return;
       this.closeEditor(); this.draft = draft;
       $("#sketch-details-title").textContent = label(draft.kind);
       $("#sketch-x").value = draft.point.x; $("#sketch-y").value = draft.point.y;
@@ -223,7 +294,7 @@
     }
     closeEditor() {if (!this.busy) {this.calculationSequence++; this.draft = null; $("#sketch-form").hidden = true;}}
     editGun() {
-      const gun = this.plan().guns.find(gun => gun.id === this.gunId); if (!gun || this.busy) return;
+      const gun = this.plan().guns.find(gun => gun.id === this.gunId); if (!this.active || !this.editing || !gun || this.busy) return;
       this.openEditor({kind:"gun", point:{...gun}, mapId:this.hooks.map().identifier});
       $("#sketch-gun-fields").hidden = false; $("#sketch-gun-fields").disabled = false;
       $("#sketch-target-fields").hidden = true; $("#sketch-target-fields").disabled = true; $("#sketch-unlink").hidden = true;
@@ -234,22 +305,23 @@
       $("#sketch-editor-context").textContent = "Moving or changing cannon clears this gun's firing settings.";
     }
     editTarget(point) {
-      if (this.busy) return;
+      if (!this.active || !this.editing || this.busy) return;
       const gun = this.plan().guns.find(gun => gun.id === this.gunId), existing = M.configuration(this.plan(), this.gunId, point.id);
+      const previous = M.previousConfiguration(this.plan(), this.gunId, point.id), preferences = existing || previous;
       this.openEditor({kind:"target", point:{...point}, gun:gun && {...gun}, existing, solution:existing ? M.copy(existing.solution) : null, mapId:this.hooks.map().identifier});
       $("#sketch-gun-fields").hidden = true; $("#sketch-gun-fields").disabled = true;
-      $("#sketch-target-fields").hidden = false; $("#sketch-target-fields").disabled = !gun;
+      $("#sketch-target-fields").hidden = !gun; $("#sketch-target-fields").disabled = !gun;
       $("#sketch-unlink").hidden = !existing;
       const ammunition = gun ? this.hooks.options().weapons[gun.cannon] : [];
       $("#sketch-ammo").replaceChildren(...ammunition.map(value => {const option = document.createElement("option"); option.value = value; option.textContent = value; return option;}));
-      $("#sketch-ammo").value = existing?.projectile || (ammunition.includes(this.hooks.options().defaults.projectile) ? this.hooks.options().defaults.projectile : ammunition[0] || "");
-      $("#sketch-burst").value = existing?.airburst_mode ? "airburst" : "ground";
-      $("#sketch-angle").value = existing?.elevation_degrees ?? ""; $("#sketch-fuze").value = existing?.fuze_seconds ?? ""; $("#sketch-notes").value = existing?.notes || "";
+      $("#sketch-ammo").value = ammunition.includes(preferences?.projectile) ? preferences.projectile : (ammunition.includes(this.hooks.options().defaults.projectile) ? this.hooks.options().defaults.projectile : ammunition[0] || "");
+      $("#sketch-burst").value = preferences?.airburst_mode ? "airburst" : "ground";
+      $("#sketch-angle").value = existing?.elevation_degrees ?? ""; $("#sketch-fuze").value = existing?.fuze_seconds ?? ""; $("#sketch-notes").value = preferences?.notes || "";
       $("#sketch-editor-context").textContent = gun ? "Moving this shared point clears its firing settings." : "Select a gun for firing settings. You can edit or delete this point now.";
       $("#sketch-save").disabled = false; $("#sketch-defaults").disabled = !existing; $("#sketch-calculate").disabled = !gun;
       if (existing) {this.draft.solutionKey = this.solutionKey(this.draft, point); this.simulationText(existing.solution);}
-      else $("#sketch-simulation").textContent = gun ? "Calculate to prepare settings for this gun." : "No gun selected.";
-      if (!existing && gun && this.editing) this.calculateDraft(false);
+      else $("#sketch-simulation").textContent = gun ? (previous ? "Map alignment updated. Calculate new elevation and fuze settings." : "Calculate to prepare settings for this gun.") : "No gun selected.";
+
     }
     readPoint(draft) {
       return {...draft.point, x:$("#sketch-x").value === "" ? NaN : Number($("#sketch-x").value), y:$("#sketch-y").value === "" ? NaN : Number($("#sketch-y").value)};
@@ -257,7 +329,7 @@
     solutionKey(draft, point) {return JSON.stringify([draft.mapId, draft.gun?.id, draft.gun?.cannon, draft.gun?.x, draft.gun?.y, point.x, point.y, $("#sketch-ammo").value, $("#sketch-burst").value]);}
     simulationText(solution) {$("#sketch-simulation").textContent = `Simulator: ${solution.elevation_degrees.toFixed(2)}° · ${solution.fuze_seconds.toFixed(3)} s · ${solution.slant_range_yards.toFixed(0)} yd · ${solution.clearance_status || "clearance unknown"}`;}
     async calculateDraft(keepValues) {
-      const draft = this.draft; if (!draft || draft.kind !== "target" || !draft.gun || this.busy) return;
+      const draft = this.draft; if (!this.active || !this.editing || !draft || draft.kind !== "target" || !draft.gun || this.busy) return;
       const sequence = ++this.calculationSequence, point = this.readPoint(draft), key = this.solutionKey(draft, point);
       draft.solution = null; draft.solutionKey = null; $("#sketch-save").disabled = true; $("#sketch-defaults").disabled = true;
       $("#sketch-simulation").textContent = "Calculating…"; $("#sketch-editor-status").textContent = "";
@@ -272,15 +344,16 @@
         if (!keepValues) this.useDefaults(); this.render();
       } catch (error) {if (sequence === this.calculationSequence && this.draft === draft) {$("#sketch-simulation").textContent = error.message; $("#sketch-editor-status").textContent = "A firing solution is required before saving this configuration.";}}
     }
-    useDefaults() {if (this.draft?.solution && !this.busy) {$("#sketch-angle").value = this.draft.solution.elevation_degrees; $("#sketch-fuze").value = this.draft.solution.fuze_seconds;}}
+    useDefaults() {if (this.active && this.editing && this.draft?.solution && !this.busy) {$("#sketch-angle").value = this.draft.solution.elevation_degrees; $("#sketch-fuze").value = this.draft.solution.fuze_seconds;}}
     async persist(change) {
+      if (!this.active || !this.editing) return false;
       this.busy = true; this.render(); this.status();
       try {await this.store.update(change); this.loadError = null; return true;}
       catch (error) {$("#sketch-editor-status").textContent = `Save failed: ${error.message}`; this.hooks.status(`SAVE FAILED: ${error.message}`); return false;}
       finally {this.busy = false; this.render();}
     }
     async saveDraft() {
-      const draft = this.draft; if (!draft || this.busy || !this.store?.ready || this.loadError) return;
+      const draft = this.draft; if (!this.active || !this.editing || !draft || this.busy || !this.store?.ready || this.loadError) return;
       const point = this.readPoint(draft);
       if (draft.kind === "gun") {
         const cannon = $("#sketch-weapon").value;
@@ -311,7 +384,7 @@
       else {this.selection = null; this.targetId = null; this.hooks.mission(null, null, null); this.render();}
     }
     async deleteSelected() {
-      const selected = this.selection; if (!this.active || !selected || this.busy || !this.store?.ready || this.loadError) return;
+      const selected = this.selection; if (!this.active || !this.editing || !selected || this.busy || !this.store?.ready || this.loadError) return;
       const mapId = this.hooks.map().identifier;
       if (selected.kind === "target" && !this.plan().targets.some(point => point.id === selected.id)) {
         this.closeEditor(); this.selection = null; this.targetId = null; this.render(); this.status(); return;
@@ -327,7 +400,7 @@
       }
     }
     async unlinkSelected() {
-      const draft = this.draft; if (this.busy || draft?.kind !== "target" || !draft.gun) return;
+      const draft = this.draft; if (!this.active || !this.editing || this.busy || draft?.kind !== "target" || !draft.gun) return;
       if (await this.persist(library => M.unlinkTarget(library.maps[draft.mapId], draft.gun.id, draft.point.id))) {
         this.closeEditor(); this.selection = null; this.targetId = null; this.hooks.mission(null, null, null); this.render(); this.status();
       }
@@ -337,7 +410,7 @@
       try {await this.store.queue; this.hooks.status(await this.store.adapter.export(this.store.data));} catch (error) {this.hooks.status(`EXPORT FAILED: ${error.message}`);}
     }
     async importFile(file) {
-      $("#sketch-file").value = ""; if (!file || !this.store || this.busy) return;
+      $("#sketch-file").value = ""; if (!this.active || !this.editing || !file || !this.store || this.busy) return;
       this.busy = true;
       try {
         if (file.size > M.MAX_BYTES) throw Error("Plan file is too large");

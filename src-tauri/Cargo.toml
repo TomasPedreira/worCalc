@@ -1,6 +1,6 @@
 [package]
 name = "worcalc-app"
-version = "1.0.0"
+version = "1.1.8"
 edition = "2021"
 
 [lib]
@@ -13,10 +13,18 @@ tauri-build = { version = "2", features = [] }
 [dependencies]
 tauri = { version = "2", features = [] }
 tauri-plugin-fs = "2"
-worcalc-core = { path = "../native/core" }
+worcalc-core = { path = "../native/core", optional = true }
 serde_json = "1"
+sha2 = "0.10"
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.61", optional = true, features = ["Win32_Foundation", "Win32_System_Diagnostics_ToolHelp", "Win32_System_Diagnostics_Debug", "Win32_System_Threading"] }
 
 [features]
+default = ["calculator"]
+calculator = ["dep:worcalc-core"]
+sketcher = ["calculator"]
+kill-tracker = ["dep:windows-sys"]
 custom-protocol = ["tauri/custom-protocol"]
 
 [target.'cfg(target_os = "android")'.dependencies]

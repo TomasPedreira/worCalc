@@ -13,6 +13,10 @@ export function nativeSketchStorage(invoke) {
     export:async data => `Exported to ${await callNative(invoke, "native_sketch", {operation:"export", data})}`,
   };
 }
+export function nativeKillTracker(invoke) {
+  const request = (operation, authorized = false) => callNative(invoke, "native_kill_tracker", {operation, authorized});
+  return {start:authorized => request("start", authorized), poll:() => request("poll"), stop:() => request("stop")};
+}
 export function createNativeApi(invoke) {
   const read = nativeResources(invoke);
   const request = (operation, data = null) => callNative(invoke, "native_request", {operation, data});

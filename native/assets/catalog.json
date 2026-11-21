@@ -23693,5 +23693,417 @@
       "minimum_display_deg": -8,
       "maximum_display_deg": 13.6
     }
+  },
+  "map_alignments": {
+    "revision": 1,
+    "description": "Miller and Nicodemus retain their investigated fits. Other crops use centred battlefield-axis rotation or neutral-axis rectification; neutral full-map views remain unchanged. See docs/map-alignment-corrections.md for evidence and limits.",
+    "maps": {
+      "map-1": {
+        "heading_degrees": -50,
+        "method": "battlefield_axis_rotation"
+      },
+      "map-2": {
+        "heading_degrees": -50,
+        "method": "battlefield_axis_rotation"
+      },
+      "map-3": {
+        "heading_degrees": -50,
+        "method": "battlefield_axis_rotation"
+      },
+      "map-4": {
+        "heading_degrees": -50,
+        "method": "battlefield_axis_rotation"
+      },
+      "map-5": {
+        "heading_degrees": -50,
+        "method": "battlefield_axis_rotation"
+      },
+      "map-6": {
+        "heading_degrees": -50,
+        "method": "battlefield_axis_rotation"
+      },
+      "map-7": {
+        "heading_degrees": -50,
+        "method": "battlefield_axis_rotation"
+      },
+      "map-8": {
+        "heading_degrees": -50,
+        "method": "battlefield_axis_rotation"
+      },
+      "map-9": {
+        "heading_degrees": -50,
+        "method": "battlefield_axis_rotation"
+      },
+      "map-10": {
+        "heading_degrees": -50,
+        "method": "battlefield_axis_rotation"
+      },
+      "map-11": {
+        "heading_degrees": -50,
+        "method": "battlefield_axis_rotation"
+      },
+      "map-12": {
+        "heading_degrees": -50,
+        "method": "battlefield_axis_rotation"
+      },
+      "map-13": {
+        "heading_degrees": 0,
+        "method": "neutral_axis_rectification"
+      },
+      "map-14": {
+        "heading_degrees": -50,
+        "method": "battlefield_axis_rotation"
+      },
+      "map-15": {
+        "heading_degrees": -50,
+        "method": "battlefield_axis_rotation"
+      },
+      "map-16": {
+        "heading_degrees": -50,
+        "method": "battlefield_axis_rotation"
+      },
+      "map-17": {
+        "method": "measured_building_similarity",
+        "image_transform": {
+          "a": 0.9945819506168841,
+          "z": 0.06368972860255215,
+          "tx": 64.7161502102499,
+          "ty": -55.14150220355123
+        }
+      },
+      "map-18": {
+        "heading_degrees": -50,
+        "method": "battlefield_axis_rotation"
+      },
+      "map-19": {
+        "method": "verified_compass_angle_building_fit",
+        "image_transform": {
+          "a": 0.9987327872264953,
+          "z": 0.06899357875718132,
+          "tx": 68.56048969982542,
+          "ty": -68.77829190522698
+        }
+      },
+      "map-20": {
+        "heading_degrees": -50,
+        "method": "battlefield_axis_rotation"
+      },
+      "map-21": {
+        "heading_degrees": -50,
+        "method": "battlefield_axis_rotation"
+      },
+      "map-22": {
+        "heading_degrees": -50,
+        "method": "battlefield_axis_rotation"
+      },
+      "map-23": {
+        "heading_degrees": -50,
+        "method": "battlefield_axis_rotation"
+      },
+      "map-24": {
+        "heading_degrees": -50,
+        "method": "battlefield_axis_rotation"
+      },
+      "map-25": {
+        "heading_degrees": -50,
+        "method": "battlefield_axis_rotation"
+      },
+      "map-26": {
+        "heading_degrees": -50,
+        "method": "battlefield_axis_rotation"
+      },
+      "map-27": {
+        "heading_degrees": -50,
+        "method": "battlefield_axis_rotation"
+      },
+      "map-28": {
+        "heading_degrees": -50,
+        "method": "battlefield_axis_rotation"
+      },
+      "map-29": {
+        "heading_degrees": -50,
+        "method": "battlefield_axis_rotation"
+      },
+      "map-30": {
+        "heading_degrees": -50,
+        "method": "battlefield_axis_rotation"
+      },
+      "map-31": {
+        "heading_degrees": -50,
+        "method": "battlefield_axis_rotation"
+      },
+      "map-32": {
+        "heading_degrees": 0,
+        "method": "neutral_axis_rectification"
+      },
+      "map-33": {
+        "heading_degrees": 0,
+        "method": "neutral_axis_rectification"
+      },
+      "map-34": {
+        "heading_degrees": 0,
+        "method": "neutral_axis_rectification"
+      },
+      "map-35": {
+        "heading_degrees": 0,
+        "method": "neutral_axis_rectification"
+      },
+      "map-36": {
+        "heading_degrees": 0,
+        "method": "neutral_axis_rectification"
+      },
+      "map-37": {
+        "heading_degrees": 0,
+        "method": "neutral_axis_rectification"
+      },
+      "map-38": {
+        "heading_degrees": 0,
+        "method": "neutral_axis_rectification"
+      },
+      "map-39": {
+        "heading_degrees": 0,
+        "method": "neutral_axis_rectification"
+      },
+      "map-40": {
+        "heading_degrees": 0,
+        "method": "neutral_axis_rectification"
+      },
+      "map-41": {
+        "heading_degrees": 0,
+        "method": "neutral_axis_rectification"
+      },
+      "map-42": {
+        "heading_degrees": 0,
+        "method": "neutral_axis_rectification"
+      },
+      "map-43": {
+        "heading_degrees": 0,
+        "method": "neutral_axis_rectification"
+      },
+      "map-44": {
+        "heading_degrees": 0,
+        "method": "neutral_axis_rectification"
+      },
+      "map-45": {
+        "heading_degrees": 0,
+        "method": "neutral_axis_rectification"
+      },
+      "map-46": {
+        "heading_degrees": 0,
+        "method": "neutral_axis_rectification"
+      },
+      "map-47": {
+        "heading_degrees": 0,
+        "method": "neutral_axis_rectification"
+      },
+      "map-48": {
+        "heading_degrees": 0,
+        "method": "neutral_axis_rectification"
+      },
+      "map-49": {
+        "heading_degrees": 0,
+        "method": "neutral_axis_rectification"
+      },
+      "map-50": {
+        "heading_degrees": 0,
+        "method": "neutral_axis_rectification"
+      },
+      "map-51": {
+        "heading_degrees": 0,
+        "method": "neutral_axis_rectification"
+      },
+      "map-52": {
+        "heading_degrees": 0,
+        "method": "neutral_axis_rectification"
+      },
+      "map-53": {
+        "heading_degrees": 0,
+        "method": "neutral_axis_rectification"
+      },
+      "map-54": {
+        "heading_degrees": 0,
+        "method": "neutral_axis_rectification"
+      },
+      "map-55": {
+        "heading_degrees": 0,
+        "method": "neutral_axis_rectification"
+      },
+      "map-56": {
+        "heading_degrees": 0,
+        "method": "neutral_axis_rectification"
+      },
+      "map-57": {
+        "heading_degrees": 0,
+        "method": "neutral_axis_rectification"
+      },
+      "map-58": {
+        "heading_degrees": 0,
+        "method": "neutral_axis_rectification"
+      },
+      "map-59": {
+        "heading_degrees": 0,
+        "method": "neutral_axis_rectification"
+      },
+      "map-60": {
+        "heading_degrees": 0,
+        "method": "neutral_axis_rectification"
+      },
+      "map-61": {
+        "heading_degrees": 0,
+        "method": "neutral_axis_rectification"
+      },
+      "map-62": {
+        "heading_degrees": 0,
+        "method": "neutral_axis_rectification"
+      },
+      "map-63": {
+        "heading_degrees": 0,
+        "method": "neutral_axis_rectification"
+      },
+      "map-64": {
+        "heading_degrees": 0,
+        "method": "neutral_axis_rectification"
+      },
+      "map-65": {
+        "heading_degrees": 0,
+        "method": "neutral_axis_rectification"
+      },
+      "map-66": {
+        "heading_degrees": 0,
+        "method": "neutral_axis_rectification"
+      },
+      "map-67": {
+        "heading_degrees": 0,
+        "method": "neutral_axis_rectification"
+      },
+      "map-68": {
+        "heading_degrees": 0,
+        "method": "neutral_axis_rectification"
+      },
+      "map-69": {
+        "heading_degrees": 0,
+        "method": "neutral_axis_rectification"
+      },
+      "map-70": {
+        "heading_degrees": 0,
+        "method": "neutral_axis_rectification"
+      },
+      "map-71": {
+        "heading_degrees": 0,
+        "method": "neutral_axis_rectification"
+      },
+      "map-72": {
+        "heading_degrees": 0,
+        "method": "neutral_axis_rectification"
+      },
+      "map-73": {
+        "heading_degrees": 0,
+        "method": "neutral_axis_rectification"
+      },
+      "map-74": {
+        "heading_degrees": 0,
+        "method": "neutral_axis_rectification"
+      },
+      "map-75": {
+        "heading_degrees": 0,
+        "method": "neutral_axis_rectification"
+      },
+      "map-76": {
+        "heading_degrees": 0,
+        "method": "neutral_axis_rectification"
+      },
+      "map-77": {
+        "heading_degrees": 0,
+        "method": "neutral_axis_rectification"
+      },
+      "map-78": {
+        "heading_degrees": 0,
+        "method": "neutral_axis_rectification"
+      },
+      "map-79": {
+        "heading_degrees": 0,
+        "method": "neutral_axis_rectification"
+      },
+      "map-80": {
+        "heading_degrees": 0,
+        "method": "neutral_axis_rectification"
+      },
+      "map-81": {
+        "heading_degrees": 0,
+        "method": "neutral_axis_rectification"
+      },
+      "map-82": {
+        "heading_degrees": 0,
+        "method": "neutral_axis_rectification"
+      },
+      "map-83": {
+        "heading_degrees": 0,
+        "method": "neutral_axis_rectification"
+      },
+      "map-84": {
+        "heading_degrees": 0,
+        "method": "neutral_axis_rectification"
+      },
+      "map-85": {
+        "heading_degrees": 0,
+        "method": "neutral_axis_rectification"
+      },
+      "map-86": {
+        "heading_degrees": 0,
+        "method": "neutral_axis_rectification"
+      },
+      "map-87": {
+        "heading_degrees": 0,
+        "method": "neutral_axis_rectification"
+      },
+      "map-88": {
+        "heading_degrees": 0,
+        "method": "neutral_axis_rectification"
+      },
+      "map-89": {
+        "heading_degrees": 0,
+        "method": "neutral_axis_rectification"
+      },
+      "map-90": {
+        "heading_degrees": 0,
+        "method": "neutral_axis_rectification"
+      },
+      "map-91": {
+        "heading_degrees": 0,
+        "method": "neutral_axis_rectification"
+      },
+      "map-92": {
+        "heading_degrees": 0,
+        "method": "neutral_axis_rectification"
+      },
+      "map-93": {
+        "heading_degrees": 0,
+        "method": "neutral_axis_rectification"
+      },
+      "map-94": {
+        "heading_degrees": 0,
+        "method": "neutral_axis_rectification"
+      },
+      "map-95": {
+        "heading_degrees": 0,
+        "method": "neutral_axis_rectification"
+      },
+      "map-96": {
+        "heading_degrees": 0,
+        "method": "neutral_axis_rectification"
+      },
+      "map-97": {
+        "heading_degrees": 0,
+        "method": "neutral_axis_rectification"
+      },
+      "map-98": {
+        "heading_degrees": 0,
+        "method": "neutral_axis_rectification"
+      },
+      "map-99": {
+        "heading_degrees": 0,
+        "method": "neutral_axis_rectification"
+      }
+    }
   }
 }

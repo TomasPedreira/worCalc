@@ -7,16 +7,32 @@ use worcalc_core::{
     AssetStore, Engine, Result,
 };
 
-struct Files(PathBuf);
+struct Files {
+    path: PathBuf,
+    legacy_projection: bool,
+}
 impl AssetStore for Files {
     fn read(&self, path: &str) -> Result<Vec<u8>> {
-        std::fs::read(self.0.join(path)).map_err(|e| e.to_string())
+        let bytes = std::fs::read(self.path.join(path)).map_err(|e| e.to_string())?;
+        if path == "catalog.json" && self.legacy_projection {
+            // These frozen results predate the artwork alignment correction.
+            // Preserve their independent physics/terrain reference instead of
+            // replacing expected outputs with values from the implementation.
+            let mut catalog: Value = serde_json::from_slice(&bytes).unwrap();
+            catalog.as_object_mut().unwrap().remove("map_alignments");
+            return Ok(serde_json::to_vec(&catalog).unwrap());
+        }
+        Ok(bytes)
     }
 }
 fn engine() -> Engine {
-    Engine::new(Arc::new(Files(
-        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../assets"),
-    )))
+    engine_with_projection(false)
+}
+fn engine_with_projection(legacy_projection: bool) -> Engine {
+    Engine::new(Arc::new(Files {
+        path: PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../assets"),
+        legacy_projection,
+    }))
     .unwrap()
 }
 fn compare(expected: &Value, actual: &Value, context: &str) {
@@ -90,9 +106,9 @@ fn empirical_calibration_matches_reference_branches() {
     }
 }
 #[test]
-fn all_maps_weapons_modes_and_observed_impacts_match_reference() {
+fn legacy_projection_physics_and_impacts_still_match_frozen_reference() {
     let cases: Vec<Value> = serde_json::from_str(include_str!("fixtures/missions.json")).unwrap();
-    let mut engine = engine();
+    let mut engine = engine_with_projection(true);
     for (i, case) in cases.iter().enumerate() {
         engine.observations.clear();
         let mut actual = engine
@@ -103,6 +119,10 @@ fn all_maps_weapons_modes_and_observed_impacts_match_reference() {
             .unwrap()
             .remove("calculation_id")
             .unwrap();
+        actual
+            .as_object_mut()
+            .unwrap()
+            .remove("coordinate_revision");
         compare(
             &case["expected"],
             &actual,

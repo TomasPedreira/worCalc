@@ -16,7 +16,7 @@
       metric("FUZE", fuzeText(fuze), null, ids.fuze));
     return window;
   }
-  function position(point, viewport, size, occupied = []) {
+  function position(point, viewport, size, occupied = [], avoidOverlap = false) {
     const margin = 8, bottom = 64;
     const clamp = (value, max) => Math.max(margin, Math.min(max - margin, value));
     const candidates = [
@@ -28,7 +28,22 @@
     const overlap = box => occupied.reduce((total, other) => total +
       Math.max(0, Math.min(box.x + box.width, other.x + other.width) - Math.max(box.x, other.x)) *
       Math.max(0, Math.min(box.y + box.height, other.y + other.height) - Math.max(box.y, other.y)), 0);
-    return candidates.reduce((best, candidate) => overlap(candidate) < overlap(best) ? candidate : best);
+    let best = candidates.reduce((best, candidate) => overlap(candidate) < overlap(best) ? candidate : best);
+    if (avoidOverlap && overlap(best) > 0) {
+      let nearest = Infinity;
+      const fits = (x, y) => x + size.width <= viewport.width - margin && y + size.height <= viewport.height - bottom;
+      for (let y = margin; y + size.height <= viewport.height - bottom; y += size.height + margin) {
+        for (let x = margin; fits(x, y); x += size.width + margin) {
+          const candidate = {x, y, ...size};
+          const distance = Math.hypot(x + size.width / 2 - point.x, y + size.height / 2 - point.y);
+          if (distance < nearest && overlap(candidate) === 0) {
+            best = candidate;
+            nearest = distance;
+          }
+        }
+      }
+    }
+    return best;
   }
   globalThis.WorCalcFireReadouts = Object.freeze({create, elevationText, fuzeText, position});
 })();

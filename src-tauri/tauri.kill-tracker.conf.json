@@ -1,0 +1,13 @@
+{
+  "productName": "Kill Tracker",
+  "identifier": "pt.tomaspedreira.killtracker",
+  "build": {
+    "beforeBuildCommand": "npm run build:kill-tracker",
+    "beforeDevCommand": "npm run dev:kill-tracker",
+    "frontendDist": "../native/frontend/dist-kill-tracker"
+  },
+  "app": {
+    "windows": [{"title":"Kill Tracker", "width":1100, "height":760}]
+  },
+  "bundle": {"resources":[]}
+}
